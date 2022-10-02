@@ -39,12 +39,12 @@ function data()
 					logger.print('moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
 				end
 				logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
-				-- if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
-				-- 	params.lolloBusStop_model = 0
-				-- 	logger.print('params.lolloBusStop_model set to') debugPrint(params.lolloBusStop_model)
-				-- else
-				-- 	logger.print('params.lolloBusStop_model =', params.lolloBusStop_model)
-				-- end
+				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
+					params.lolloBusStop_model = 0
+					logger.print('params.lolloBusStop_model set to') debugPrint(params.lolloBusStop_model)
+				else
+					logger.print('params.lolloBusStop_model =', params.lolloBusStop_model)
+				end
 			end
 			_initParams()
 
@@ -59,6 +59,11 @@ function data()
 			local _streetFileName = _selectedStreetData.fileName
             local _tramTrackType = _getTramTrackType()
 			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 and not(_selectedStreetData.isOneWay)
+			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
+			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
+				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
+				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
+			logger.print('_selectedModel =') logger.debugPrint(_selectedModel)
             local result = {
                 colliders = {},
                 cost = 1000,
@@ -115,30 +120,9 @@ function data()
                         -- tag2Nodes = {},
                     },
                 },
-                -- edgeObjects = {
-                --     {
-                --         edge = 1,                                              -- attach object to edge index base 0
-                --         param = 0.5,                                            -- param along the edge
-                --         left = false,
-                --         -- model = 'station/air/asset/radar.mdl',
-                --         -- model = 'station/air/asset/signal_runway_old.mdl',
-                --         model = 'station/bus/small_new.mdl',
-                --     }
-                -- },
 				-- groundFaces = {},
 				-- labelText = {},
-				models = {
-					{
-						id = 'lollo_bus_stop/icon/blue.mdl',
-						-- tag = 'stationTag',
-                        transf = {1, 0, 0, 0,
-                            0, 1, 0, 0,
-                            0, 0, 1, 0,
-                            0, 0, 0, 1},
-					},
-                },
-                stations = {},
-				terminalGroups = {},
+				models = { },
 				terrainAlignmentLists = { { -- LOLLO NOTE this thing with the empty faces is required , otherwise the game will make its own alignments, with spikes and all on bridges or tunnels.
 					type = 'EQUAL',
 					optional = true,
@@ -146,28 +130,46 @@ function data()
 				} },
             }
 
-			local transfLeft = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1})
-			local transfRight = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1})
+			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, 0, 1})
+			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, 0, 1})
+			result.models[#result.models+1] = {
+				id = _selectedModel.fileName,
+				-- tag = 'stationTag',
+				transf = params.lolloBusStop_direction == 0
+					and modelTransfLeft
+					or modelTransfRight
+			}
+			if _isBothSides then
+				result.models[#result.models+1] = {
+					id = _selectedModel.fileName,
+					-- tag = 'stationTag',
+					transf = params.lolloBusStop_direction == 0
+						and modelTransfRight
+						or modelTransfLeft
+				}
+			end
+
+			local vehicleEdgeTransfLeft = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1})
+			local vehicleEdgeTransfRight = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1})
 			result.models[#result.models+1] = {
 				id = 'lollo_bus_stop/vehicle_edge_left.mdl',
 				-- tag = 'stationTag',
 				transf = params.lolloBusStop_direction == 0
-					and transfLeft
-					or transfRight
+					and vehicleEdgeTransfLeft
+					or vehicleEdgeTransfRight
 			}
 			if _isBothSides then
 				result.models[#result.models+1] = {
 					id = 'lollo_bus_stop/vehicle_edge_left.mdl',
 					-- tag = 'stationTag',
 					transf = params.lolloBusStop_direction == 0
-						and transfRight
-						or transfLeft
+						and vehicleEdgeTransfRight
+						or vehicleEdgeTransfLeft
 				}
 			end
 
-            -- join terminals together
+            -- join terminals together, similar to result.terminateConstructionHook that fires with modular stations
 			local terminateConstructionHook = function()
-				-- this fires after the user has added a module
 				-- logger.print('starting terminateConstructionHook')
                 local _extraCargoCapacity = 100
 
@@ -183,14 +185,14 @@ function data()
 						{
 							tag = 0,
 							terminals = {
-								{ 1, 0 },
+								{ 2, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						},
 						{
 							tag = 1,
 							terminals = {
-								{ 2, 0 },
+								{ 3, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						},
@@ -203,8 +205,7 @@ function data()
 							terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
 						}
 					}
-					table.insert(
-						result.terminalGroups,
+					result.terminalGroups = {
 						{
 							tag = 0,
 							terminals = {
@@ -212,7 +213,7 @@ function data()
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						}
-					)
+					}
 				end
 
 				-- avoid dump when configuring

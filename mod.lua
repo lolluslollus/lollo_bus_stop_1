@@ -1,7 +1,9 @@
 function data()
+    -- local arrayUtils = require('lollo_bus_stop.arrayUtils')
     local logger = require('lollo_bus_stop.logger')
     local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
     local streetUtils = require('lollo_bus_stop.streetUtils')
+    -- local stringUtils = require('lollo_bus_stop.stringUtils')
     -- local _extraCapacity = 160.0
     local function _getUiTypeNumber(uiTypeStr)
         if uiTypeStr == 'BUTTON' then return 0
@@ -62,7 +64,14 @@ function data()
 --[[
             local busStopModels = {}
             local allGameModels = api.res.modelRep.getAll()
+            local allGameStationModels = {}
             for modelId, modelFileName in pairs(allGameModels) do
+                if modelFileName ~= nil and modelFileName:find('station/bus/') then
+                    allGameStationModels[modelId] = modelFileName
+                end
+            end
+
+            for modelId, modelFileName in pairs(allGameStationModels) do
                 if modelId ~= nil and modelFileName ~= nil then
                     local model = api.res.modelRep.get(modelId)
                     if not(model) then break end -- prevent a crash, the models table is dodgy
@@ -83,8 +92,48 @@ function data()
                     end
                 end
             end
+
+            logger.print('#busStopModels =', #busStopModels) logger.debugPrint(busStopModels)
+            -- now, make copies of the models with model.metadata = nil. This fails.
+            local geldedBusStopModels = {}
+            for _, value in pairs(busStopModels) do
+                local staticModel = api.res.modelRep.get(value.id)
+                local newModel = staticModel
+                newModel.metadata = arrayUtils.cloneDeepOmittingFields(staticModel.metadata, {'streetTerminal'}, true)
+                -- local newFileName = (stringUtils.stringSplit(value.fileName, '.mdl')[1])
+                local newFileName = value.fileName:gsub('.mdl', '_2.mdl')
+                print('newFileName =') debugPrint(newFileName)
+                local newId = api.res.modelRep.add(newFileName, newModel, false)
+                print('newId =') debugPrint(newId)
+                geldedBusStopModels[#geldedBusStopModels+1] = {
+                    fileName = newFileName,
+                    id = newId,
+                    name = value.name
+                }
+            end
 ]]
-            -- logger.print('#busStopModels =', #busStopModels) logger.debugPrint(busStopModels)
+            local getGeldedBusStopModels = function()
+                local results = {}
+                local add = function(fileName)
+                    local id = api.res.modelRep.find(fileName)
+                    local model = api.res.modelRep.get(id)
+                    results[#results+1] = {
+                        fileName = fileName,
+                        icon = model.metadata.description.icon,
+                        id = id,
+                        name = model.metadata.description.name
+                    }
+                end
+                add('lollo_bus_stop/geldedBusStops/pole_old.mdl')
+                add('lollo_bus_stop/geldedBusStops/pole_mid.mdl')
+                add('lollo_bus_stop/geldedBusStops/pole_new.mdl')
+                add('lollo_bus_stop/geldedBusStops/small_old.mdl')
+                add('lollo_bus_stop/geldedBusStops/small_mid.mdl')
+                add('lollo_bus_stop/geldedBusStops/small_new.mdl')
+                return results
+            end
+            local geldedBusStopModels = getGeldedBusStopModels()
+            logger.print('geldedBusStopModels =') logger.debugPrint(geldedBusStopModels)
 
             local staticCon = api.res.constructionRep.get(
                 api.res.constructionRep.find(
@@ -121,14 +170,14 @@ function data()
             newCon.updateScript.fileName = scriptFileName .. '.updateFn'
             newCon.updateScript.params = {
                 globalStreetData = allStreetData,
-                -- globalBusStopModelData = busStopModels,
+                globalBusStopModelData = geldedBusStopModels,
             }
             -- these are useless but the game wants them
             newCon.preProcessScript.fileName = scriptFileName .. '.preProcessFn'
             newCon.upgradeScript.fileName = scriptFileName .. '.upgradeFn'
             newCon.createTemplateScript.fileName = scriptFileName .. '.createTemplateFn'
 
-            -- moduleHelpers.updateParamValues_model(newCon.params, busStopModels)
+            moduleHelpers.updateParamValues_model(newCon.params, geldedBusStopModels)
             moduleHelpers.updateParamValues_streetType_(newCon.params, allStreetData)
 
             api.res.constructionRep.add(newCon.fileName, newCon, true) -- fileName, resource, visible

@@ -49,19 +49,19 @@ helpers.getParams = function()
             -- will be replaced at postRunFn
             defaultIndex = 0
         },
-        -- {
-        --     key = 'lolloBusStop_model',
-        --     name = _('modelName'),
-        --     -- will be replaced at postRunFn
-        --     values = {
-        --         'dummy1',
-        --         'dummy2'
-        --     },
-        --     -- will be replaced at postRunFn
-        --     uiType = 'BUTTON',
-        --     -- will be replaced at postRunFn
-        --     defaultIndex = 0
-        -- },
+        {
+            key = 'lolloBusStop_model',
+            name = _('modelName'),
+            -- will be replaced at postRunFn
+            values = {
+                'dummy1',
+                'dummy2'
+            },
+            -- will be replaced at postRunFn
+            uiType = 'BUTTON',
+            -- will be replaced at postRunFn
+            defaultIndex = 0
+        },
         {
             key = 'lolloBusStop_bothSides',
             name = _('bothSidesName'),

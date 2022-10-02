@@ -1,7 +1,4 @@
-local arrayUtils = require('lollo_bus_stop.arrayUtils')
-local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local logger = require('lollo_bus_stop.logger')
-local transfUtils = require('lollo_bus_stop.transfUtils')
 
 
 local _eventId = '__lolloStreetsidePassengerStopsEvent__'

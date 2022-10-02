@@ -1,0 +1,61 @@
+local mdlHelpers = require('lollo_streetside_passenger_stops.mdlHelpers')
+
+function data()
+	local _cargoNodeZ = -4 -- 0.3
+	local _vehicleNodeZ = 0.1
+
+	return {
+        boundingInfo = mdlHelpers.getVoidBoundingInfo(),
+        collider = mdlHelpers.getVoidCollider(),
+		lods = {
+			{
+				node = {
+					name = "RootNode",
+					transf = { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1, },
+				},
+				static = false,
+				visibleFrom = 0,
+				visibleTo = 1000,
+			},
+		},
+		metadata = {
+			transportNetworkProvider = {
+				laneLists = {
+					-- in the middle of the road
+					{
+						linkable = false,
+						nodes = {
+							{{ -5, 0, 0 }, { 5, 0, 0, }, 3}, -- edge 0 -- node 0
+							{{ 0, 0, _vehicleNodeZ }, { 5, 0, 0, }, 3}, -- node 1
+
+							{{ 0, 0, _vehicleNodeZ }, { 5, 0, 0 }, 3}, -- edge 1 -- node 2
+							{{ 5, 0, 0 }, { 5, 0, 0 }, 3}, -- node 3
+						},
+						speedLimit = 30,
+						transportModes = { 'BUS', 'ELECTRIC_TRAM', 'TRAM', 'TRUCK' },
+					},
+					-- anywhere out of the way, we only need it to avoid crashes
+					{
+						linkable = false,
+						nodes = {
+							{{ -7, 4, _cargoNodeZ, },{ 0.2, 0, 0, }, 3}, -- edge 2
+							{{ -6.8, 4, _cargoNodeZ, },{ 0.2, 0, 0, }, 3},
+						},
+						speedLimit = 30,
+						transportModes = { 'CARGO' },
+					},
+				},
+				runways = { },
+				terminals = {
+					{
+						-- order = 999,
+						personEdges = { 2 },
+						personNodes = { 5 },
+						vehicleNode = 2,
+					},
+				},
+			},
+		},
+		version = 1,
+	}
+end

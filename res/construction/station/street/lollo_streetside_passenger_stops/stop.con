@@ -1,0 +1,193 @@
+local logger = require('lollo_streetside_passenger_stops.logger')
+-- local moduleHelpers = require('lollo_streetside_passenger_stops.moduleHelpers')
+
+function data()
+	-- logger.print('old con, params are set =')
+	-- logger.debugPrint(moduleHelpers.getParams())
+	return {
+		type = 'STREET_STATION',
+		description = {
+			name = _('BUS_STOP_NAME'),
+			description = _('BUS_STOP_DESC'),
+		},
+		availability = {
+			yearFrom = 1925, -- same year as modern streets
+			yearTo = 0, -- -1, -- 0
+		},
+		order = 5005,
+		-- soundConfig = {
+		-- 	soundSet = { name = 'lollo_lorry_bay' }
+		-- },
+		autoRemovable = false,
+		-- snapping = { -- useless
+		-- 	rail = true,
+		-- 	road = true,
+		-- 	water = false
+		-- },
+		skipCollision = true, -- we need this to change the street type when reconfiguring
+        params = { }, -- keep it empty or it will crash coz it won't find the params, which I pass when building the construction
+		updateFn = function(params, two)
+            local _streetFileName = 'standard/town_medium_new.lua'
+            local _tramTrackType = 'ELECTRIC'
+            local result = {
+                colliders = {},
+                cost = 1000,
+                edgeLists = {
+                    {
+                        type = 'STREET',
+                        params = {
+                            hasBus = true, -- UG TODO broken
+                            type = _streetFileName,
+                            tramTrackType = _tramTrackType
+                        },
+                        edges = {
+                            -- one entry refers to a position and a tangent
+                            { { -15, 0, 0 },  { 10, 0, 0 } },  -- node 0
+                            { { -5, 0, 0 },  { 10, 0, 0 } },  -- node 1
+                            { { -5, 0, 0 },  { 10, 0, 0 } },  -- node 2
+                            { { 5, 0, 0 },  { 10, 0, 0 } },  -- node 3
+                            { { 5, 0, 0 },  { 10, 0, 0 } },  -- node 4
+                            { { 15, 0, 0 },  { 10, 0, 0 } },  -- node 5
+                        },
+                        -- freeNodes = { 0, 3 },
+                        snapNodes = { 0, },
+                        -- tag2Nodes = {},
+                    },
+                },
+                edgeObjects = {
+                    {
+                        edge = 1,                                              -- attach object to edge index base 0
+                        param = 0.5,                                            -- param along the edge
+                        left = false,
+                        -- model = 'station/air/asset/radar.mdl',
+                        -- model = 'station/air/asset/signal_runway_old.mdl',
+                        model = 'station/bus/small_new.mdl',
+                    }
+                },
+				-- groundFaces = {},
+				labelText = {},
+				models = {
+                    {
+						id = 'lollo_streetside_passenger_stops/vehicle_edge.mdl',
+						-- tag = 'stationTag',
+                        transf = {1, 0, 0, 0,
+                            0, 1, 0, 0,
+                            0, 0, 1, 0,
+                            0, 0, 0, 1},
+					},
+					{
+						id = 'lollo_streetside_passenger_stops/icon/blue.mdl',
+						-- tag = 'stationTag',
+                        transf = {1, 0, 0, 0,
+                            0, 1, 0, 0,
+                            0, 0, 1, 0,
+                            0, 0, 0, 1},
+					},
+                },
+                stations = {},
+				terminalGroups = {},
+				terrainAlignmentLists = { { -- LOLLO NOTE this thing with the empty faces is required , otherwise the game will make its own alignments, with spikes and all on bridges or tunnels.
+					type = 'EQUAL',
+					optional = true,
+					faces =  { }
+				} },
+            }
+
+            -- join terminals together
+			local terminateConstructionHook = function()
+				-- this fires after the user has added a module
+				logger.print('starting terminateConstructionHook') logger.print('result.models =') logger.debugPrint(result.models)
+                local _extraCargoCapacity = 100
+				result.stations = {
+					{
+						pool = { moreCapacity = _extraCargoCapacity },
+						tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
+						terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+					}
+				}
+                table.insert(
+                    result.terminalGroups,
+                    {
+                        tag = 0,
+                        terminals = {
+                            { 0, 0 }
+                        },
+                        -- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
+                    }
+                )
+
+				-- avoid dump when configuring
+				if #(result.stations[1].terminals) == 0 then
+					table.insert(result.stations[1].terminals, 0)
+				end
+
+				-- it should output something like (this example has one terminal made of two adjacent bits)
+				-- stock result.stations =
+				-- 	{
+				-- 		{
+				-- 			tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
+				-- 			terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+				-- 		}
+				-- 	}
+				-- stock result.terminalGroups =
+				-- {
+				-- 	{
+				-- 		tag = -1, -- possibly useless, try to keep the m all different tho
+				-- 		terminals = {
+				-- 			{ 22, 0 }, -- 22 is the position of a model with a terminal, in base 0
+				-- 			{ 25, 0 }, -- 0 is always 0 in the stock station, it is something like a terminal number
+				-- 		}
+				-- 	}
+				-- }
+
+				logger.print('leaving terminateConstructionHook')
+				logger.print('result.models = ') logger.debugPrint(result.models)
+				logger.print('result.stations = ') logger.debugPrint(result.stations)
+				logger.print('result.terminalGroups = ') logger.debugPrint(result.terminalGroups)
+			end
+            terminateConstructionHook()
+
+            logger.print('result = ') logger.debugPrint(result)
+			return result
+		end,
+--[[ 		preProcessFn = function(modules, change, three)
+			-- this fires when the user adds or removes a module
+			-- print('LOLLO preProcessFn')
+			-- print('modules =')
+			-- debugPrint(modules)
+			-- print('change =')
+			-- debugPrint(change)
+			-- default behaviour
+			if change.added then
+				modules[change.slotId] = change.module
+			else
+				modules[change.slotId] = nil
+			end
+			-- airport behaviour
+			-- if change.added then
+			-- 	if change.slotId == landingSlotId + 1 then
+			-- 		modules[landingSlotId + 0] = nil
+			-- 	elseif change.slotId == landingSlotId + 0 then
+			-- 		modules[landingSlotId + 1] = nil
+			-- 	elseif change.slotId == landingSlotId + 2 then
+			-- 		modules[landingSlotId + 3] = nil
+			-- 	elseif change.slotId == landingSlotId + 3 then
+			-- 		modules[landingSlotId + 2] = nil
+			-- 	end
+			-- 	modules[change.slotId] = change.module
+			-- else
+			-- 	modules[change.slotId] = nil
+			-- end
+			return modules
+        end,
+]]
+--[[
+		-- this can be overwritten by the .script file, it is useless anyway
+		upgradeFn = function(one, two) -- this is overwritten by the .script file
+			logger.print('upgradeFn starting, one =') logger.debugPrint(one)
+			logger.print('two =') logger.debugPrint(two)
+			return {}
+        end,
+]]
+	}
+end

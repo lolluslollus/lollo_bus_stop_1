@@ -8,8 +8,8 @@ function data()
 	return {
 		type = 'STREET_STATION',
 		description = {
-			name = _('BUS_STOP_NAME'),
-			description = _('BUS_STOP_DESC'),
+			name = _('busStopName'),
+			description = _('busStopDesc'),
 		},
 		availability = {
 			yearFrom = -1,

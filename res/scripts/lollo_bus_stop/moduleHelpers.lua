@@ -74,7 +74,6 @@ helpers.getParams = function()
         {
             key = 'lolloBusStop_direction',
             name = _('directionName'),
-            tooltip = _('directionDesc'),
             values = {
                 _('↑'),
                 _('↓')
@@ -83,7 +82,6 @@ helpers.getParams = function()
         {
             key = 'lolloBusStop_driveOnLeft',
             name = _('driveOnLeftName'),
-            tooltip = _('driveOnLeftDesc'),
             values = {
                 _('No'),
                 _('Yes'),
@@ -103,7 +101,7 @@ helpers.getParams = function()
         },
         {
             key = 'lolloBusStop_tramTrack',
-            name = _('Tram track'),
+            name = _('tramTrackName'),
             values = {
                 -- must be in this sequence
                 _('NO'),
@@ -113,7 +111,7 @@ helpers.getParams = function()
         },
         {
             key = 'lolloBusStop_pitch',
-            name = _('Pitch (adjust it with O and P while building)'),
+            name = _('pitchName'),
             values = pitchHelpers.getPitchParamValues(),
             defaultIndex = pitchHelpers.getDefaultPitchParamValue(),
             uiType = 'SLIDER'
@@ -169,12 +167,14 @@ helpers.updateParamValues_model = function(params, modelData)
             param.values = arrayUtils.map(
                 modelData,
                 function(model)
-                    return model.name
+                    -- return model.name
+                    return model.icon
                 end
             )
             logger.print('param.values =') logger.debugPrint(param.values)
             -- param.defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allModelData)
-            param.uiType = 2 -- 'COMBOBOX'
+            -- param.uiType = 2 -- 'COMBOBOX'
+            param.uiType = 3 -- 'ICON_BUTTON'
             -- print('lolloBusStop_streetType_ param =')
             -- debugPrint(param)
         end

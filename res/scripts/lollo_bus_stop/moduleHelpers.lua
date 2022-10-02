@@ -1,4 +1,5 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
+local logger = require('lollo_bus_stop.logger')
 local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 
 local helpers = {}
@@ -33,7 +34,7 @@ helpers.getTerrainAlignmentList = function(face)
     }
 end
 
-helpers.getParams = function(allStreetData, defaultStreetTypeIndex)
+helpers.getParams = function()
     return {
         {
             key = 'lolloBusStop_streetType_',
@@ -48,6 +49,19 @@ helpers.getParams = function(allStreetData, defaultStreetTypeIndex)
             -- will be replaced at postRunFn
             defaultIndex = 0
         },
+        -- {
+        --     key = 'lolloBusStop_model',
+        --     name = _('modelName'),
+        --     -- will be replaced at postRunFn
+        --     values = {
+        --         'dummy1',
+        --         'dummy2'
+        --     },
+        --     -- will be replaced at postRunFn
+        --     uiType = 'BUTTON',
+        --     -- will be replaced at postRunFn
+        --     defaultIndex = 0
+        -- },
         {
             key = 'lolloBusStop_bothSides',
             name = _('bothSidesName'),
@@ -142,6 +156,24 @@ helpers.updateParamValues_streetType_ = function(params, allStreetData)
                 end
             )
             param.defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allStreetData)
+            param.uiType = 2 -- 'COMBOBOX'
+            -- print('lolloBusStop_streetType_ param =')
+            -- debugPrint(param)
+        end
+    end
+end
+
+helpers.updateParamValues_model = function(params, modelData)
+    for _, param in pairs(params) do
+        if param.key == 'lolloBusStop_model' then
+            param.values = arrayUtils.map(
+                modelData,
+                function(model)
+                    return model.name
+                end
+            )
+            logger.print('param.values =') logger.debugPrint(param.values)
+            -- param.defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allModelData)
             param.uiType = 2 -- 'COMBOBOX'
             -- print('lolloBusStop_streetType_ param =')
             -- debugPrint(param)

@@ -38,6 +38,13 @@ function data()
 					logger.print('params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
 					logger.print('moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
 				end
+				logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
+				-- if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
+				-- 	params.lolloBusStop_model = 0
+				-- 	logger.print('params.lolloBusStop_model set to') debugPrint(params.lolloBusStop_model)
+				-- else
+				-- 	logger.print('params.lolloBusStop_model =', params.lolloBusStop_model)
+				-- end
 			end
 			_initParams()
 
@@ -119,7 +126,7 @@ function data()
                 --     }
                 -- },
 				-- groundFaces = {},
-				labelText = {},
+				-- labelText = {},
 				models = {
 					{
 						id = 'lollo_bus_stop/icon/blue.mdl',
@@ -275,13 +282,11 @@ function data()
 			return modules
         end,
 ]]
---[[
  		-- useless
 		upgradeFn = function(one, two) -- this is overwritten by the .script file
 			logger.print('upgradeFn starting, one =') logger.debugPrint(one)
 			logger.print('two =') logger.debugPrint(two)
 			return {}
         end,
-]]
 	}
 end

@@ -12,8 +12,8 @@ function data()
 			description = _('BUS_STOP_DESC'),
 		},
 		availability = {
-			yearFrom = 1925, -- same year as modern streets
-			yearTo = 0, -- -1, -- 0
+			yearFrom = -1,
+			yearTo = -1,
 		},
 		order = 5005,
 		-- soundConfig = {

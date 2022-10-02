@@ -46,9 +46,12 @@ function data()
 			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
 			logger.print('_selectedStreetData =') logger.debugPrint(_selectedStreetData)
-			local _vehicleEdgeYOffset = -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
+			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
+				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
+				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
 			local _streetFileName = _selectedStreetData.fileName
             local _tramTrackType = _getTramTrackType()
+			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 and not(_selectedStreetData.isOneWay)
             local result = {
                 colliders = {},
                 cost = 1000,
@@ -118,21 +121,6 @@ function data()
 				-- groundFaces = {},
 				labelText = {},
 				models = {
-                    {
-						id = 'lollo_bus_stop/vehicle_edge_left.mdl',
-						-- tag = 'stationTag',
-                        transf = params.lolloBusStop_direction == 0
-							and transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1})
-							-- {1, 0, 0, 0,
-							-- 	0, 1, 0, 0,
-							-- 	0, 0, 1, 0,
-							-- 	0, -_vehicleEdgeYOffset, 0, 1}
-							or transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1})
-							-- {-1, 0, 0, 0,
-							-- 	0, -1, 0, 0,
-							-- 	0, 0, 1, 0,
-							-- 	0, _vehicleEdgeYOffset, 0, 1},
-					},
 					{
 						id = 'lollo_bus_stop/icon/blue.mdl',
 						-- tag = 'stationTag',
@@ -151,28 +139,74 @@ function data()
 				} },
             }
 
+			local transfLeft = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1})
+			local transfRight = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1})
+			result.models[#result.models+1] = {
+				id = 'lollo_bus_stop/vehicle_edge_left.mdl',
+				-- tag = 'stationTag',
+				transf = params.lolloBusStop_direction == 0
+					and transfLeft
+					or transfRight
+			}
+			if _isBothSides then
+				result.models[#result.models+1] = {
+					id = 'lollo_bus_stop/vehicle_edge_left.mdl',
+					-- tag = 'stationTag',
+					transf = params.lolloBusStop_direction == 0
+						and transfRight
+						or transfLeft
+				}
+			end
+
             -- join terminals together
 			local terminateConstructionHook = function()
 				-- this fires after the user has added a module
 				-- logger.print('starting terminateConstructionHook')
                 local _extraCargoCapacity = 100
-				result.stations = {
-					{
-						pool = { moreCapacity = _extraCargoCapacity },
-						tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
-						terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+
+				if _isBothSides then
+					result.stations = {
+						{
+							pool = { moreCapacity = _extraCargoCapacity * 2 },
+							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
+							terminals = { 0, 1 } -- 0 is the position of the linked terminal group, in base 0
+						}
 					}
-				}
-                table.insert(
-                    result.terminalGroups,
-                    {
-                        tag = 0,
-                        terminals = {
-                            { 0, 0 }
-                        },
-                        -- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
-                    }
-                )
+					result.terminalGroups = {
+						{
+							tag = 0,
+							terminals = {
+								{ 1, 0 },
+							},
+							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
+						},
+						{
+							tag = 1,
+							terminals = {
+								{ 2, 0 },
+							},
+							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
+						},
+					}
+				else
+					result.stations = {
+						{
+							pool = { moreCapacity = _extraCargoCapacity },
+							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
+							terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+						}
+					}
+					table.insert(
+						result.terminalGroups,
+						{
+							tag = 0,
+							terminals = {
+								{ 1, 0 }
+							},
+							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
+						}
+					)
+				end
 
 				-- avoid dump when configuring
 				if #(result.stations[1].terminals) == 0 then
@@ -190,7 +224,7 @@ function data()
 				-- stock result.terminalGroups =
 				-- {
 				-- 	{
-				-- 		tag = -1, -- possibly useless, try to keep the m all different tho
+				-- 		tag = -1, -- possibly useless, try to keep them all different tho
 				-- 		terminals = {
 				-- 			{ 22, 0 }, -- 22 is the position of a model with a terminal, in base 0
 				-- 			{ 25, 0 }, -- 0 is always 0 in the stock station, it is something like a terminal number

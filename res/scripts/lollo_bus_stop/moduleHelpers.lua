@@ -49,6 +49,15 @@ helpers.getParams = function(allStreetData, defaultStreetTypeIndex)
             defaultIndex = 0
         },
         {
+            key = 'lolloBusStop_bothSides',
+            name = _('bothSidesName'),
+            tooltip = _('bothSidesDesc'),
+            values = {
+                _('No'),
+                _('Yes'),
+            },
+        },
+        {
             key = 'lolloBusStop_direction',
             name = _('directionName'),
             tooltip = _('directionDesc'),
@@ -58,9 +67,9 @@ helpers.getParams = function(allStreetData, defaultStreetTypeIndex)
             },
         },
         {
-            key = 'lolloBusStop_bothSides',
-            name = _('bothSidesName'),
-            tooltip = _('bothSidesDesc'),
+            key = 'lolloBusStop_driveOnLeft',
+            name = _('driveOnLeftName'),
+            tooltip = _('driveOnLeftDesc'),
             values = {
                 _('No'),
                 _('Yes'),

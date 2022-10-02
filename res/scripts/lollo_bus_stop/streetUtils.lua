@@ -402,6 +402,7 @@ local function _getStreetTypesWithApi()
             fileName = fileName,
             icon = streetProperties.icon,
             isAllTramTracks = helper.isStreetAllTramTracks(streetProperties.laneConfigs),
+            isOneWay = helper.isStreetOneWay(streetProperties.laneConfigs),
             laneCount = #(streetProperties.laneConfigs),
             name = streetProperties.name,
             rightLaneWidth = (streetProperties.laneConfigs[2] or {}).width or 0,

@@ -16,10 +16,6 @@ local _guiConstants = {
     _ploppablePassengersModelId = false,
 }
 
-local function _myErrorHandler(err)
-    print('lollo lorry station ERROR: ', err)
-end
-
 
 function data()
     return {

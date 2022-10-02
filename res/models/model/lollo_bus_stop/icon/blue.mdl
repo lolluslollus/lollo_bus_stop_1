@@ -1,4 +1,4 @@
-local mdlHelpers = require('lollo_streetside_passenger_stops.mdlHelpers')
+local mdlHelpers = require('lollo_bus_stop.mdlHelpers')
 
 function data()
     return {
@@ -9,9 +9,9 @@ function data()
                 node = {
                     children = {
                         {
-                            materials = {'lollo_streetside_passenger_stops/icon/blue.mtl'},
+                            materials = {'lollo_bus_stop/icon/blue.mtl'},
                             -- mesh = 'asset/icon/lod_0_icon_exclamation_mark.msh',
-                            mesh = 'lollo_streetside_passenger_stops/icon/lod_0_icon_pointer.msh',
+                            mesh = 'lollo_bus_stop/icon/lod_0_icon_pointer.msh',
                             transf = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
                         },
                     },

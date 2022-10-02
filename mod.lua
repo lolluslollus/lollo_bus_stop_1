@@ -1,4 +1,7 @@
 function data()
+    local logger = require('lollo_bus_stop.logger')
+    local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
+    local streetUtils = require('lollo_bus_stop.streetUtils')
     local _extraCapacity = 160.0
     return {
         info = {
@@ -31,11 +34,33 @@ function data()
                         data.metadata.streetTerminal.pool = {
                             moreCapacity = _extraCapacity,
                         }
-                        print('extra capacity added to station ' .. fileName)
+                        logger.print('extra capacity added to station ' .. fileName) -- this has no effect, otherwise the rest would be useless
                     end
                     return data
                 end
             )
+        end,
+
+        -- Unlike runFn, postRunFn runs after all resources have been loaded.
+        -- It is the only place where we can define a dynamic construction,
+        -- which is the only way we can define dynamic parameters.
+        -- Here, the dynamic parameters are the street types.
+        postRunFn = function(settings, modParams)
+            local allStreetData = streetUtils.getGlobalStreetData()
+
+            local staticCon = api.res.constructionRep.get(
+                api.res.constructionRep.find(
+                    'station/street/lollo_bus_stop/stop.con'
+                )
+            )
+            -- UG TODO it would be nice to alter the soundSet here, but there is no suitable type
+            staticCon.updateScript.fileName = 'construction/station/street/lollo_bus_stop/stop.updateFn'
+            staticCon.updateScript.params = {
+                globalStreetData = allStreetData
+            }
+            -- this is useless
+            -- staticCon.upgradeScript.fileName = 'construction/station/street/lollo_bus_stop/stop.upgradeFn'
+            moduleHelpers.updateParamValues_streetType_(staticCon.params, allStreetData)
         end,
     }
 end

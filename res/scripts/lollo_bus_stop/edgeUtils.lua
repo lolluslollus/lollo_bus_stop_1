@@ -1,7 +1,7 @@
-local arrayUtils = require('lollo_streetside_passenger_stops.arrayUtils')
-local matrixUtils = require('lollo_streetside_passenger_stops.matrix')
-local quadrangleUtils = require('lollo_streetside_passenger_stops.quadrangleUtils')
-local transfUtils = require('lollo_streetside_passenger_stops.transfUtils')
+local arrayUtils = require('lollo_bus_stop.arrayUtils')
+local matrixUtils = require('lollo_bus_stop.matrix')
+local quadrangleUtils = require('lollo_bus_stop.quadrangleUtils')
+local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
 
 

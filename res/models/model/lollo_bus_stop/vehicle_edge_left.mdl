@@ -1,9 +1,7 @@
-local mdlHelpers = require('lollo_streetside_passenger_stops.mdlHelpers')
+local constants = require('lollo_bus_stop.constants')
+local mdlHelpers = require('lollo_bus_stop.mdlHelpers')
 
 function data()
-	local _cargoNodeZ = -4 -- 0.3
-	local _vehicleNodeZ = 0.1
-
 	return {
         boundingInfo = mdlHelpers.getVoidBoundingInfo(),
         collider = mdlHelpers.getVoidCollider(),
@@ -25,11 +23,11 @@ function data()
 					{
 						linkable = false,
 						nodes = {
-							{{ -5, 0, 0 }, { 5, 0, 0, }, 3}, -- edge 0 -- node 0
-							{{ 0, 0, _vehicleNodeZ }, { 5, 0, 0, }, 3}, -- node 1
+							{{ -constants.halfEdgeLength, 0, 0 }, { constants.halfEdgeLength, 0, constants.vehicleNodeZ, }, 3}, -- edge 0 -- node 0
+							{{ 0, 0, constants.vehicleNodeZ }, { constants.halfEdgeLength, 0, constants.vehicleNodeZ, }, 3}, -- node 1
 
-							{{ 0, 0, _vehicleNodeZ }, { 5, 0, 0 }, 3}, -- edge 1 -- node 2
-							{{ 5, 0, 0 }, { 5, 0, 0 }, 3}, -- node 3
+							{{ 0, 0, constants.vehicleNodeZ }, { constants.halfEdgeLength, 0, -constants.vehicleNodeZ }, 3}, -- edge 1 -- node 2
+							{{ constants.halfEdgeLength, 0, 0 }, { constants.halfEdgeLength, 0, -constants.vehicleNodeZ }, 3}, -- node 3
 						},
 						speedLimit = 30,
 						transportModes = { 'BUS', 'ELECTRIC_TRAM', 'TRAM', 'TRUCK' },
@@ -38,11 +36,12 @@ function data()
 					{
 						linkable = false,
 						nodes = {
-							{{ -7, 4, _cargoNodeZ, },{ 0.2, 0, 0, }, 3}, -- edge 2
-							{{ -6.8, 4, _cargoNodeZ, },{ 0.2, 0, 0, }, 3},
+							{{ -0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3}, -- edge 2
+							{{ 0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3},
 						},
 						speedLimit = 30,
-						transportModes = { 'CARGO' },
+						-- transportModes = { 'CARGO', 'PERSON' },
+						transportModes = { 'PERSON' },
 					},
 				},
 				runways = { },

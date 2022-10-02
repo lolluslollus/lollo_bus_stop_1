@@ -1,0 +1,253 @@
+local constants = require('lollo_bus_stop.constants')
+local logger = require('lollo_bus_stop.logger')
+local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
+local pitchHelpers = require('lollo_bus_stop.pitchHelper')
+local transfUtilsUG = require('transf')
+
+function data()
+	return {
+		updateFn = function(params, two)
+			local getSnapNodes = function()
+				if params.lolloBusStop_direction == 0 then
+					if params.lolloBusStop_snapNodes == 0 then return {}
+					elseif params.lolloBusStop_snapNodes == 1 then return { 0, }
+					elseif params.lolloBusStop_snapNodes == 2 then return { 5, }
+					elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
+					end
+				else
+					if params.lolloBusStop_snapNodes == 0 then return {}
+					elseif params.lolloBusStop_snapNodes == 1 then return { 5, }
+					elseif params.lolloBusStop_snapNodes == 2 then return { 0, }
+					elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
+					end
+				end
+				return {}
+			end
+			local function _getTramTrackType()
+				return params.lolloBusStop_tramTrack == 0 and 'NO' or params.lolloBusStop_tramTrack == 1 and 'YES' or 'ELECTRIC'
+			end
+			local function _initParams()
+				if params.lolloBusStop_snapNodes ~= 0 and params.lolloBusStop_snapNodes ~= 1 and params.lolloBusStop_snapNodes ~= 2 and params.lolloBusStop_snapNodes ~= 3 then
+					params.lolloBusStop_snapNodes = 3
+				end
+				if params.lolloBusStop_direction ~= 0 and params.lolloBusStop_direction ~= 1 then params.lolloBusStop_direction = 1 end
+				if not(params.lolloBusStop_streetType_) or not(two.globalStreetData[params.lolloBusStop_streetType_ + 1]) then
+					params.lolloBusStop_streetType_ = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
+					logger.print('params.lolloBusStop_streetType_ set to') debugPrint(params.lolloBusStop_streetType_)
+				else
+					logger.print('params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
+					logger.print('moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
+				end
+			end
+			_initParams()
+
+			local _pitchAngle = pitchHelpers.getPitchAngle(params)
+			logger.print('_pitchAngle =') logger.debugPrint(_pitchAngle)
+			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
+			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
+			logger.print('_selectedStreetData =') logger.debugPrint(_selectedStreetData)
+			local _vehicleEdgeYOffset = -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
+			local _streetFileName = _selectedStreetData.fileName
+            local _tramTrackType = _getTramTrackType()
+            local result = {
+                colliders = {},
+                cost = 1000,
+                edgeLists = {
+                    {
+                        type = 'STREET',
+                        params = {
+                            hasBus = true, -- UG TODO broken
+                            type = _streetFileName,
+                            tramTrackType = _tramTrackType
+                        },
+                        edges = params.lolloBusStop_direction == 0
+						and {
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeX, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeX, 0, 0 }
+							},  -- node 0
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeX, 0, 0 }
+							},  -- node 1
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength * 2, 0, 0 }
+							},  -- node 2
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength * 2, 0, 0 }
+							},  -- node 3
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.outerEdgeX -constants.halfEdgeLength, 0, 0 }
+							},  -- node 4
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeX, 0, 0 }),  { constants.outerEdgeX -constants.halfEdgeLength, 0, 0 }
+							},  -- node 5
+                        } or {
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeX, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+							},  -- node 0
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+							},  -- node 1
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength * 2, 0, 0 }
+							},  -- node 2
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength * 2, 0, 0 }
+							},  -- node 3
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+							},  -- node 4
+                            {
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeX, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+							},  -- node 5
+                        },
+						freeNodes = getSnapNodes(), -- LOLLO TODO test this, the alternative is no free nodes
+						snapNodes = getSnapNodes(),
+                        -- tag2Nodes = {},
+                    },
+                },
+                -- edgeObjects = {
+                --     {
+                --         edge = 1,                                              -- attach object to edge index base 0
+                --         param = 0.5,                                            -- param along the edge
+                --         left = false,
+                --         -- model = 'station/air/asset/radar.mdl',
+                --         -- model = 'station/air/asset/signal_runway_old.mdl',
+                --         model = 'station/bus/small_new.mdl',
+                --     }
+                -- },
+				-- groundFaces = {},
+				labelText = {},
+				models = {
+                    {
+						id = 'lollo_bus_stop/vehicle_edge_left.mdl',
+						-- tag = 'stationTag',
+                        transf = params.lolloBusStop_direction == 0
+							and transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1})
+							-- {1, 0, 0, 0,
+							-- 	0, 1, 0, 0,
+							-- 	0, 0, 1, 0,
+							-- 	0, -_vehicleEdgeYOffset, 0, 1}
+							or transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1})
+							-- {-1, 0, 0, 0,
+							-- 	0, -1, 0, 0,
+							-- 	0, 0, 1, 0,
+							-- 	0, _vehicleEdgeYOffset, 0, 1},
+					},
+					{
+						id = 'lollo_bus_stop/icon/blue.mdl',
+						-- tag = 'stationTag',
+                        transf = {1, 0, 0, 0,
+                            0, 1, 0, 0,
+                            0, 0, 1, 0,
+                            0, 0, 0, 1},
+					},
+                },
+                stations = {},
+				terminalGroups = {},
+				terrainAlignmentLists = { { -- LOLLO NOTE this thing with the empty faces is required , otherwise the game will make its own alignments, with spikes and all on bridges or tunnels.
+					type = 'EQUAL',
+					optional = true,
+					faces =  { }
+				} },
+            }
+
+            -- join terminals together
+			local terminateConstructionHook = function()
+				-- this fires after the user has added a module
+				-- logger.print('starting terminateConstructionHook')
+                local _extraCargoCapacity = 100
+				result.stations = {
+					{
+						pool = { moreCapacity = _extraCargoCapacity },
+						tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
+						terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+					}
+				}
+                table.insert(
+                    result.terminalGroups,
+                    {
+                        tag = 0,
+                        terminals = {
+                            { 0, 0 }
+                        },
+                        -- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
+                    }
+                )
+
+				-- avoid dump when configuring
+				if #(result.stations[1].terminals) == 0 then
+					table.insert(result.stations[1].terminals, 0)
+				end
+
+				-- it should output something like (this example has one terminal made of two adjacent bits)
+				-- stock result.stations =
+				-- 	{
+				-- 		{
+				-- 			tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
+				-- 			terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+				-- 		}
+				-- 	}
+				-- stock result.terminalGroups =
+				-- {
+				-- 	{
+				-- 		tag = -1, -- possibly useless, try to keep the m all different tho
+				-- 		terminals = {
+				-- 			{ 22, 0 }, -- 22 is the position of a model with a terminal, in base 0
+				-- 			{ 25, 0 }, -- 0 is always 0 in the stock station, it is something like a terminal number
+				-- 		}
+				-- 	}
+				-- }
+
+				-- logger.print('leaving terminateConstructionHook')
+				-- logger.print('result.models = ') logger.debugPrint(result.models)
+				-- logger.print('result.stations = ') logger.debugPrint(result.stations)
+				-- logger.print('result.terminalGroups = ') logger.debugPrint(result.terminalGroups)
+			end
+            terminateConstructionHook()
+
+            -- logger.print('result = ') logger.debugPrint(result)
+			return result
+		end,
+--[[  	
+		-- useless	
+		preProcessFn = function(modules, change, three)
+			-- this fires when the user adds or removes a module
+			logger.print('preProcessFn starting')
+			-- print('modules =')
+			-- debugPrint(modules)
+			-- print('change =')
+			-- debugPrint(change)
+			-- default behaviour
+			if change.added then
+				modules[change.slotId] = change.module
+			else
+				modules[change.slotId] = nil
+			end
+			-- airport behaviour
+			-- if change.added then
+			-- 	if change.slotId == landingSlotId + 1 then
+			-- 		modules[landingSlotId + 0] = nil
+			-- 	elseif change.slotId == landingSlotId + 0 then
+			-- 		modules[landingSlotId + 1] = nil
+			-- 	elseif change.slotId == landingSlotId + 2 then
+			-- 		modules[landingSlotId + 3] = nil
+			-- 	elseif change.slotId == landingSlotId + 3 then
+			-- 		modules[landingSlotId + 2] = nil
+			-- 	end
+			-- 	modules[change.slotId] = change.module
+			-- else
+			-- 	modules[change.slotId] = nil
+			-- end
+			return modules
+        end,
+]]
+--[[
+ 		-- useless
+		upgradeFn = function(one, two) -- this is overwritten by the .script file
+			logger.print('upgradeFn starting, one =') logger.debugPrint(one)
+			logger.print('two =') logger.debugPrint(two)
+			return {}
+        end,
+]]
+	}
+end

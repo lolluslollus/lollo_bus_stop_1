@@ -6,15 +6,15 @@ local _isTimersActive = false
 return {
     print = function(...)
         if not(_isExtendedLogActive) then return end
-        print('lollo_streetside_passenger_stops INFO: ', ...)
+        print('lollo_bus_stop INFO: ', ...)
     end,
     warn = function(label, ...)
         if not(_isWarningLogActive) then return end
-        print('lollo_streetside_passenger_stops WARNING: ' .. label, ...)
+        print('lollo_bus_stop WARNING: ' .. label, ...)
     end,
     err = function(label, ...)
         if not(_isErrorLogActive) then return end
-        print('lollo_streetside_passenger_stops ERROR: ' .. label, ...)
+        print('lollo_bus_stop ERROR: ' .. label, ...)
     end,
     debugPrint = function(whatever)
         if not(_isExtendedLogActive) then return end
@@ -45,14 +45,14 @@ return {
     end,
     xpHandler = function(error)
         if not(_isExtendedLogActive) then return end
-        print('lollo_streetside_passenger_stops INFO:') debugPrint(error)
+        print('lollo_bus_stop INFO:') debugPrint(error)
     end,
     xpWarningHandler = function(error)
         if not(_isWarningLogActive) then return end
-        print('lollo_streetside_passenger_stops WARNING:') debugPrint(error)
+        print('lollo_bus_stop WARNING:') debugPrint(error)
     end,
     xpErrorHandler = function(error)
         if not(_isErrorLogActive) then return end
-        print('lollo_streetside_passenger_stops ERROR:') debugPrint(error)
+        print('lollo_bus_stop ERROR:') debugPrint(error)
     end,
 }

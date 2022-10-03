@@ -4,6 +4,9 @@ local _isErrorLogActive = true
 local _isTimersActive = false
 
 return {
+    getIsExtendedLog = function()
+        return _isExtendedLogActive
+    end,
     print = function(...)
         if not(_isExtendedLogActive) then return end
         print('lollo_bus_stop INFO: ', ...)

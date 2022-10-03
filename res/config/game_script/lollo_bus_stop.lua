@@ -10,8 +10,9 @@ local _eventProperties = {
 --     streetsideBusStopBuilt = { conName = 'station/street/lollo_bus_stop/lollo_lorry_bay_with_edges.con', eventName = 'streetsideBusStopBuilt' },
 --     ploppableModularCargoStationBuilt = { conName = 'station/street/lollo_bus_stop/lollo_lorry_bay_with_edges_ploppable.con', eventName = 'ploppableModularCargoStationBuilt' },
 --     ploppableStreetsideCargoStationBuilt = { conName = nil, eventName = 'ploppableStreetsideCargoStationBuilt' },
+    buildConRequested = { conName = nil, eventName = 'buildConRequested' },
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
-    splitRequested = { conName = nil, eventName = 'splitRequested'},
+    secondSplitRequested = { conName = nil, eventName = 'secondSplitRequested'},
 }
 
 local _guiConstants = {
@@ -542,8 +543,13 @@ function data()
                             function ()
                                 local newlyBuiltNodeId = _utils.getNewlyBuiltNodeId(result)
                                 if edgeUtils.isValidAndExistingId(newlyBuiltNodeId) then
-                                    successEventArgs.node0Id = newlyBuiltNodeId
-                                    successEventArgs.node0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                    if not(successEventArgs.node0Id) then
+                                        successEventArgs.node0Id = newlyBuiltNodeId
+                                        successEventArgs.node0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                    else
+                                        successEventArgs.node1Id = newlyBuiltNodeId
+                                        successEventArgs.node1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                    end
                                     api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                         string.sub(debug.getinfo(1, 'S').source, 1),
                                         _eventId,
@@ -589,8 +595,24 @@ function data()
                             then
                                 return
                             end
-
-                            _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName, {edgeObjectTransf = edgeObjectTransf})
+                            local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+                            -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
+                            local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)
+                            -- logger.print('baseEdgeStreet =') logger.debugPrint(baseEdgeStreet)
+                            local streetType = api.res.streetTypeRep.get(baseEdgeStreet.streetType)
+                            -- logger.print('streetType =') logger.debugPrint(streetType)
+                            local yShift = -(streetType.streetWidth + streetType.sidewalkWidth) / 2
+                            logger.print('baseEdge.objects[1][2] =', baseEdge.objects[1][2])
+                            -- if baseEdge.objects[1][2] == 1 then yShift = -yShift end -- NO!
+                            local edgeObjectTransf_y0 = transfUtils.getTransfYShiftedBy(edgeObjectTransf, yShift)
+                            logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
+                            logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
+                            _actions.replaceEdgeWithSame(
+                                edgeId,
+                                edgeObjectId,
+                                _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName,
+                                { edgeObjectTransf = edgeObjectTransf_y0 }
+                            )
                         end
                     end
                 end,
@@ -631,12 +653,65 @@ function data()
                                 z = transf0[15],
                             }
                         )
-                        logger.print('nodeBetween =') logger.debugPrint(nodeBetween)
-                        _actions.splitEdge(args.edgeId, nodeBetween, _eventProperties.splitRequested.eventName, {transf0 = transf0, transf1 = transf1})
-                    elseif name == _eventProperties.splitRequested then
-                        -- LOLLO TODO now, make the second split
-                        -- LOLLO TODO check this with the starting bus stop at the end of an edge: it might fail
-                        -- LOLLO TODO then, build the construction between
+                        logger.print('first nodeBetween =') logger.debugPrint(nodeBetween)
+                        _actions.splitEdge(args.edgeId, nodeBetween, _eventProperties.secondSplitRequested.eventName, {transf0 = transf0, transf1 = transf1})
+                    elseif name == _eventProperties.secondSplitRequested.eventName then
+                        -- find out which edge needs splitting
+                        logger.print('args.node0EdgeIds') logger.debugPrint(args.node0EdgeIds)
+                        if #args.node0EdgeIds == 0 then
+                            logger.warn('cannot find an edge for the second split')
+                            return
+                        end
+                        local edgeId2BeSplit = nil
+                        local nodeBetween = nil
+                        logger.print('args.transf1[13] =', args.transf1[13])
+                        logger.print('args.transf1[14] =', args.transf1[14])
+                        logger.print('args.transf1[15] =', args.transf1[15])
+                        for _, edgeId in pairs(args.node0EdgeIds) do
+                            local minDistance = 9999.9
+                            local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+                            if baseEdge ~= nil then
+                                local baseNode0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
+                                local baseNode1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
+                                logger.print('baseNode0 =') logger.debugPrint(baseNode0)
+                                logger.print('baseNode1 =') logger.debugPrint(baseNode1)
+                                if baseNode0 ~= nil and baseNode1 ~= nil then
+                                    local testNodeBetween = edgeUtils.getNodeBetweenByPosition(
+                                        edgeId,
+                                        {
+                                            x = args.transf1[13],
+                                            y = args.transf1[14],
+                                            z = args.transf1[15],
+                                        }
+                                        -- logger.getIsExtendedLog()
+                                    )
+                                    logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
+                                    if testNodeBetween ~= nil then
+                                        local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.transf1))
+                                        logger.print('currentDistance =') logger.debugPrint(currentDistance)
+                                        if currentDistance ~= nil and currentDistance < minDistance then
+                                            edgeId2BeSplit = edgeId
+                                            minDistance = currentDistance
+                                            nodeBetween = testNodeBetween
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        if not(edgeId2BeSplit) then
+                            logger.warn('cannot decide on an edge id for the second split')
+                            return
+                        end
+                        if not(nodeBetween) then
+                            logger.warn('cannot find out nodeBetween')
+                            return
+                        end
+
+                        logger.print('final nodeBetween =') logger.debugPrint(nodeBetween)
+                        _actions.splitEdge(edgeId2BeSplit, nodeBetween, _eventProperties.buildConRequested.eventName, args)
+                    elseif name == _eventProperties.buildConRequested.eventName then
+                        -- LOLLO TODO build the construction between args.transf0 and args.transf1
+
                     end
                 end,
                 logger.xpErrorHandler

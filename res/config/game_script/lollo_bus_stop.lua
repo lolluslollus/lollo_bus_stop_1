@@ -21,7 +21,7 @@ local _guiConstants = {
 
 function data()
     local _utils = {
-        getNewlyBuildEdgeId = function(result)
+        getNewlyBuiltEdgeId = function(result)
             -- result.proposal.proposal.addedSegments[1].entity is not always available, UG TODO this api should always return an edgeId
             if edgeUtils.isValidAndExistingId(result.proposal.proposal.addedSegments[1].entity) then
                 return result.proposal.proposal.addedSegments[1].entity
@@ -84,6 +84,33 @@ function data()
 
                 logger.warn('cannot find the new edgeId, giving up')
                 return nil
+            end
+        end,
+        getNewlyBuiltNodeId = function(result)
+            -- result.proposal.proposal.addedSegments[1].entity is not always available, UG TODO this api should always return an edgeId
+            if edgeUtils.isValidAndExistingId(result.proposal.proposal.addedNodes[1].entity) then
+                return result.proposal.proposal.addedNodes[1].entity
+            else
+                local _tolerance = 0.001
+                local positionXYZ = result.proposal.proposal.addedNodes[1].comp.position
+                -- logger.print('positionXYZ =') logger.debugPrint(positionXYZ)
+                -- logger.print('positionXYZ.z =') logger.debugPrint(positionXYZ.z)
+                -- logger.print('type(positionXYZ.z) =') logger.debugPrint(type(positionXYZ.z))
+                -- logger.print('tonumber(positionXYZ.z, 10)') logger.debugPrint(tonumber(positionXYZ.z, 10))
+                -- logger.print('tonumber(positionXYZ.z)') logger.debugPrint(tonumber(positionXYZ.z))
+                local nodeIds = edgeUtils.getNearbyObjectIds(
+                    transfUtils.position2Transf(positionXYZ),
+                    _tolerance,
+                    api.type.ComponentType.BASE_NODE,
+                    tonumber(positionXYZ.z) - _tolerance,
+                    tonumber(positionXYZ.z) + _tolerance
+                )
+                if #nodeIds ~= 1 then
+                    logger.warn('cannot find newly built node')
+                    return nil
+                end
+                logger.print('nodeId found, it is ' .. tostring(nodeIds[1]))
+                return nodeIds[1]
             end
         end,
         getWhichEdgeGetsEdgeObjectAfterSplit = function(edgeObjPosition, node0pos, node1pos, nodeBetween)
@@ -364,7 +391,7 @@ function data()
 
                         xpcall(
                             function ()
-                                local newlyBuiltEdgeId = _utils.getNewlyBuildEdgeId(result)
+                                local newlyBuiltEdgeId = _utils.getNewlyBuiltEdgeId(result)
                                 if edgeUtils.isValidAndExistingId(newlyBuiltEdgeId) then
                                     successEventArgs.edgeId = newlyBuiltEdgeId
                                     api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
@@ -381,7 +408,7 @@ function data()
                 end
             )
         end,
-        splitEdge = function(wholeEdgeId, nodeBetween)
+        splitEdge = function(wholeEdgeId, nodeBetween, successEventName, successEventArgs)
             if not(edgeUtils.isValidAndExistingId(wholeEdgeId)) or type(nodeBetween) ~= 'table' then return end
     
             local oldBaseEdge = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.BASE_EDGE)
@@ -394,7 +421,7 @@ function data()
             if node0 == nil or node1 == nil then return end
     
             if not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)) and not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node1.position)) then
-                print('WARNING: splitEdge cannot find the nodes')
+                logger.warn('splitEdge cannot find the nodes')
             end
             local isNodeBetweenOrientatedLikeMyEdge = edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)
             local distance0 = isNodeBetweenOrientatedLikeMyEdge and nodeBetween.refDistance0 or nodeBetween.refDistance1
@@ -403,9 +430,6 @@ function data()
     
             local oldTan0Length = edgeUtils.getVectorLength(oldBaseEdge.tangent0)
             local oldTan1Length = edgeUtils.getVectorLength(oldBaseEdge.tangent1)
-    
-            local playerOwned = api.type.PlayerOwned.new()
-            playerOwned.player = api.engine.util.getPlayer()
     
             local newNodeBetween = api.type.NodeAndEntity.new()
             newNodeBetween.entity = -3
@@ -428,7 +452,7 @@ function data()
             )
             newEdge0.comp.type = oldBaseEdge.type -- respect bridge or tunnel
             newEdge0.comp.typeIndex = oldBaseEdge.typeIndex -- respect bridge or tunnel type
-            newEdge0.playerOwned = playerOwned
+            newEdge0.playerOwned = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.PLAYER_OWNED)
             newEdge0.streetEdge = oldBaseEdgeStreet
     
             local newEdge1 = api.type.SegmentAndEntity.new()
@@ -448,7 +472,7 @@ function data()
             )
             newEdge1.comp.type = oldBaseEdge.type
             newEdge1.comp.typeIndex = oldBaseEdge.typeIndex
-            newEdge1.playerOwned = playerOwned
+            newEdge1.playerOwned = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.PLAYER_OWNED)
             newEdge1.streetEdge = oldBaseEdgeStreet
     
             if type(oldBaseEdge.objects) == 'table' then
@@ -509,7 +533,27 @@ function data()
                     -- debugPrint(result)
                     -- print('LOLLO street splitter callback returned success = ', success)
                     if not(success) then
-                        print('Warning: streetTuning.splitEdge failed, proposal = ') debugPrint(proposal)
+                        logger.warn('splitEdge failed, proposal = ') debugPrint(proposal)
+                    else
+                        logger.print('replaceEdgeWithSame succeeded, result =') --debugPrint(result)
+                        if not(successEventName) then return end
+
+                        xpcall(
+                            function ()
+                                local newlyBuiltNodeId = _utils.getNewlyBuiltNodeId(result)
+                                if edgeUtils.isValidAndExistingId(newlyBuiltNodeId) then
+                                    successEventArgs.node0Id = newlyBuiltNodeId
+                                    successEventArgs.node0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                    api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                                        string.sub(debug.getinfo(1, 'S').source, 1),
+                                        _eventId,
+                                        successEventName,
+                                        successEventArgs
+                                    ))
+                                end
+                            end,
+                            logger.xpErrorHandler
+                        )
                     end
                 end
             )
@@ -579,19 +623,20 @@ function data()
                         logger.print('pos0 =') logger.debugPrint(pos0)
                         logger.print('pos1 =') logger.debugPrint(pos1)
 
-                        -- local nodeBetween = edgeUtils.getNodeBetweenByPosition(
-                        --     args.edgeId,
-                        --     -- LOLLO NOTE position and transf are always very similar
-                        --     {
-                        --         x = args.edgeObjectTransf[13],
-                        --         y = args.edgeObjectTransf[14],
-                        --         z = args.edgeObjectTransf[15],
-                        --     }
-                        -- )
-                        -- logger.print('nodeBetween =') logger.debugPrint(nodeBetween)
-                        -- _actions.splitEdge(args.edgeId, nodeBetween)
-
-                        -- LOLLO TODO now, make two splits
+                        local nodeBetween = edgeUtils.getNodeBetweenByPosition(
+                            args.edgeId,
+                            {
+                                x = transf0[13],
+                                y = transf0[14],
+                                z = transf0[15],
+                            }
+                        )
+                        logger.print('nodeBetween =') logger.debugPrint(nodeBetween)
+                        _actions.splitEdge(args.edgeId, nodeBetween, _eventProperties.splitRequested.eventName, {transf0 = transf0, transf1 = transf1})
+                    elseif name == _eventProperties.splitRequested then
+                        -- LOLLO TODO now, make the second split
+                        -- LOLLO TODO check this with the starting bus stop at the end of an edge: it might fail
+                        -- LOLLO TODO then, build the construction between
                     end
                 end,
                 logger.xpErrorHandler

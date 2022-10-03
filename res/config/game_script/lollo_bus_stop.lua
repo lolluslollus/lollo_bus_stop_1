@@ -151,8 +151,8 @@ function data()
             proposal.streetProposal.edgesToAdd[2] = newEdge1
             local context = api.type.Context:new()
             -- context.checkTerrainAlignment = true -- default is false
-            -- context.cleanupStreetGraph = true
-            -- context.gatherBuildings = true -- default is false
+            context.cleanupStreetGraph = true
+            context.gatherBuildings = true -- default is false
             -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
             -- if true then return end -- LOLLO TODO remove after testing

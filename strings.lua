@@ -2,7 +2,7 @@ function data()
 	return {
 		en = {
 			["ModDesc"] = "Use the splitter from the street tuning to carve out a short stretch of road, then plop this in the gap.",
-			["ModName"] = "Streetside bus or tram stops with with extra capacity ",
+			["ModName"] = "Bus or tram stops with extra capacity ",
 			["bothSidesName"] = "Both Sides",
 			["bothSidesDesc"] = "Only with certain street types",
 			["busStopDesc"] = "Use the splitter from the street tuning to carve out a short stretch of road, then plop this in the gap",

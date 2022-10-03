@@ -711,6 +711,7 @@ function data()
                         _actions.splitEdge(edgeId2BeSplit, nodeBetween, _eventProperties.buildConRequested.eventName, args)
                     elseif name == _eventProperties.buildConRequested.eventName then
                         -- LOLLO TODO build the construction between args.transf0 and args.transf1
+                        -- the first thing to test is how to pass the parameters
 
                     end
                 end,

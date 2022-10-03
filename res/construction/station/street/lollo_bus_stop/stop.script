@@ -115,7 +115,7 @@ function data()
 								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeX, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
 							},  -- node 5
                         },
-						-- freeNodes = getSnapNodes(), -- useless
+						freeNodes = getSnapNodes(), -- useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},
                     },

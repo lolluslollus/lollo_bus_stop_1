@@ -13,6 +13,7 @@
         "addModifier",
         "_",
         "debugPrint",
-        "api"
+        "api",
+        "game"
     ]
 }

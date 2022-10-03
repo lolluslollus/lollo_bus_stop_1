@@ -25,59 +25,90 @@ function data()
         buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId, fileName, paramsBak)
             -- LOLLO TODO the construction does not connect to the network, fix it
             logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
+            logger.print('oldNode0Id =', oldNode0Id) logger.print('oldNode1Id =', oldNode1Id)
             local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
             if con == nil then
                 logger.warn('cannot find con')
                 return
             end
-            local frozenNodeIds = con.frozenNodes
-            local frozenEdgeIds = con.frozenEdges
-            local endNodeIds = {}
-            for _, edgeId in pairs(frozenEdgeIds) do
-                local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-                if baseEdge == nil then logger.warn('baseEdge is NIL, edgeId = ' .. (edgeId or 'NIL')) return end
-                if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node0)) then
-                    arrayUtils.addUnique(endNodeIds, baseEdge.node0)
+
+            local getNewNodeIds = function()
+                local frozenNodeIds = con.frozenNodes
+                local frozenEdgeIds = con.frozenEdges
+                local endNodeIdsUnsorted = {}
+                for _, edgeId in pairs(frozenEdgeIds) do
+                    local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+                    if baseEdge == nil then
+                        logger.warn('baseEdge is NIL, edgeId = ' .. (edgeId or 'NIL'))
+                        return nil, nil
+                    end
+                    if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node0)) then
+                        arrayUtils.addUnique(endNodeIdsUnsorted, baseEdge.node0)
+                    end
+                    if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node1)) then
+                        arrayUtils.addUnique(endNodeIdsUnsorted, baseEdge.node1)
+                    end
                 end
-                if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node1)) then
-                    arrayUtils.addUnique(endNodeIds, baseEdge.node1)
+                logger.print('endNodeIdsUnsorted =') logger.debugPrint(endNodeIdsUnsorted)
+                if (#endNodeIdsUnsorted ~= 2) then
+                    logger.warn('endNodeIdsUnsorted has ~= 2 items') logger.warningDebugPrint(endNodeIdsUnsorted)
                 end
+
+                local baseEndNode0 = api.engine.getComponent(endNodeIdsUnsorted[1], api.type.ComponentType.BASE_NODE)
+                local baseEndNode1 = api.engine.getComponent(endNodeIdsUnsorted[2], api.type.ComponentType.BASE_NODE)
+                local baseOldNode0 = api.engine.getComponent(oldNode0Id, api.type.ComponentType.BASE_NODE)
+                local baseOldNode1 = api.engine.getComponent(oldNode1Id, api.type.ComponentType.BASE_NODE)
+                if baseOldNode0 == nil or baseOldNode1 == nil then
+                    logger.warn('cannot find node0Id or node1Id')
+                    return nil, nil
+                end
+                local endNode0Id = endNodeIdsUnsorted[1]
+                local endNode1Id = endNodeIdsUnsorted[2]
+                logger.print('newNode0Id before swapping =', endNode0Id, 'newNode1Id =', endNode1Id)
+                local distance00 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode0.position)
+                local distance01 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode1.position)
+                local distance10 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode0.position)
+                local distance11 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode1.position)
+                logger.print('distances =') logger.debugPrint({distance00, distance01, distance10, distance11})
+                if distance00 > distance01 then
+                    if distance11 < distance10 then
+                        logger.warn('something is fishy swapping end nodes')
+                    end
+                    endNode0Id, endNode1Id = endNode1Id, endNode0Id
+                    baseEndNode0, baseEndNode1 = baseEndNode1, baseEndNode0
+                    logger.print('swapping end nodes, newNode0Id after swapping =', endNode0Id, 'newNode1Id =', endNode1Id)
+                    local distance00 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode0.position)
+                    local distance01 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode1.position)
+                    local distance10 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode0.position)
+                    local distance11 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode1.position)
+                    logger.print('distances after swapping =') logger.debugPrint({distance00, distance01, distance10, distance11})
+                end
+
+                return endNode0Id, endNode1Id
             end
-            logger.print('endNodeIds =') logger.debugPrint(endNodeIds)
-            if (#endNodeIds ~= 2) then
-                logger.warn('endNodeIds has ~= 2 items') logger.warningDebugPrint(endNodeIds)
-            end
-            local baseEndNode0 = api.engine.getComponent(endNodeIds[1], api.type.ComponentType.BASE_NODE)
-            local baseEndNode1 = api.engine.getComponent(endNodeIds[2], api.type.ComponentType.BASE_NODE)
-            local baseNode0 = api.engine.getComponent(oldNode0Id, api.type.ComponentType.BASE_NODE)
-            local baseNode1 = api.engine.getComponent(oldNode1Id, api.type.ComponentType.BASE_NODE)
-            if baseNode0 == nil or baseNode1 == nil then
-                logger.warn('cannot find node0Id or node1Id')
-                return
-            end
-            local newNode0Id = endNodeIds[1]
-            local newNode1Id = endNodeIds[2]
-            if transfUtils.getPositionsDistance(baseNode0.position, baseEndNode0.position) > transfUtils.getPositionsDistance(baseNode0.position, baseEndNode1.position) then
-                newNode0Id, newNode1Id = newNode1Id, newNode0Id
-            end
+            local newNode0Id, newNode1Id = getNewNodeIds()
+            if newNode0Id == nil or newNode1Id == nil then return end
 
             local oldEdge0Id = edgeUtils.getConnectedEdgeIds({oldNode0Id})[1]
             local oldEdge1Id = edgeUtils.getConnectedEdgeIds({oldNode1Id})[1]
-            logger.print('oldEdge0Id =') logger.debugPrint(oldEdge0Id)
-            logger.print('oldEdge1Id =') logger.debugPrint(oldEdge1Id)
+            logger.print('oldEdge0Id =', oldEdge0Id)
+            logger.print('oldEdge1Id =', oldEdge1Id)
             local oldBaseEdge0 = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.BASE_EDGE)
             local oldBaseEdge1 = api.engine.getComponent(oldEdge1Id, api.type.ComponentType.BASE_EDGE)
             local oldEdge0Street = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.BASE_EDGE_STREET)
             local oldEdge1Street = api.engine.getComponent(oldEdge1Id, api.type.ComponentType.BASE_EDGE_STREET)
+
             local newEdge0 = api.type.SegmentAndEntity.new()
             newEdge0.entity = -1
             newEdge0.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
             newEdge0.comp = oldBaseEdge0
+            logger.print('newEdge0.comp before =') logger.debugPrint(newEdge0.comp)
             if newEdge0.comp.node0 == oldNode0Id then newEdge0.comp.node0 = newNode0Id
             elseif newEdge0.comp.node0 == oldNode1Id then newEdge0.comp.node0 = newNode1Id
             elseif newEdge0.comp.node1 == oldNode0Id then newEdge0.comp.node1 = newNode0Id
             elseif newEdge0.comp.node1 == oldNode1Id then newEdge0.comp.node1 = newNode1Id
             end
+            logger.print('newEdge0.comp after =') logger.debugPrint(newEdge0.comp)
             if type(oldBaseEdge0.objects) == 'table' then
                 local edgeObjects = {}
                 for _, edgeObj in pairs(oldBaseEdge0.objects) do
@@ -87,15 +118,18 @@ function data()
             end
             newEdge0.playerOwned = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.PLAYER_OWNED)
             newEdge0.streetEdge = oldEdge0Street
+
             local newEdge1 = api.type.SegmentAndEntity.new()
             newEdge1.entity = -2
             newEdge1.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
             newEdge1.comp = oldBaseEdge1
+            logger.print('newEdge1.comp before =') logger.debugPrint(newEdge1.comp)
             if newEdge1.comp.node0 == oldNode0Id then newEdge1.comp.node0 = newNode0Id
             elseif newEdge1.comp.node0 == oldNode1Id then newEdge1.comp.node0 = newNode1Id
             elseif newEdge1.comp.node1 == oldNode0Id then newEdge1.comp.node1 = newNode0Id
             elseif newEdge1.comp.node1 == oldNode1Id then newEdge1.comp.node1 = newNode1Id
             end
+            logger.print('newEdge1.comp after =') logger.debugPrint(newEdge1.comp)
             if type(oldBaseEdge1.objects) == 'table' then
                 local edgeObjects = {}
                 for _, edgeObj in pairs(oldBaseEdge1.objects) do
@@ -115,10 +149,11 @@ function data()
             proposal.streetProposal.edgesToAdd[2] = newEdge1
             local context = api.type.Context:new()
             -- context.checkTerrainAlignment = true -- default is false
-            context.cleanupStreetGraph = true
-            context.gatherBuildings = true -- default is false
-            context.gatherFields = true -- default is true
+            -- context.cleanupStreetGraph = true
+            -- context.gatherBuildings = true -- default is false
+            -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
+            -- if true then return end -- LOLLO TODO remove after testing
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
@@ -379,9 +414,9 @@ function data()
 
             local context = api.type.Context:new()
             -- context.checkTerrainAlignment = true -- default is false
-            context.cleanupStreetGraph = true
-            context.gatherBuildings = true -- default is false
-            context.gatherFields = true -- default is true
+            -- context.cleanupStreetGraph = true -- default is false
+            -- context.gatherBuildings = true -- default is false
+            -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
@@ -392,13 +427,11 @@ function data()
                         local stationConId = result.resultEntities[1]
                         logger.print('buildConstruction succeeded, stationConId = ', stationConId)
                         _utils.buildSnappyRoads(node0Id, node1Id, stationConId, newCon.fileName, paramsBak)
-
                     else
                         logger.warn('result =') logger.warningDebugPrint(result)
                     end
                 end
             )
-    
         end,
 
         bulldozeConstruction = function(constructionId)
@@ -717,7 +750,7 @@ function data()
             proposal.streetProposal.nodesToAdd[1] = newNodeBetween
     
             local context = api.type.Context:new()
-            context.checkTerrainAlignment = true -- default is false, true gives smoother Z
+            -- context.checkTerrainAlignment = true -- default is false, true gives smoother Z
             -- context.cleanupStreetGraph = true -- default is false
             -- context.gatherBuildings = true  -- default is false
             -- context.gatherFields = true -- default is true

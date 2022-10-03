@@ -22,6 +22,8 @@ local _guiConstants = {
 
 function data()
     local _utils = {
+        -- LOLLO TODO this is no good, it bulldozes the houses.
+        -- Plus, it fails at random.
         buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId, fileName, paramsBak)
             -- LOLLO TODO the construction does not connect to the network, fix it
             logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
@@ -172,8 +174,7 @@ function data()
                                     collectgarbage() -- LOLLO TODO this is a stab in the dark to try and avoid crashes in the following
                                     -- UG TODO there is no such thing in the new api,
                                     -- nor an upgrade event, both would be useful
-                                    logger.print('stationConId =') logger.debugPrint(conId)
-                                    logger.print('result.resultEntities[1] =') logger.debugPrint(result.resultEntities[1])
+                                    logger.print('about to upgrade con, stationConId =', conId, 'fileName =', fileName)
                                     local upgradedConId = game.interface.upgradeConstruction(
                                         conId,
                                         fileName,

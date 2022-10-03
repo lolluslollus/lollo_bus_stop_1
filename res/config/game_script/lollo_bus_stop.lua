@@ -360,6 +360,33 @@ function data()
             -- debugPrint(result)
             return result
         end,
+        upgradeCon = function(conId, fileName, paramsBak)
+            -- LOLLO TODO the construction does not connect to the network, fix it
+            logger.print('upgradeCon starting, conId =') logger.debugPrint(conId)
+            local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
+            if con == nil then
+                logger.warn('cannot find con')
+                return
+            end
+
+            xpcall(
+                function()
+                    collectgarbage() -- LOLLO TODO this is a stab in the dark to try and avoid crashes in the following
+                    -- UG TODO there is no such thing in the new api,
+                    -- nor an upgrade event, both would be useful
+                    logger.print('about to upgrade con, stationConId =', conId, 'fileName =', fileName)
+                    local upgradedConId = game.interface.upgradeConstruction(
+                        conId,
+                        fileName,
+                        paramsBak
+                    )
+                    logger.print('upgradeConstruction succeeded') logger.debugPrint(upgradedConId)
+                end,
+                function(error)
+                    logger.warn(error)
+                end
+            )
+        end,
     }
     local _actions = {
         buildConstruction = function(node0Id, node1Id, transf0, transf1, transfMid, streetType)
@@ -379,10 +406,66 @@ function data()
                 return
             end
             -- LOLLO TODO find out why we need this bodge, it's probably the same thing that make the splitter change z
-            local zMid = (baseNode0.position.z + baseNode1.position.z) / 2
-            local zShift = zMid - transfMid[15]
-            conTransf = transfUtils.getTransfZShiftedBy(conTransf, zShift)
-            conTransf = transfUtilsUG.mul(conTransf, {-1, 0, 0, 0,  0, -1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1})
+            local x0 = baseNode0.position.x
+            local x1 = baseNode1.position.x
+            local y0 = baseNode0.position.y
+            local y1 = baseNode1.position.y
+            local z0 = baseNode0.position.z
+            local z1 = baseNode1.position.z
+            local xMid = (x0 + x1) / 2
+            local yMid = (y0 + y1) / 2
+            local zMid = (z0 + z1) / 2
+            local vecX0 = {constants.outerEdgeX, 0, 0}
+            local vecX1 = {-constants.outerEdgeX, 0, 0}
+            local vecY0 = {0, 1, 0}
+            local vecY1 = {0, -1, 0}
+            local vecZ0 = {0, 0, 1}
+            local vecZ1 = {0, 0, -1}
+            --[[
+                x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
+                y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
+                z = vecXYZ.x * transf[3] + vecXYZ.y * transf[7] + vecXYZ.z * transf[11] + transf[15]
+            ]]
+            local unknownTransf = {}
+            unknownTransf[4] = 0
+            unknownTransf[8] = 0
+            unknownTransf[12] = 0
+            unknownTransf[16] = 1
+            unknownTransf[13] = xMid
+            unknownTransf[14] = yMid
+            unknownTransf[15] = zMid
+            -- solving for vecX0
+            unknownTransf[1] = (x0 - unknownTransf[13]) / constants.outerEdgeX
+            unknownTransf[2] = (y0 - unknownTransf[14]) / constants.outerEdgeX
+            unknownTransf[3] = (z0 - unknownTransf[15]) / constants.outerEdgeX
+            -- solving for vecX1
+            unknownTransf[1] = (x1 - unknownTransf[13]) / -constants.outerEdgeX
+            unknownTransf[2] = (y1 - unknownTransf[14]) / -constants.outerEdgeX
+            unknownTransf[3] = (z1 - unknownTransf[15]) / -constants.outerEdgeX
+            -- which is the same
+
+            -- solving for vecY0
+            unknownTransf[5] = (xMid - unknownTransf[13])
+            unknownTransf[6] = (yMid + 1 - unknownTransf[14])
+            unknownTransf[7] = (zMid - unknownTransf[15])
+
+            -- solving for vecZ0
+            unknownTransf[9] = (xMid - unknownTransf[13])
+            unknownTransf[10] = (yMid - unknownTransf[14])
+            unknownTransf[11] = (zMid + 1 - unknownTransf[15]) -- this is probably wrong: as it is, it does not tilt, so the construction makes a step. Try tilting it.
+
+
+            -- conTransf = transfUtilsUG.mul(conTransf, {-1, 0, 0, 0,  0, -1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1})
+            -- logger.print('conTransf before =') logger.debugPrint(conTransf)
+            -- LOLLO TODO this transf attaches perfectly to node0 and node1, but the station still looks wrong. See the note above with tilt.
+            conTransf = unknownTransf
+            logger.print('conTransf new =') logger.debugPrint(conTransf)
+            local vecX0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({constants.outerEdgeX, 0, 0}), conTransf)
+            local vecX1Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({-constants.outerEdgeX, 0, 0}), conTransf)
+            local vecYTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({0, 1, 0}), conTransf)
+            local vecZTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({0, 0, 1}), conTransf)
+            logger.print('vecs transformed =') logger.debugPrint(vecX0Transformed) logger.debugPrint(vecX1Transformed) logger.debugPrint(vecYTransformed) logger.debugPrint(vecZTransformed)
+            logger.print('coordinates x0, x1, y0, y1, z0, z1, xMid, yMid, zMid =', x0, x1, y0, y1, z0, z1, xMid, yMid, zMid)
 
             local newCon = api.type.SimpleProposal.ConstructionEntity.new()
             newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
@@ -425,9 +508,10 @@ function data()
                     logger.print('buildConstruction callback, success =', success)
                     -- logger.debugPrint(result)
                     if success then
-                        local stationConId = result.resultEntities[1]
-                        logger.print('buildConstruction succeeded, stationConId = ', stationConId)
-                        _utils.buildSnappyRoads(node0Id, node1Id, stationConId, newCon.fileName, paramsBak)
+                        local conId = result.resultEntities[1]
+                        logger.print('buildConstruction succeeded, stationConId = ', conId)
+                        -- _utils.buildSnappyRoads(node0Id, node1Id, stationConId, newCon.fileName, paramsBak)
+                        _utils.upgradeCon(conId, newCon.fileName, paramsBak)
                     else
                         logger.warn('result =') logger.warningDebugPrint(result)
                     end

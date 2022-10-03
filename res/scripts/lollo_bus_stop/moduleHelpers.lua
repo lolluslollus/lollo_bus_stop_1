@@ -115,7 +115,7 @@ helpers.getParams = function()
             values = pitchHelpers.getPitchParamValues(),
             defaultIndex = pitchHelpers.getDefaultPitchParamValue(),
             uiType = 'SLIDER'
-        }
+        },
     }
 end
 

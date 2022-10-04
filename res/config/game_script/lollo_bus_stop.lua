@@ -390,82 +390,96 @@ function data()
     }
     local _actions = {
         buildConstruction = function(node0Id, node1Id, transf0, transf1, transfMid, streetType)
-            -- LOLLO TODO the construction does not connect to the network, fix it
+            -- LOLLO TODO the construction does not transform well and does not connect to the network: fix it
             logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
             logger.print('transfMid =') logger.debugPrint(transfMid)
-            -- local conTransf = { }
-            -- for i = 1, 16, 1 do
-            --     conTransf[i] = (transf0[i] + transf1[i]) / 2
-            -- end
-            
-            local conTransf = transfMid
+
             local baseNode0 = api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE)
             local baseNode1 = api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE)
             if baseNode0 == nil or baseNode1 == nil then
                 logger.warn('cannot find node0Id or node1Id')
                 return
             end
-            -- LOLLO TODO find out why we need this bodge, it's probably the same thing that make the splitter change z
-            local x0 = baseNode0.position.x
-            local x1 = baseNode1.position.x
-            local y0 = baseNode0.position.y
-            local y1 = baseNode1.position.y
-            local z0 = baseNode0.position.z
-            local z1 = baseNode1.position.z
-            local xMid = (x0 + x1) / 2
-            local yMid = (y0 + y1) / 2
-            local zMid = (z0 + z1) / 2
-            local vecX0 = {constants.outerEdgeX, 0, 0}
-            local vecX1 = {-constants.outerEdgeX, 0, 0}
-            local vecY0 = {0, 1, 0}
-            local vecY1 = {0, -1, 0}
-            local vecZ0 = {0, 0, 1}
-            local vecZ1 = {0, 0, -1}
-            --[[
-                x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
-                y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
-                z = vecXYZ.x * transf[3] + vecXYZ.y * transf[7] + vecXYZ.z * transf[11] + transf[15]
-            ]]
-            local unknownTransf = {}
-            unknownTransf[4] = 0
-            unknownTransf[8] = 0
-            unknownTransf[12] = 0
-            unknownTransf[16] = 1
-            unknownTransf[13] = xMid
-            unknownTransf[14] = yMid
-            unknownTransf[15] = zMid
-            -- solving for vecX0
-            unknownTransf[1] = (x0 - unknownTransf[13]) / constants.outerEdgeX
-            unknownTransf[2] = (y0 - unknownTransf[14]) / constants.outerEdgeX
-            unknownTransf[3] = (z0 - unknownTransf[15]) / constants.outerEdgeX
-            -- solving for vecX1
-            unknownTransf[1] = (x1 - unknownTransf[13]) / -constants.outerEdgeX
-            unknownTransf[2] = (y1 - unknownTransf[14]) / -constants.outerEdgeX
-            unknownTransf[3] = (z1 - unknownTransf[15]) / -constants.outerEdgeX
-            -- which is the same
+            local getConTransf = function()
+                local x0 = baseNode0.position.x
+                local x1 = baseNode1.position.x
+                local y0 = baseNode0.position.y
+                local y1 = baseNode1.position.y
+                local z0 = baseNode0.position.z
+                local z1 = baseNode1.position.z
+                local xMid = (x0 + x1) / 2
+                local yMid = (y0 + y1) / 2
+                local zMid = (z0 + z1) / 2
+                local vecX0 = {-constants.outerEdgeX, 0, 0} -- transforms to {x0, y0, z0}
+                local vecX1 = {constants.outerEdgeX, 0, 0} -- transforms to {x1, y1, z1}
+                local vecY0 = {0, 1, 0} -- transforms to {xMid, yMid + 1, zMid}
+                local vecY1 = {0, -1, 0} -- transforms to {xMid, yMid - 1, zMid}
+                local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
+                local vecZ1 = {0, 0, -1} -- transforms to {xMid, yMid, zMid - 1}
+                --[[
+                    x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
+                    y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
+                    z = vecXYZ.x * transf[3] + vecXYZ.y * transf[7] + vecXYZ.z * transf[11] + transf[15]
+                ]]
+                local unknownTransf = {}
+                unknownTransf[4] = 0
+                unknownTransf[8] = 0
+                unknownTransf[12] = 0
+                unknownTransf[16] = 1
+                unknownTransf[13] = xMid
+                unknownTransf[14] = yMid
+                unknownTransf[15] = zMid
+                -- solving for vecX0
+                unknownTransf[1] = (x0 - xMid) / (-constants.outerEdgeX)
+                unknownTransf[2] = (y0 - yMid) / (-constants.outerEdgeX)
+                unknownTransf[3] = (z0 - zMid) / (-constants.outerEdgeX)
+                -- solving for vecX1 (same result)
+                -- unknownTransf[1] = (x1 - xMid) / constants.outerEdgeX
+                -- unknownTransf[2] = (y1 - yMid) / constants.outerEdgeX
+                -- unknownTransf[3] = (z1 - zMid) / constants.outerEdgeX
+                -- solving for vecY0
+                unknownTransf[5] = 0
+                unknownTransf[6] = 1
+                unknownTransf[7] = 0
+                -- solving for vecZ0 vertical
+                unknownTransf[9] = 0
+                unknownTransf[10] = 0
+                unknownTransf[11] = 1 -- this is probably wrong: as it is, it does not tilt, so the construction makes a step. Try tilting it.
+                logger.print('unknownTransf straight =') logger.debugPrint(unknownTransf)
+                -- solving for vecZ0 tilted
+                local tanAlpha = (z1-z0) / (x1-x0)
+                local sinAlpha = (z1-z0) / math.sqrt((z1-z0)^2 + (x1-x0)^2)
+                local cosAlpha = (x1-x0) / math.sqrt((z1-z0)^2 + (x1-x0)^2)
+                logger.print('tanAlpha =', tanAlpha, 'sinAlpha =', sinAlpha, 'cosAlpha =', cosAlpha)
+                local vecZ0Tilted = {-sinAlpha, 0, cosAlpha} -- transforms to {xMid - sinAlpha, yMid, zMid + cosAlpha}
+                local vecZ1Tilted = {sinAlpha, 0, -cosAlpha} -- transforms to {xMid + sinAlpha, yMid, zMid - cosAlpha}
+                -- unknownTransf[9] = ( -sinAlpha + sinAlpha * unknownTransf[1] ) / cosAlpha
+                -- unknownTransf[10] = sinAlpha * unknownTransf[2] / cosAlpha
+                -- unknownTransf[11] = ( cosAlpha + sinAlpha * unknownTransf[3] ) / cosAlpha
+                logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
-            -- solving for vecY0
-            unknownTransf[5] = (xMid - unknownTransf[13])
-            unknownTransf[6] = (yMid + 1 - unknownTransf[14])
-            unknownTransf[7] = (zMid - unknownTransf[15])
-
-            -- solving for vecZ0
-            unknownTransf[9] = (xMid - unknownTransf[13])
-            unknownTransf[10] = (yMid - unknownTransf[14])
-            unknownTransf[11] = (zMid + 1 - unknownTransf[15]) -- this is probably wrong: as it is, it does not tilt, so the construction makes a step. Try tilting it.
-
-
-            -- conTransf = transfUtilsUG.mul(conTransf, {-1, 0, 0, 0,  0, -1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1})
-            -- logger.print('conTransf before =') logger.debugPrint(conTransf)
-            -- LOLLO TODO this transf attaches perfectly to node0 and node1, but the station still looks wrong. See the note above with tilt.
-            conTransf = unknownTransf
-            logger.print('conTransf new =') logger.debugPrint(conTransf)
-            local vecX0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({constants.outerEdgeX, 0, 0}), conTransf)
-            local vecX1Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({-constants.outerEdgeX, 0, 0}), conTransf)
-            local vecYTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({0, 1, 0}), conTransf)
-            local vecZTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ({0, 0, 1}), conTransf)
-            logger.print('vecs transformed =') logger.debugPrint(vecX0Transformed) logger.debugPrint(vecX1Transformed) logger.debugPrint(vecYTransformed) logger.debugPrint(vecZTransformed)
-            logger.print('coordinates x0, x1, y0, y1, z0, z1, xMid, yMid, zMid =', x0, x1, y0, y1, z0, z1, xMid, yMid, zMid)
+                -- conTransf = transfUtilsUG.mul(conTransf, {-1, 0, 0, 0,  0, -1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1})
+                -- logger.print('conTransf before =') logger.debugPrint(conTransf)
+                -- LOLLO TODO this transf attaches perfectly to node0 and node1, but the station still looks wrong. See the note above with tilt.
+                local conTransf = unknownTransf
+                logger.print('conTransf =') logger.debugPrint(conTransf)
+                local vecX0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecX0), conTransf)
+                local vecX1Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecX1), conTransf)
+                local vecYTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecY0), conTransf)
+                local vecZ0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0), conTransf)
+                local vecZ0TiltedTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0Tilted), conTransf)
+                logger.print('vecX0 straight and transformed =') logger.debugPrint(vecX0) logger.debugPrint(vecX0Transformed)
+                logger.print('vecX1 straight and transformed =') logger.debugPrint(vecX1) logger.debugPrint(vecX1Transformed)
+                logger.print('vecY0 straight and transformed =') logger.debugPrint(vecY0) logger.debugPrint(vecYTransformed)
+                logger.print('vecZ0 straight and transformed =') logger.debugPrint(vecZ0) logger.debugPrint(vecZ0Transformed)
+                logger.print('vecZ0Tilted straight and transformed =') logger.debugPrint(vecZ0Tilted) logger.debugPrint(vecZ0TiltedTransformed)
+                logger.print('x0, x1 =', x0, x1)
+                logger.print('y0, y1 =', y0, y1)
+                logger.print('z0, z1 =', z0, z1)
+                logger.print('xMid, yMid, zMid =', xMid, yMid, zMid)
+                return conTransf
+            end
+            local conTransf = getConTransf()
 
             local newCon = api.type.SimpleProposal.ConstructionEntity.new()
             newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
@@ -482,6 +496,9 @@ function data()
                 return
             end
             newCon.params = {
+                lolloBusStop_model = 5, -- it's easier to see transf problems
+                lolloBusStop_node0Id = node0Id, -- this stays because it's an integer
+                lolloBusStop_node1Id = node1Id, -- idem
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
                 seed = math.abs(math.ceil(conTransf[13] * 1000)),
             }
@@ -511,7 +528,7 @@ function data()
                         local conId = result.resultEntities[1]
                         logger.print('buildConstruction succeeded, stationConId = ', conId)
                         -- _utils.buildSnappyRoads(node0Id, node1Id, stationConId, newCon.fileName, paramsBak)
-                        _utils.upgradeCon(conId, newCon.fileName, paramsBak)
+                        -- _utils.upgradeCon(conId, newCon.fileName, paramsBak)
                     else
                         logger.warn('result =') logger.warningDebugPrint(result)
                     end
@@ -991,42 +1008,47 @@ function data()
                             logger.warn('cannot find an edge for the second split')
                             return
                         end
-                        local edgeId2BeSplit = nil
-                        local nodeBetween = nil
-                        logger.print('args.transf1[13] =', args.transf1[13])
-                        logger.print('args.transf1[14] =', args.transf1[14])
-                        logger.print('args.transf1[15] =', args.transf1[15])
-                        for _, edgeId in pairs(args.node0EdgeIds) do
+                        local getSplitData = function()
+                            local edgeId2BeSplit = nil
+                            local nodeBetween = nil
+                            logger.print('args.transf1[13] =', args.transf1[13])
+                            logger.print('args.transf1[14] =', args.transf1[14])
+                            logger.print('args.transf1[15] =', args.transf1[15])
                             local minDistance = 9999.9
-                            local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-                            if baseEdge ~= nil then
-                                local baseNode0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
-                                local baseNode1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
-                                logger.print('baseNode0 =') logger.debugPrint(baseNode0)
-                                logger.print('baseNode1 =') logger.debugPrint(baseNode1)
-                                if baseNode0 ~= nil and baseNode1 ~= nil then
-                                    local testNodeBetween = edgeUtils.getNodeBetweenByPosition(
-                                        edgeId,
-                                        {
-                                            x = args.transf1[13],
-                                            y = args.transf1[14],
-                                            z = args.transf1[15],
-                                        }
-                                        -- logger.getIsExtendedLog()
-                                    )
-                                    logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
-                                    if testNodeBetween ~= nil then
-                                        local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.transf1))
-                                        logger.print('currentDistance =') logger.debugPrint(currentDistance)
-                                        if currentDistance ~= nil and currentDistance < minDistance then
-                                            edgeId2BeSplit = edgeId
-                                            minDistance = currentDistance
-                                            nodeBetween = testNodeBetween
+                            for _, edgeId in pairs(args.node0EdgeIds) do
+                                local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+                                if baseEdge ~= nil then
+                                    local baseNode0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
+                                    local baseNode1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
+                                    logger.print('baseNode0.position =') logger.debugPrint(baseNode0.position)
+                                    logger.print('baseNode1.position =') logger.debugPrint(baseNode1.position)
+                                    if baseNode0 ~= nil and baseNode1 ~= nil then
+                                        local testNodeBetween = edgeUtils.getNodeBetweenByPosition(
+                                            edgeId,
+                                            {
+                                                x = args.transf1[13],
+                                                y = args.transf1[14],
+                                                z = args.transf1[15],
+                                            }
+                                            -- logger.getIsExtendedLog()
+                                        )
+                                        logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
+                                        if testNodeBetween ~= nil then
+                                            local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.transf1))
+                                            logger.print('currentDistance =') logger.debugPrint(currentDistance)
+                                            if currentDistance ~= nil and currentDistance < minDistance then
+                                                logger.print('setting nodeBetween')
+                                                edgeId2BeSplit = edgeId
+                                                minDistance = currentDistance
+                                                nodeBetween = arrayUtils.cloneDeepOmittingFields(testNodeBetween)
+                                            end
                                         end
                                     end
                                 end
                             end
+                            return edgeId2BeSplit, nodeBetween
                         end
+                        local edgeId2BeSplit, nodeBetween = getSplitData()
                         if not(edgeId2BeSplit) then
                             logger.warn('cannot decide on an edge id for the second split')
                             return

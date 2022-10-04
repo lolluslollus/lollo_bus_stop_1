@@ -412,8 +412,11 @@ function data()
                 local zMid = (z0 + z1) / 2
                 local vecX0 = {-constants.outerEdgeX, 0, 0} -- transforms to {x0, y0, z0}
                 local vecX1 = {constants.outerEdgeX, 0, 0} -- transforms to {x1, y1, z1}
-                local vecY0 = {0, 1, 0} -- transforms to {xMid, yMid + 1, zMid}
-                local vecY1 = {0, -1, 0} -- transforms to {xMid, yMid - 1, zMid}
+                local ipotenusaYX = math.sqrt((x1 - x0)^2 + (y1 - y0)^2)
+                local sinYX = (y1-y0) / ipotenusaYX
+                local cosYX = (x1-x0) / ipotenusaYX
+                logger.print('ipotenusaYX =', ipotenusaYX, 'sinYX =', sinYX, 'cosYX =', cosYX)
+                local vecY0 = {0, 1, 0} -- transforms to {xMid - sinYX, yMid + cosYX, zMid}
                 local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
                 local vecZ1 = {0, 0, -1} -- transforms to {xMid, yMid, zMid - 1}
                 --[[
@@ -430,6 +433,7 @@ function data()
                 unknownTransf[14] = yMid
                 unknownTransf[15] = zMid
                 -- solving for vecX0
+                -- local xyz = {x0, y0, z0}
                 unknownTransf[1] = (x0 - xMid) / (-constants.outerEdgeX)
                 unknownTransf[2] = (y0 - yMid) / (-constants.outerEdgeX)
                 unknownTransf[3] = (z0 - zMid) / (-constants.outerEdgeX)
@@ -438,8 +442,9 @@ function data()
                 -- unknownTransf[2] = (y1 - yMid) / constants.outerEdgeX
                 -- unknownTransf[3] = (z1 - zMid) / constants.outerEdgeX
                 -- solving for vecY0
-                unknownTransf[5] = 0
-                unknownTransf[6] = 1
+                -- local xyz = {xMid - sinYX, yMid + cosYX, zMid}
+                unknownTransf[5] = x1 > x0 and (-math.abs(sinYX)) or (math.abs(sinYX))
+                unknownTransf[6] = y1 > y0 and (math.abs(cosYX)) or (-math.abs(cosYX))
                 unknownTransf[7] = 0
                 -- solving for vecZ0 vertical
                 unknownTransf[9] = 0
@@ -447,15 +452,15 @@ function data()
                 unknownTransf[11] = 1 -- this is probably wrong: as it is, it does not tilt, so the construction makes a step. Try tilting it.
                 logger.print('unknownTransf straight =') logger.debugPrint(unknownTransf)
                 -- solving for vecZ0 tilted
-                local tanAlpha = (z1-z0) / (x1-x0)
-                local sinAlpha = (z1-z0) / math.sqrt((z1-z0)^2 + (x1-x0)^2)
-                local cosAlpha = (x1-x0) / math.sqrt((z1-z0)^2 + (x1-x0)^2)
-                logger.print('tanAlpha =', tanAlpha, 'sinAlpha =', sinAlpha, 'cosAlpha =', cosAlpha)
-                local vecZ0Tilted = {-sinAlpha, 0, cosAlpha} -- transforms to {xMid - sinAlpha, yMid, zMid + cosAlpha}
-                local vecZ1Tilted = {sinAlpha, 0, -cosAlpha} -- transforms to {xMid + sinAlpha, yMid, zMid - cosAlpha}
-                -- unknownTransf[9] = ( -sinAlpha + sinAlpha * unknownTransf[1] ) / cosAlpha
-                -- unknownTransf[10] = sinAlpha * unknownTransf[2] / cosAlpha
-                -- unknownTransf[11] = ( cosAlpha + sinAlpha * unknownTransf[3] ) / cosAlpha
+                -- local ipotenusaZX = math.sqrt((z1-z0)^2 + (x1-x0)^2)
+                -- local sinZX = (z1-z0) / ipotenusaZX
+                -- local cosZX = (x1-x0) / ipotenusaZX
+                -- logger.print('ipotenusaZX =', ipotenusaZX, 'sinZX =', sinZX, 'cosZX =', cosZX)
+                -- local vecZ0Tilted = {-sinZX, 0, cosZX} -- transforms to {xMid - sinZX, yMid, zMid + cosZX}
+                -- local vecZ1Tilted = {sinZX, 0, -cosZX} -- transforms to {xMid + sinZX, yMid, zMid - cosZX}
+                -- unknownTransf[9] = ( -sinZX + sinZX * unknownTransf[1] ) / cosZX
+                -- unknownTransf[10] = sinZX * unknownTransf[2] / cosZX
+                -- unknownTransf[11] = ( cosZX + sinZX * unknownTransf[3] ) / cosZX
                 logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
                 -- conTransf = transfUtilsUG.mul(conTransf, {-1, 0, 0, 0,  0, -1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1})
@@ -467,12 +472,12 @@ function data()
                 local vecX1Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecX1), conTransf)
                 local vecYTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecY0), conTransf)
                 local vecZ0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0), conTransf)
-                local vecZ0TiltedTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0Tilted), conTransf)
+                -- local vecZ0TiltedTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0Tilted), conTransf)
                 logger.print('vecX0 straight and transformed =') logger.debugPrint(vecX0) logger.debugPrint(vecX0Transformed)
                 logger.print('vecX1 straight and transformed =') logger.debugPrint(vecX1) logger.debugPrint(vecX1Transformed)
                 logger.print('vecY0 straight and transformed =') logger.debugPrint(vecY0) logger.debugPrint(vecYTransformed)
                 logger.print('vecZ0 straight and transformed =') logger.debugPrint(vecZ0) logger.debugPrint(vecZ0Transformed)
-                logger.print('vecZ0Tilted straight and transformed =') logger.debugPrint(vecZ0Tilted) logger.debugPrint(vecZ0TiltedTransformed)
+                -- logger.print('vecZ0Tilted straight and transformed =') logger.debugPrint(vecZ0Tilted) logger.debugPrint(vecZ0TiltedTransformed)
                 logger.print('x0, x1 =', x0, x1)
                 logger.print('y0, y1 =', y0, y1)
                 logger.print('z0, z1 =', z0, z1)

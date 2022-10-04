@@ -80,10 +80,10 @@ function data()
                         edges = params.lolloBusStop_direction == 0
 						and {
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeX, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeX, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeXCon, 0, 0 }
 							},  -- node 0
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeX, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeXCon, 0, 0 }
 							},  -- node 1
                             {
 								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength * 2, 0, 0 }
@@ -92,17 +92,17 @@ function data()
 								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength * 2, 0, 0 }
 							},  -- node 3
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.outerEdgeX -constants.halfEdgeLength, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.outerEdgeXCon -constants.halfEdgeLength, 0, 0 }
 							},  -- node 4
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeX, 0, 0 }),  { constants.outerEdgeX -constants.halfEdgeLength, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXCon, 0, 0 }),  { constants.outerEdgeXCon -constants.halfEdgeLength, 0, 0 }
 							},  -- node 5
                         } or {
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeX, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXCon, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
 							},  -- node 0
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
 							},  -- node 1
                             {
 								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength * 2, 0, 0 }
@@ -111,10 +111,10 @@ function data()
 								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength * 2, 0, 0 }
 							},  -- node 3
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
 							},  -- node 4
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeX, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeX, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
 							},  -- node 5
                         },
 						freeNodes = getSnapNodes(), -- useless
@@ -286,8 +286,8 @@ function data()
         end,
 ]]
  		-- useless
-		upgradeFn = function(one, two) -- this is overwritten by the .script file
-			logger.print('upgradeFn starting, one =') logger.debugPrint(one)
+		upgradeFn = function(one, two)
+			logger.print('upgradeFn.script starting, one =') logger.debugPrint(one)
 			logger.print('two =') logger.debugPrint(two)
 			return {}
         end,

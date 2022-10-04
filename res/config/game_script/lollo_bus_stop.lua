@@ -11,6 +11,7 @@ local transfUtilsUG = require('transf')
 local _eventId = '__lolloStreetsidePassengerStopsEvent__'
 local _eventProperties = {
     buildConRequested = { conName = nil, eventName = 'buildConRequested' },
+    buildSnappyConRequested = { conName = nil, eventName = 'buildSnappyConRequested' },
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
     removeEdgeBetween = { conName = nil, eventName = 'removeEdgeBetween' },
     secondSplitRequested = { conName = nil, eventName = 'secondSplitRequested'},
@@ -23,10 +24,9 @@ local _guiConstants = {
 
 function data()
     local _utils = {
-        -- LOLLO TODO this is no good, it bulldozes the houses.
+        -- this is no good, it bulldozes the houses.
         -- Plus, it fails at random.
-        buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId, fileName, paramsBak)
-            -- LOLLO TODO the construction does not connect to the network, fix it
+        buildSnappyRoadsUNUSED = function(oldNode0Id, oldNode1Id, conId, fileName, conParams)
             logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
             logger.print('oldNode0Id =', oldNode0Id) logger.print('oldNode1Id =', oldNode1Id)
             local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
@@ -156,14 +156,13 @@ function data()
             context.gatherBuildings = true -- default is false
             -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
-            -- if true then return end -- LOLLO TODO remove after testing
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
                     logger.print('buildSnappyRoads callback, success =', success)
                     -- logger.debugPrint(result)
                     if not(success) then
-                        logger.warn('result =') logger.warningDebugPrint(result)
+                        logger.warn('buildSnappyRoads result =') logger.warningDebugPrint(result)
                     else
                         xpcall(
                             function()
@@ -175,11 +174,12 @@ function data()
                                     collectgarbage() -- LOLLO TODO this is a stab in the dark to try and avoid crashes in the following
                                     -- UG TODO there is no such thing in the new api,
                                     -- nor an upgrade event, both would be useful
+                                    local paramsNoSeed = arrayUtils.cloneDeepOmittingFields(conParams, {'seed'})
                                     logger.print('about to upgrade con, stationConId =', conId, 'fileName =', fileName)
                                     local upgradedConId = game.interface.upgradeConstruction(
                                         conId,
                                         fileName,
-                                        paramsBak
+                                        paramsNoSeed
                                     )
                                     logger.print('upgradeConstruction succeeded') logger.debugPrint(upgradedConId)
                                 else
@@ -361,12 +361,12 @@ function data()
             -- debugPrint(result)
             return result
         end,
-        upgradeCon = function(conId, fileName, paramsBak)
-            -- LOLLO TODO the construction does not connect to the network, fix it
-            logger.print('upgradeCon starting, conId =') logger.debugPrint(conId)
+        upgradeCon = function(conId, conParams)
+            -- LOLLO TODO to prevent random crashes, try calling this across a call to the GUI thread and back to the worker thread
+            logger.print('upgradeCon starting, conId =', (conId or 'NIL'))
             local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
             if con == nil then
-                logger.warn('cannot find con')
+                logger.warn('upgradeCon cannot find con')
                 return
             end
 
@@ -375,15 +375,18 @@ function data()
                     collectgarbage() -- LOLLO TODO this is a stab in the dark to try and avoid crashes in the following
                     -- UG TODO there is no such thing in the new api,
                     -- nor an upgrade event, both would be useful
-                    logger.print('about to upgrade con, stationConId =', conId, 'fileName =', fileName)
+                    local paramsNoSeed = arrayUtils.cloneDeepOmittingFields(conParams, {'seed'})
+                    logger.print('paramsNoSeed =') logger.debugPrint(paramsNoSeed)
+                    logger.print('about to upgrade con, stationConId =', conId, 'con.fileName =', con.fileName)
                     local upgradedConId = game.interface.upgradeConstruction(
                         conId,
-                        fileName,
-                        paramsBak
+                        con.fileName,
+                        paramsNoSeed
                     )
-                    logger.print('upgradeConstruction succeeded') logger.debugPrint(upgradedConId)
+                    logger.print('upgradeCon succeeded, conId =', (upgradedConId or 'NIL'))
                 end,
                 function(error)
+                    logger.warn('upgradeCon failed')
                     logger.warn(error)
                 end
             )
@@ -391,7 +394,6 @@ function data()
     }
     local _actions = {
         buildConstruction = function(node0Id, node1Id, transf0, transf1, transfMid, streetType)
-            -- LOLLO TODO the construction does not transform well and does not connect to the network: fix it
             logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
             logger.print('transfMid =') logger.debugPrint(transfMid)
 
@@ -466,9 +468,6 @@ function data()
                 -- unknownTransf[11] = ( cosZX + sinZX * unknownTransf[3] ) / cosZX
                 logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
-                -- conTransf = transfUtilsUG.mul(conTransf, {-1, 0, 0, 0,  0, -1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1})
-                -- logger.print('conTransf before =') logger.debugPrint(conTransf)
-                -- LOLLO TODO this transf attaches perfectly to node0 and node1, but the station still looks wrong. See the note above with tilt.
                 local conTransf = unknownTransf
                 logger.print('conTransf =') logger.debugPrint(conTransf)
                 local vecX0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecX0), conTransf)
@@ -506,20 +505,25 @@ function data()
                 logger.warn('cannot find street type index', streetType or 'NIL')
                 return
             end
-            newCon.params = {
+            local newParams = {
                 lolloBusStop_bothSides = 0,
                 lolloBusStop_direction = 0,
                 lolloBusStop_driveOnLeft = 0,
                 lolloBusStop_model = 5, -- it's easier to see transf problems
-                lolloBusStop_node0Id = node0Id, -- this stays because it's an integer
+                lolloBusStop_node0Id = node0Id, -- this stays across upgrades because it's an integer
                 lolloBusStop_node1Id = node1Id, -- idem
                 lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
                 lolloBusStop_snapNodes = 3,
+                -- LOLLO TODO This needs upgradeConstruction anyway, and it fails in curves even with shorter con edges. Check it.
+                -- On a deeper analysis, the transf is not good for curves, and I doubt it can be adjusted
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
                 lolloBusStop_tramTrack = 0,
                 seed = math.abs(math.ceil(conTransf[13] * 1000)),
             }
-            local paramsBak = arrayUtils.cloneDeepOmittingFields(newCon.params, {'seed'})
+            -- clone your own variable, it's safer than cloning newCon.params, which is userdata
+            local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
+            newCon.params = newParams
+            -- logger.print('just made conParamsBak, it is') logger.debugPrint(conParamsBak)
             newCon.playerEntity = api.engine.util.getPlayer()
             newCon.transf = api.type.Mat4f.new(
                 api.type.Vec4f.new(conTransf[1], conTransf[2], conTransf[3], conTransf[4]),
@@ -544,8 +548,21 @@ function data()
                     if success then
                         local conId = result.resultEntities[1]
                         logger.print('buildConstruction succeeded, stationConId = ', conId)
-                        -- _utils.buildSnappyRoads(node0Id, node1Id, stationConId, newCon.fileName, paramsBak)
-                        _utils.upgradeCon(conId, newCon.fileName, paramsBak)
+                        xpcall(
+                            function ()
+                                api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                                    string.sub(debug.getinfo(1, 'S').source, 1),
+                                    _eventId,
+                                    _eventProperties.buildSnappyConRequested.eventName,
+                                    {
+                                        conId = conId,
+                                        conParams = conParamsBak,
+                                        conTransf = conTransf,
+                                    }
+                                ))
+                            end,
+                            logger.xpErrorHandler
+                        )
                     else
                         logger.warn('result =') logger.warningDebugPrint(result)
                     end
@@ -982,11 +999,13 @@ function data()
 
             xpcall(
                 function()
+                    -- LOLLO if everything else works, add a function to rebuild the road after deleting.
+                    -- The params with the node ids are in place.
                     if name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
                         if not(edgeUtils.isValidAndExistingId(args.edgeId)) or edgeUtils.isEdgeFrozen(args.edgeId) then return end
 
                         local length = edgeUtils.getEdgeLength(args.edgeId)
-                        if length < constants.outerEdgeX * 2 then return end -- LOLLO TODO join adjacent edges until one is long enough
+                        if length < constants.outerEdgeX * 2 then return end -- LOLLO TODO if everything else works, join adjacent edges until one is long enough
 
                         local transf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
                         local transf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
@@ -1105,10 +1124,9 @@ function data()
 
                         _actions.removeEdge(edgeIdsBetweenNodes[1], _eventProperties.buildConRequested.eventName, args)
                     elseif name == _eventProperties.buildConRequested.eventName then
-                        -- LOLLO TODO build the construction between args.transf0 and args.transf1
-                        -- the first thing to test is how to pass the parameters. First even, try to plop it as it is
-
                         _actions.buildConstruction(args.node0Id, args.node1Id, args.transf0, args.transf1, args.transfMid, args.streetType)
+                    elseif name == _eventProperties.buildSnappyConRequested.eventName then
+                        _utils.upgradeCon(args.conId, args.conParams)
                     end
                 end,
                 logger.xpErrorHandler

@@ -2,6 +2,7 @@ local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local constants = require('lollo_bus_stop.constants')
 local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local logger = require('lollo_bus_stop.logger')
+local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 local streetUtils = require('lollo_bus_stop.streetUtils')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
@@ -443,8 +444,10 @@ function data()
                 -- unknownTransf[3] = (z1 - zMid) / constants.outerEdgeX
                 -- solving for vecY0
                 -- local xyz = {xMid - sinYX, yMid + cosYX, zMid}
-                unknownTransf[5] = x1 > x0 and (-math.abs(sinYX)) or (math.abs(sinYX))
-                unknownTransf[6] = y1 > y0 and (math.abs(cosYX)) or (-math.abs(cosYX))
+                -- unknownTransf[5] = (y1 > y0) and (-math.abs(sinYX)) or (math.abs(sinYX))
+                -- unknownTransf[6] = (x1 > x0) and (math.abs(cosYX)) or (-math.abs(cosYX))
+                unknownTransf[5] = -sinYX
+                unknownTransf[6] = cosYX
                 unknownTransf[7] = 0
                 -- solving for vecZ0 vertical
                 unknownTransf[9] = 0
@@ -474,9 +477,12 @@ function data()
                 local vecZ0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0), conTransf)
                 -- local vecZ0TiltedTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0Tilted), conTransf)
                 logger.print('vecX0 straight and transformed =') logger.debugPrint(vecX0) logger.debugPrint(vecX0Transformed)
+                logger.print('should be') logger.debugPrint({-constants.outerEdgeX, 0, 0})
                 logger.print('vecX1 straight and transformed =') logger.debugPrint(vecX1) logger.debugPrint(vecX1Transformed)
                 logger.print('vecY0 straight and transformed =') logger.debugPrint(vecY0) logger.debugPrint(vecYTransformed)
+                logger.print('should be') logger.debugPrint({xMid - sinYX, yMid + cosYX, zMid})
                 logger.print('vecZ0 straight and transformed =') logger.debugPrint(vecZ0) logger.debugPrint(vecZ0Transformed)
+                logger.print('should be') logger.debugPrint({xMid, yMid, zMid + 1})
                 -- logger.print('vecZ0Tilted straight and transformed =') logger.debugPrint(vecZ0Tilted) logger.debugPrint(vecZ0TiltedTransformed)
                 logger.print('x0, x1 =', x0, x1)
                 logger.print('y0, y1 =', y0, y1)
@@ -501,10 +507,16 @@ function data()
                 return
             end
             newCon.params = {
+                lolloBusStop_bothSides = 0,
+                lolloBusStop_direction = 0,
+                lolloBusStop_driveOnLeft = 0,
                 lolloBusStop_model = 5, -- it's easier to see transf problems
                 lolloBusStop_node0Id = node0Id, -- this stays because it's an integer
                 lolloBusStop_node1Id = node1Id, -- idem
+                lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
+                lolloBusStop_snapNodes = 3,
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
+                lolloBusStop_tramTrack = 0,
                 seed = math.abs(math.ceil(conTransf[13] * 1000)),
             }
             local paramsBak = arrayUtils.cloneDeepOmittingFields(newCon.params, {'seed'})
@@ -533,7 +545,7 @@ function data()
                         local conId = result.resultEntities[1]
                         logger.print('buildConstruction succeeded, stationConId = ', conId)
                         -- _utils.buildSnappyRoads(node0Id, node1Id, stationConId, newCon.fileName, paramsBak)
-                        -- _utils.upgradeCon(conId, newCon.fileName, paramsBak)
+                        _utils.upgradeCon(conId, newCon.fileName, paramsBak)
                     else
                         logger.warn('result =') logger.warningDebugPrint(result)
                     end

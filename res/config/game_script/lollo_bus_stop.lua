@@ -515,6 +515,7 @@ function data()
                 lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
                 lolloBusStop_snapNodes = 3,
                 -- LOLLO TODO This needs upgradeConstruction anyway, and it fails in curves even with shorter con edges. Check it.
+                -- The sharper the bends, the more the trouble - and some crashes appear.
                 -- On a deeper analysis, the transf is not good for curves, and I doubt it can be adjusted
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
                 lolloBusStop_tramTrack = 0,
@@ -564,6 +565,7 @@ function data()
                             logger.xpErrorHandler
                         )
                     else
+                        logger.warn('buildConstruction callback failed')
                         logger.warn('result =') logger.warningDebugPrint(result)
                     end
                 end

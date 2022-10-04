@@ -117,7 +117,7 @@ function data()
 								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
 							},  -- node 5
                         },
-						freeNodes = getSnapNodes(), -- useless
+						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},
                     },

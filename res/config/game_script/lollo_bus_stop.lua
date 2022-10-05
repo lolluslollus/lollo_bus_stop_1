@@ -160,10 +160,10 @@ function data()
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
-                    logger.print('buildSnappyRoads callback, success =', success)
-                    -- logger.debugPrint(result)
+                    logger.print('buildSnappyRoads callback, success =', success) -- logger.debugPrint(result)
                     if not(success) then
-                        logger.warn('buildSnappyRoads result =') logger.warningDebugPrint(result)
+                        logger.warn('buildSnappyRoads failed, proposal =') logger.warningDebugPrint(proposal)
+                        logger.warn('buildSnappyRoads failed, result =') logger.warningDebugPrint(result)
                     else
                         xpcall(
                             function()
@@ -182,7 +182,7 @@ function data()
                                         fileName,
                                         paramsNoSeed
                                     )
-                                    logger.print('upgradeConstruction succeeded') logger.debugPrint(upgradedConId)
+                                    logger.print('upgradeConstruction succeeded, conId =', upgradedConId or 'NIL')
                                 else
                                     logger.warn('cannot upgrade construction')
                                 end
@@ -292,17 +292,6 @@ function data()
             local result = {
                 assignToSide = nil,
             }
-            -- print('LOLLO attempting to place edge object with position =')
-            -- debugPrint(edgeObjPosition)
-            -- print('wholeEdge.node0pos =')
-            -- debugPrint(node0pos)
-            -- print('nodeBetween.position =')
-            -- debugPrint(nodeBetween.position)
-            -- print('nodeBetween.tangent =')
-            -- debugPrint(nodeBetween.tangent)
-            -- print('wholeEdge.node1pos =')
-            -- debugPrint(node1pos)
-    
             local edgeObjPosition_assignTo = nil
             local node0_assignTo = nil
             local node1_assignTo = nil
@@ -358,8 +347,7 @@ function data()
                 result.assignToSide = 1
             end
     
-            -- print('LOLLO assignment =')
-            -- debugPrint(result)
+            -- logger.print('LOLLO assignment =') logger.debugPrint(result)
             return result
         end,
         upgradeCon = function(conId, conParams)
@@ -467,7 +455,7 @@ function data()
                 -- unknownTransf[9] = ( -sinZX + sinZX * unknownTransf[1] ) / cosZX
                 -- unknownTransf[10] = sinZX * unknownTransf[2] / cosZX
                 -- unknownTransf[11] = ( cosZX + sinZX * unknownTransf[3] ) / cosZX
-                logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
+                -- logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
                 local conTransf = unknownTransf
                 logger.print('conTransf =') logger.debugPrint(conTransf)
@@ -476,18 +464,20 @@ function data()
                 local vecYTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecY0), conTransf)
                 local vecZ0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0), conTransf)
                 -- local vecZ0TiltedTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0Tilted), conTransf)
-                logger.print('vecX0 straight and transformed =') logger.debugPrint(vecX0) logger.debugPrint(vecX0Transformed)
-                logger.print('should be') logger.debugPrint({x0, y0, z0})
-                logger.print('vecX1 straight and transformed =') logger.debugPrint(vecX1) logger.debugPrint(vecX1Transformed)
-                logger.print('vecY0 straight and transformed =') logger.debugPrint(vecY0) logger.debugPrint(vecYTransformed)
-                logger.print('should be') logger.debugPrint({xMid - sinYX, yMid + cosYX, zMid})
-                logger.print('vecZ0 straight and transformed =') logger.debugPrint(vecZ0) logger.debugPrint(vecZ0Transformed)
-                logger.print('should be') logger.debugPrint({xMid, yMid, zMid + 1})
-                -- logger.print('vecZ0Tilted straight and transformed =') logger.debugPrint(vecZ0Tilted) logger.debugPrint(vecZ0TiltedTransformed)
-                logger.print('x0, x1 =', x0, x1)
-                logger.print('y0, y1 =', y0, y1)
-                logger.print('z0, z1 =', z0, z1)
-                logger.print('xMid, yMid, zMid =', xMid, yMid, zMid)
+                if logger.getIsExtendedLog() then
+                    print('vecX0 straight and transformed =') debugPrint(vecX0) debugPrint(vecX0Transformed)
+                    print('should be') debugPrint({x0, y0, z0})
+                    print('vecX1 straight and transformed =') debugPrint(vecX1) debugPrint(vecX1Transformed)
+                    print('vecY0 straight and transformed =') debugPrint(vecY0) debugPrint(vecYTransformed)
+                    print('should be') debugPrint({xMid - sinYX, yMid + cosYX, zMid})
+                    print('vecZ0 straight and transformed =') debugPrint(vecZ0) debugPrint(vecZ0Transformed)
+                    print('should be') debugPrint({xMid, yMid, zMid + 1})
+                    -- print('vecZ0Tilted straight and transformed =') debugPrint(vecZ0Tilted) debugPrint(vecZ0TiltedTransformed)
+                    print('x0, x1 =', x0, x1)
+                    print('y0, y1 =', y0, y1)
+                    print('z0, z1 =', z0, z1)
+                    print('xMid, yMid, zMid =', xMid, yMid, zMid)
+                end
                 return conTransf
             end
             local conTransf = getConTransf()
@@ -568,7 +558,8 @@ function data()
                         )
                     else
                         logger.warn('buildConstruction callback failed')
-                        logger.warn('result =') logger.warningDebugPrint(result)
+                        logger.warn('buildConstruction proposal =') logger.warningDebugPrint(proposal)
+                        logger.warn('buildConstruction result =') logger.warningDebugPrint(result)
                     end
                 end
             )
@@ -638,19 +629,25 @@ function data()
                         )
                     else
                         logger.warn('buildSnappyConstruction callback failed')
-                        logger.warn('result =') logger.warningDebugPrint(result)
+                        logger.warn('buildSnappyConstruction proposal =') logger.warningDebugPrint(proposal)
+                        logger.warn('buildSnappyConstruction result =') logger.warningDebugPrint(result)
                     end
                 end
             )
         end,
         bulldozeConstruction = function(constructionId)
             -- print('constructionId =', constructionId)
-            if type(constructionId) ~= 'number' or constructionId < 0 then return end
+            if type(constructionId) ~= 'number' or constructionId < 0 then
+                logger.warn('bulldozeConstruction got an invalid conId')
+                return
+            end
     
             local oldConstruction = api.engine.getComponent(constructionId, api.type.ComponentType.CONSTRUCTION)
-            -- print('oldConstruction =')
-            -- debugPrint(oldConstruction)
-            if not(oldConstruction) or not(oldConstruction.params) then return end
+            if not(oldConstruction) or not(oldConstruction.params) then
+                logger.warn('bulldozeConstruction got no con or a broken con')
+                logger.warn('oldConstruction =') logger.warningDebugPrint(oldConstruction)
+                return
+            end
     
             local proposal = api.type.SimpleProposal.new()
             -- LOLLO NOTE there are asymmetries how different tables are handled.
@@ -661,12 +658,14 @@ function data()
     
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, nil, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
-                function(res, success)
-                    -- print('LOLLO _bulldozeConstruction res = ')
-                    -- debugPrint(res)
-                    --for _, v in pairs(res.entities) do print(v) end
-                    -- print('LOLLO _bulldozeConstruction success = ')
-                    -- debugPrint(success)
+                function(result, success)
+                    if not(success) then
+                        logger.warn('bulldozeConstruction callback: failed to build')
+                        logger.warn('bulldozeConstruction proposal =') logger.warningDebugPrint(proposal)
+                        logger.warn('bulldozeConstruction result =') logger.warningDebugPrint(result)
+                    else
+                        logger.print('bulldozeConstruction callback succeeded')
+                    end
                 end
             )
         end,
@@ -707,9 +706,10 @@ function data()
                 api.cmd.make.buildProposal(proposal, nil, true),
                 function(result, success)
                     if not(success) then
-                        logger.warn('removeEdge failed, proposal = ') debugPrint(proposal)
+                        logger.warn('removeEdge failed, proposal = ') logger.warningDebugPrint(proposal)
+                        logger.warn('removeEdge failed, result = ') logger.warningDebugPrint(result)
                     else
-                        logger.print('removeEdge succeeded, result =') --debugPrint(result)
+                        logger.print('removeEdge succeeded, result =') --logger.debugPrint(result)
                         if not(successEventName) then return end
 
                         xpcall(
@@ -817,15 +817,11 @@ function data()
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, nil, true),
                 function(result, success)
-                    -- print('LOLLO res = ')
-                    -- debugPrint(res)
-                    --for _, v in pairs(res.entities) do print(v) end
-                    -- print('LOLLO success = ')
-                    -- debugPrint(success)
                     if not(success) then
-                        logger.warn('replaceEdgeWithSame failed, proposal = ') debugPrint(proposal)
+                        logger.warn('replaceEdgeWithSame failed, proposal = ') logger.warningDebugPrint(proposal)
+                        logger.warn('replaceEdgeWithSame failed, result = ') logger.warningDebugPrint(result)
                     else
-                        logger.print('replaceEdgeWithSame succeeded, result =') --debugPrint(result)
+                        logger.print('replaceEdgeWithSame succeeded, result =') --logger.debugPrint(result)
                         if not(successEventName) then return end
 
                         xpcall(
@@ -848,6 +844,7 @@ function data()
             )
         end,
         splitEdge = function(wholeEdgeId, nodeBetween, successEventName, successEventArgs)
+            logger.print('splitEdge starting')
             if not(edgeUtils.isValidAndExistingId(wholeEdgeId)) or type(nodeBetween) ~= 'table' then return end
     
             local oldBaseEdge = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.BASE_EDGE)
@@ -921,7 +918,7 @@ function data()
                 local edge1Objects = {}
                 for _, edgeObj in pairs(oldBaseEdge.objects) do
                     local edgeObjPosition = edgeUtils.getObjectPosition(edgeObj[1])
-                    -- print('edge object position =') debugPrint(edgeObjPosition)
+                    -- logger.print('edge object position =') logger.debugPrint(edgeObjPosition)
                     if type(edgeObjPosition) ~= 'table' then return end -- change nothing and leave
                     local assignment = _utils.getWhichEdgeGetsEdgeObjectAfterSplit(
                         edgeObjPosition,
@@ -968,13 +965,11 @@ function data()
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
-                    -- print('LOLLO street splitter callback returned result = ')
-                    -- debugPrint(result)
-                    -- print('LOLLO street splitter callback returned success = ', success)
                     if not(success) then
-                        logger.warn('splitEdge failed, proposal = ') debugPrint(proposal)
+                        logger.warn('splitEdge failed, proposal = ') logger.warningDebugPrint(proposal)
+                        logger.warn('splitEdge failed, result = ') logger.warningDebugPrint(result)
                     else
-                        logger.print('replaceEdgeWithSame succeeded, result =') --debugPrint(result)
+                        logger.print('splitEdge succeeded, result =') -- logger.debugPrint(result)
                         if not(successEventName) then return end
 
                         xpcall(

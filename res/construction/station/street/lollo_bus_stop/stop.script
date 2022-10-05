@@ -249,7 +249,7 @@ function data()
 			end
             terminateConstructionHook()
 
-            -- logger.print('result = ') logger.debugPrint(result)
+            logger.print('updateFn.script result = ') logger.debugPrint(result)
 			return result
 		end,
 --[[  	

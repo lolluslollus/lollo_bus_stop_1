@@ -526,6 +526,7 @@ function data()
 
             local newCon = api.type.SimpleProposal.ConstructionEntity.new()
             newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
+            -- newCon.fileName = 'station/street/lollo_bus_stop/stop_3.con' -- LOLLO TODO try the new parametric construction so it sticks to curves
             local allStreetData = streetUtils.getGlobalStreetData()
             -- logger.print('allStreetData =') logger.debugPrint(allStreetData)
             local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
@@ -1251,7 +1252,7 @@ function data()
                     elseif name == _eventProperties.buildConRequested.eventName then
                         _actions.buildConstruction(args.node0Id, args.node1Id, args.transf0, args.transf1, args.transfMid, args.streetType)
                     elseif name == _eventProperties.conBuilt.eventName then
-                        _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
+                        -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.snappyConBuilt.eventName then
                         -- _utils.upgradeCon(args.conId, args.conParams)

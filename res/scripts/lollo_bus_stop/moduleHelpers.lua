@@ -1,6 +1,7 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local logger = require('lollo_bus_stop.logger')
 local pitchHelpers = require('lollo_bus_stop.pitchHelper')
+local stringUtils = require('lollo_bus_stop.stringUtils')
 
 local helpers = {}
 helpers.getGroundFace = function(face, key)
@@ -181,4 +182,23 @@ helpers.updateParamValues_model = function(params, modelData)
     end
 end
 
+local _decimalFiguresCount = 14
+helpers.getFloatFromIntParams = function(params, name1, name2)
+    local _integerNum = (params[name1] or 0)
+    local _sgn = _integerNum < 1 and -1 or 1
+    local _decimalNum = (params[name2] or 0)
+    local result = _integerNum + _decimalNum * (10 ^ -_decimalFiguresCount) * _sgn
+    return result
+end
+helpers.setIntParamsFromFloat = function(params, name1, name2, float)
+    local _float = type(float) ~= 'number' and 0.0 or float
+    local _format = '%.' .. tostring(_decimalFiguresCount) .. 'f' -- floating point number with (_decimalFiguresCount) decimal figures
+    local _floatStr = _format:format(_float)
+    local integerStr, decimalStr = table.unpack(stringUtils.stringSplit(_floatStr, '.'))
+    if not(integerStr) then integerStr = '0' end
+    if not(decimalStr) then decimalStr = '0' end
+
+    params[name1] = tonumber(integerStr)
+    params[name2] = tonumber(decimalStr)
+end
 return helpers

@@ -1165,8 +1165,8 @@ function data()
                         local length = edgeUtils.getEdgeLength(args.edgeId)
                         if length < constants.outerEdgeX * 2 then return end -- LOLLO TODO if everything else works, join adjacent edges until one is long enough
 
-                        local transf0Outer = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
-                        local transf1Outer = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
+                        local outerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
+                        local outerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
                         local transf0Inner = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.innerEdgeX)
                         local transf1Inner = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.innerEdgeX)
                         -- these are identical to the ones above, except they only have the position
@@ -1174,8 +1174,8 @@ function data()
                         local pos1Outer = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
                         local pos0Inner = transfUtils.getVec123Transformed({constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
                         local pos1Inner = transfUtils.getVec123Transformed({-constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        logger.print('transf0Outer =') logger.debugPrint(transf0Outer)
-                        logger.print('transf1Outer =') logger.debugPrint(transf1Outer)
+                        logger.print('outerTransf0 =') logger.debugPrint(outerTransf0)
+                        logger.print('outerTransf1 =') logger.debugPrint(outerTransf1)
                         logger.print('pos0Outer =') logger.debugPrint(pos0Outer)
                         logger.print('pos1Outer =') logger.debugPrint(pos1Outer)
                         logger.print('transf0Inner =') logger.debugPrint(transf0Inner)
@@ -1186,9 +1186,9 @@ function data()
                         local nodeBetween = edgeUtils.getNodeBetweenByPosition(
                             args.edgeId,
                             {
-                                x = transf0Outer[13],
-                                y = transf0Outer[14],
-                                z = transf0Outer[15],
+                                x = outerTransf0[13],
+                                y = outerTransf0[14],
+                                z = outerTransf0[15],
                             }
                         )
                         logger.print('first nodeBetween =') logger.debugPrint(nodeBetween)
@@ -1198,8 +1198,8 @@ function data()
                             _eventProperties.secondSplitRequested.eventName,
                             {
                                 streetType = args.streetType,
-                                transf0Outer = transf0Outer,
-                                transf1Outer = transf1Outer,
+                                outerTransf0 = outerTransf0,
+                                outerTransf1 = outerTransf1,
                                 transfMid = args.edgeObjectTransf,
                             }
                         )
@@ -1213,9 +1213,9 @@ function data()
                         local getSplitData = function()
                             local edgeId2BeSplit = nil
                             local nodeBetween = nil
-                            logger.print('args.transf1Outer[13] =', args.transf1Outer[13])
-                            logger.print('args.transf1Outer[14] =', args.transf1Outer[14])
-                            logger.print('args.transf1Outer[15] =', args.transf1Outer[15])
+                            logger.print('args.outerTransf1[13] =', args.outerTransf1[13])
+                            logger.print('args.outerTransf1[14] =', args.outerTransf1[14])
+                            logger.print('args.outerTransf1[15] =', args.outerTransf1[15])
                             local minDistance = 9999.9
                             for _, edgeId in pairs(args.outerNode0EdgeIds) do
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
@@ -1228,15 +1228,15 @@ function data()
                                         local testNodeBetween = edgeUtils.getNodeBetweenByPosition(
                                             edgeId,
                                             {
-                                                x = args.transf1Outer[13],
-                                                y = args.transf1Outer[14],
-                                                z = args.transf1Outer[15],
+                                                x = args.outerTransf1[13],
+                                                y = args.outerTransf1[14],
+                                                z = args.outerTransf1[15],
                                             }
                                             -- logger.getIsExtendedLog()
                                         )
                                         logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
                                         if testNodeBetween ~= nil then
-                                            local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.transf1Outer))
+                                            local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.outerTransf1))
                                             logger.print('currentDistance =') logger.debugPrint(currentDistance)
                                             if currentDistance ~= nil and currentDistance < minDistance then
                                                 logger.print('setting nodeBetween')

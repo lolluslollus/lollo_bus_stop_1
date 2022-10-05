@@ -2,6 +2,7 @@ local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local constants = require('lollo_bus_stop.constants')
 local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local logger = require('lollo_bus_stop.logger')
+local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
 local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 local streetUtils = require('lollo_bus_stop.streetUtils')
 local transfUtils = require('lollo_bus_stop.transfUtils')
@@ -208,7 +209,7 @@ function data()
                 function()
                     -- this tries to build the construction, it calls con.updateFn()
                     local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
-                    logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
+                    -- logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
 
                     if proposalData.errorState ~= nil then
                         if proposalData.errorState.critical == true then
@@ -540,6 +541,29 @@ function data()
                 return
             end
             local newParams = {
+                lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
+                lolloBusStop_testVeryLarge = 100000000.123455, -- it becomes 1.2345678901235e+19
+                -- these disappear at the first upgrade
+                -- lolloBusStop_testTable = {123, 456},
+                -- lolloBusStop_testDec = {-123.456},
+                -- lolloBusStop_testStr = '-123.456',
+                -- lolloBusStop_testStrTab1 = {'-123.456'},
+                -- lolloBusStop_testStrTab2 = {'-123.456, 124.457'},
+                -- state = {
+                --     lolloBusStop_testTable = {123, 456},
+                --     lolloBusStop_testDec = {-123.456},
+                --     lolloBusStop_testStr = '-123.456',
+                --     lolloBusStop_testStrTab1 = {'-123.456'},
+                --     lolloBusStop_testStrTab2 = {'-123.456, 124.457'},
+                -- },
+                -- paramLOL = {
+                --     lolloBusStop_testTable = {123, 456},
+                --     lolloBusStop_testDec = {-123.456},
+                --     lolloBusStop_testStr = '-123.456',
+                --     lolloBusStop_testStrTab1 = {'-123.456'},
+                --     lolloBusStop_testStrTab2 = {'-123.456, 124.457'},
+                -- },
+
                 lolloBusStop_bothSides = 0,
                 lolloBusStop_direction = 0,
                 lolloBusStop_driveOnLeft = 0,
@@ -556,6 +580,14 @@ function data()
                 lolloBusStop_tramTrack = 0,
                 seed = math.abs(math.ceil(conTransf[13] * 1000)),
             }
+            -- these work
+            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt1', 'testVeryLargeDec1', -15000.00000001, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt2', 'testVeryLargeDec2', -15000.000000001, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt3', 'testVeryLargeDec3', -15000.0000000001, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt4', 'testVeryLargeDec4', 15000.00000001, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt5', 'testVeryLargeDec5', 15000.000000001, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt6', 'testVeryLargeDec6', 15000.0000000001, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt7', 'testVeryLargeDec7', 1.5000e-5, 'lolloBusStop_')
             -- clone your own variable, it's safer than cloning newCon.params, which is userdata
             local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
             newCon.params = newParams

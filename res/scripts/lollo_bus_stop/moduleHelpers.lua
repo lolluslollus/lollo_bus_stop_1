@@ -182,23 +182,30 @@ helpers.updateParamValues_model = function(params, modelData)
     end
 end
 
-local _decimalFiguresCount = 14
-helpers.getFloatFromIntParams = function(params, name1, name2)
-    local _integerNum = (params[name1] or 0)
+local _decimalFiguresCount = 9 -- must be smaller than 2147483648
+helpers.getFloatFromIntParams = function(params, name1, name2, paramNamePrefix)
+    local _name1 = tostring(paramNamePrefix or '') .. name1
+    local _name2 = tostring(paramNamePrefix or '') .. name2
+    local _integerNum = (params[_name1] or 0)
     local _sgn = _integerNum < 1 and -1 or 1
-    local _decimalNum = (params[name2] or 0)
+    local _decimalNum = (params[_name2] or 0)
     local result = _integerNum + _decimalNum * (10 ^ -_decimalFiguresCount) * _sgn
     return result
 end
-helpers.setIntParamsFromFloat = function(params, name1, name2, float)
+helpers.setIntParamsFromFloat = function(params, name1, name2, float, paramNamePrefix)
+    local _name1 = tostring(paramNamePrefix or '') .. name1
+    local _name2 = tostring(paramNamePrefix or '') .. name2
     local _float = type(float) ~= 'number' and 0.0 or float
     local _format = '%.' .. tostring(_decimalFiguresCount) .. 'f' -- floating point number with (_decimalFiguresCount) decimal figures
     local _floatStr = _format:format(_float)
+    logger.print('_floatStr =', _floatStr)
     local integerStr, decimalStr = table.unpack(stringUtils.stringSplit(_floatStr, '.'))
+    logger.print('integerStr =', integerStr)
+    logger.print('decimalStr =', decimalStr)
     if not(integerStr) then integerStr = '0' end
     if not(decimalStr) then decimalStr = '0' end
 
-    params[name1] = tonumber(integerStr)
-    params[name2] = tonumber(decimalStr)
+    params[_name1] = tonumber(integerStr)
+    params[_name2] = tonumber(decimalStr)
 end
 return helpers

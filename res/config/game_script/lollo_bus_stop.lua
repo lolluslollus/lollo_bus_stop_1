@@ -754,6 +754,7 @@ function data()
             local proposal = api.type.SimpleProposal.new()
             proposal.constructionsToAdd[1] = newCon
             proposal.constructionsToRemove = { oldConId }
+            proposal.old2new = { {oldConId, 1} } -- LOLLO TODO check this
 
             local context = api.type.Context:new()
             -- context.checkTerrainAlignment = true -- default is false

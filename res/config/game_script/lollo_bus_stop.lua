@@ -450,7 +450,10 @@ function data()
                 logger.print('ipotenusaYX =', ipotenusaYX, 'sinYX =', sinYX, 'cosYX =', cosYX)
                 local vecY0 = {0, 1, 0} -- transforms to {xMid - sinYX, yMid + cosYX, zMid}
                 local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
-                local vecZ1 = {0, 0, -1} -- transforms to {xMid, yMid, zMid - 1}
+                local ipotenusaZX = math.sqrt((x1 - x0)^2 + (z1 - z0)^2)
+                local sinZX = (z1-z0) / ipotenusaZX
+                local cosZX = (x1-x0) / ipotenusaZX
+                local vecZTilted = {0, 0, 1} -- transforms to {xMid - sinZX, yMid, zMid + cosZX}
                 --[[
                     x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
                     y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
@@ -481,20 +484,17 @@ function data()
                 unknownTransf[6] = cosYX
                 unknownTransf[7] = 0
                 -- solving for vecZ0 vertical
+                -- this makes buildings vertical, the points match
                 unknownTransf[9] = 0
                 unknownTransf[10] = 0
-                unknownTransf[11] = 1 -- this is probably wrong: as it is, it does not tilt, so the construction makes a step. Try tilting it.
+                unknownTransf[11] = 1
                 logger.print('unknownTransf straight =') logger.debugPrint(unknownTransf)
                 -- solving for vecZ0 tilted
-                -- local ipotenusaZX = math.sqrt((z1-z0)^2 + (x1-x0)^2)
-                -- local sinZX = (z1-z0) / ipotenusaZX
-                -- local cosZX = (x1-x0) / ipotenusaZX
-                -- logger.print('ipotenusaZX =', ipotenusaZX, 'sinZX =', sinZX, 'cosZX =', cosZX)
-                -- local vecZ0Tilted = {-sinZX, 0, cosZX} -- transforms to {xMid - sinZX, yMid, zMid + cosZX}
-                -- local vecZ1Tilted = {sinZX, 0, -cosZX} -- transforms to {xMid + sinZX, yMid, zMid - cosZX}
-                -- unknownTransf[9] = ( -sinZX + sinZX * unknownTransf[1] ) / cosZX
-                -- unknownTransf[10] = sinZX * unknownTransf[2] / cosZX
-                -- unknownTransf[11] = ( cosZX + sinZX * unknownTransf[3] ) / cosZX
+                -- this makes buildings perpendicular to the road, the points match. Curves seem to get less angry.
+                -- LOLLO TODO decide on this or its twin above
+                unknownTransf[9] = -sinZX
+                unknownTransf[10] = 0
+                unknownTransf[11] = cosZX
                 -- logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
                 local conTransf = unknownTransf
@@ -511,7 +511,8 @@ function data()
                     print('vecY0 straight and transformed =') debugPrint(vecY0) debugPrint(vecYTransformed)
                     print('should be') debugPrint({xMid - sinYX, yMid + cosYX, zMid})
                     print('vecZ0 straight and transformed =') debugPrint(vecZ0) debugPrint(vecZ0Transformed)
-                    print('should be') debugPrint({xMid, yMid, zMid + 1})
+                    print('should be (vertical)') debugPrint({xMid, yMid, zMid + 1})
+                    print('or, it should be (perpendicular)') debugPrint({xMid - sinZX, yMid, zMid + cosZX})
                     -- print('vecZ0Tilted straight and transformed =') debugPrint(vecZ0Tilted) debugPrint(vecZ0TiltedTransformed)
                     print('x0, x1 =', x0, x1)
                     print('y0, y1 =', y0, y1)

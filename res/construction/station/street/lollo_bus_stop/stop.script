@@ -8,7 +8,7 @@ local transfUtilsUG = require('transf')
 function data()
 	return {
 		updateFn = function(params, two)
-			logger.print('updateFn() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
+			logger.print('updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
 			local getSnapNodes = function()
 				if params.lolloBusStop_direction == 0 then
 					if params.lolloBusStop_snapNodes == 0 then return {}
@@ -35,26 +35,26 @@ function data()
 				if params.lolloBusStop_direction ~= 0 and params.lolloBusStop_direction ~= 1 then params.lolloBusStop_direction = 1 end
 				if not(params.lolloBusStop_streetType_) or not(two.globalStreetData[params.lolloBusStop_streetType_ + 1]) then
 					params.lolloBusStop_streetType_ = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
-					logger.print('params.lolloBusStop_streetType_ set to') debugPrint(params.lolloBusStop_streetType_)
+					logger.print('updateFn.script set params.lolloBusStop_streetType_ to') debugPrint(params.lolloBusStop_streetType_)
 				else
-					logger.print('params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
-					logger.print('moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
+					logger.print('updateFn.script params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
+					logger.print('updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
 				end
 				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
 					params.lolloBusStop_model = 0
-					logger.print('params.lolloBusStop_model set to') debugPrint(params.lolloBusStop_model)
+					logger.print('updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
 				else
-					logger.print('params.lolloBusStop_model =', params.lolloBusStop_model)
+					logger.print('updateFn.script params.lolloBusStop_model =', params.lolloBusStop_model)
 				end
 			end
 			_initParams()
 
 			local _pitchAngle = pitchHelpers.getPitchAngle(params)
-			logger.print('_pitchAngle =') logger.debugPrint(_pitchAngle)
+			logger.print('updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
 			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
-			logger.print('_selectedStreetData =') logger.debugPrint(_selectedStreetData)
+			logger.print('updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
@@ -65,7 +65,7 @@ function data()
 			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
-			logger.print('_selectedModel =') logger.debugPrint(_selectedModel)
+			logger.print('updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
             local result = {
                 colliders = {},
                 cost = 1000,
@@ -288,7 +288,7 @@ function data()
  		-- useless
 		upgradeFn = function(one, two)
 			logger.print('upgradeFn.script starting, one =') logger.debugPrint(one)
-			logger.print('two =') logger.debugPrint(two)
+			logger.print('upgradeFn.script two =') logger.debugPrint(two)
 			return {}
         end,
 	}

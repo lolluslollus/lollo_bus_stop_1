@@ -15,6 +15,7 @@ local _eventProperties = {
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
     removeEdgeBetween = { conName = nil, eventName = 'removeEdgeBetween' },
     secondSplitRequested = { conName = nil, eventName = 'secondSplitRequested'},
+    upgradeConRequested = { conName = nil, eventName = 'upgradeConRequested'},
 }
 
 local _guiConstants = {
@@ -513,7 +514,8 @@ function data()
                 lolloBusStop_node0Id = node0Id, -- this stays across upgrades because it's an integer
                 lolloBusStop_node1Id = node1Id, -- idem
                 lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
-                lolloBusStop_snapNodes = 3,
+                -- lolloBusStop_snapNodes = 3,
+                lolloBusStop_snapNodes = 0,
                 -- LOLLO TODO This needs upgradeConstruction anyway, and it fails in curves even with shorter con edges. Check it.
                 -- The sharper the bends, the more the trouble - and some crashes appear.
                 -- On a deeper analysis, the transf is not good for curves, and I doubt it can be adjusted
@@ -571,7 +573,76 @@ function data()
                 end
             )
         end,
+        buildSnappyConstruction = function(oldConId, conParams, conTransf)
+            logger.print('buildSnappyConstruction starting, oldConId =', oldConId or 'NIL')
+            logger.print('conParams =') logger.debugPrint(conParams)
+            logger.print('conTransf =') logger.debugPrint(conTransf)
 
+            if not(edgeUtils.isValidAndExistingId(oldConId)) then
+                logger.err('buildSnappyConstruction got an invalid conId =', oldConId or 'NIL')
+                return
+            end
+            local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
+            if not(oldCon) then
+                logger.err('buildSnappyConstruction got an invalid con =')
+                return
+            end
+
+            local newCon = api.type.SimpleProposal.ConstructionEntity.new()
+            newCon.fileName = oldCon.fileName
+            local newParams = conParams
+            newParams.lolloBusStop_snapNodes = 3
+            newParams.seed = conParams.seed + 1
+            -- clone your own variable, it's safer than cloning newCon.params, which is userdata
+            local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
+            logger.print('buildSnappyConstruction just made conParamsBak, it is') logger.debugPrint(conParamsBak)
+            newCon.params = newParams
+            newCon.playerEntity = api.engine.util.getPlayer()
+            newCon.transf = api.type.Mat4f.new(
+                api.type.Vec4f.new(conTransf[1], conTransf[2], conTransf[3], conTransf[4]),
+                api.type.Vec4f.new(conTransf[5], conTransf[6], conTransf[7], conTransf[8]),
+                api.type.Vec4f.new(conTransf[9], conTransf[10], conTransf[11], conTransf[12]),
+                api.type.Vec4f.new(conTransf[13], conTransf[14], conTransf[15], conTransf[16])
+            )
+            local proposal = api.type.SimpleProposal.new()
+            proposal.constructionsToAdd[1] = newCon
+            proposal.constructionsToRemove = { oldConId }
+
+            local context = api.type.Context:new()
+            -- context.checkTerrainAlignment = true -- default is false
+            -- context.cleanupStreetGraph = true -- default is false
+            -- context.gatherBuildings = true -- default is false
+            -- context.gatherFields = true -- default is true
+            context.player = api.engine.util.getPlayer()
+            api.cmd.sendCommand(
+                api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
+                function(result, success)
+                    logger.print('buildSnappyConstruction callback, success =', success)
+                    -- logger.debugPrint(result)
+                    if success then
+                        local newConId = result.resultEntities[1]
+                        logger.print('buildSnappyConstruction succeeded, stationConId = ', newConId)
+                        xpcall(
+                            function ()
+                                api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                                    string.sub(debug.getinfo(1, 'S').source, 1),
+                                    _eventId,
+                                    _eventProperties.upgradeConRequested.eventName,
+                                    {
+                                        conId = newConId,
+                                        conParams = conParamsBak,
+                                    }
+                                ))
+                            end,
+                            logger.xpErrorHandler
+                        )
+                    else
+                        logger.warn('buildSnappyConstruction callback failed')
+                        logger.warn('result =') logger.warningDebugPrint(result)
+                    end
+                end
+            )
+        end,
         bulldozeConstruction = function(constructionId)
             -- print('constructionId =', constructionId)
             if type(constructionId) ~= 'number' or constructionId < 0 then return end
@@ -1128,7 +1199,9 @@ function data()
                     elseif name == _eventProperties.buildConRequested.eventName then
                         _actions.buildConstruction(args.node0Id, args.node1Id, args.transf0, args.transf1, args.transfMid, args.streetType)
                     elseif name == _eventProperties.buildSnappyConRequested.eventName then
-                        _utils.upgradeCon(args.conId, args.conParams)
+                        -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
+                    elseif name == _eventProperties.upgradeConRequested.eventName then
+                        -- _utils.upgradeCon(args.conId, args.conParams)
                     end
                 end,
                 logger.xpErrorHandler

@@ -11,7 +11,7 @@ local transfUtilsUG = require('transf')
 local _eventId = '__lolloStreetsidePassengerStopsEvent__'
 local _eventProperties = {
     buildConRequested = { conName = nil, eventName = 'buildConRequested' },
-    buildSnappyConRequested = { conName = nil, eventName = 'buildSnappyConRequested' },
+    conBuilt = { conName = nil, eventName = 'conBuilt' },
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
     removeEdgeBetween = { conName = nil, eventName = 'removeEdgeBetween' },
     secondSplitRequested = { conName = nil, eventName = 'secondSplitRequested'},
@@ -195,6 +195,46 @@ function data()
                     end
                 end
             )
+        end,
+        -- this is not so good, UG TODO must make a proper upfront estimator
+        checkProposalUpfront = function(proposal, context)
+            logger.print('checkProposalUpfront starting')
+            if not(proposal) then logger.err('checkProposalUpfront got no proposal') return nil, nil end
+            if not(context) then logger.err('checkProposalUpfront got no context') return nil, nil end
+
+            local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
+            logger.print('checkProposalUpfront proposalData =') logger.debugPrint(proposalData)
+            local isErrorsOtherThanCollision = false
+            local isWarnings = false
+
+            if proposalData.errorState ~= nil
+            and proposalData.errorState.critical == false
+            and proposalData.errorState.messages ~= nil
+            then
+                for _, message in pairs(proposalData.errorState.messages) do
+                    logger.print('looping over messages ONE, message =', message)
+                    if message ~= 'Collision' then
+                        isErrorsOtherThanCollision = true
+                        break
+                    end
+                end
+                for _, warning in pairs(proposalData.errorState.warnings) do
+                    logger.print('looping over warnings ONE, warnings =', warning)
+                    isWarnings = true
+                    break
+                end
+                -- for i = 1, #proposalData.errorState.messages, 1 do
+                --     local message = proposalData.errorState.messages[i]
+                --     logger.print('looping over messages TWO, message =', message)
+                --     if message ~= 'Collision' then
+                --         isErrorsOtherThanCollision = true
+                --         break
+                --     end
+                -- end
+            end
+            logger.print('checkProposalUpfront isErrorsOtherThanCollision =', isErrorsOtherThanCollision)
+            logger.print('checkProposalUpfront isWarnings =', isWarnings)
+            return isErrorsOtherThanCollision, isWarnings
         end,
         getNewlyBuiltEdgeId = function(result)
             -- result.proposal.proposal.addedSegments[1].entity is not always available, UG TODO this api should always return an edgeId
@@ -533,7 +573,15 @@ function data()
             -- context.gatherBuildings = true -- default is false
             -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
+            local isErrorsOtherThanCollision, isWarnings = _utils.checkProposalUpfront(proposal, context)
+            if isErrorsOtherThanCollision or isWarnings then
+                logger.warn('buildConstruction made a dangerous proposal')
+                -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
+                return
+            end
             api.cmd.sendCommand(
+                -- LOLLO TODO let's try without force and see if the random crashes go away. Not a good idea
+                -- coz it fails to build very often, because of collisions
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
                     logger.print('buildConstruction callback, success =', success)
@@ -546,7 +594,7 @@ function data()
                                 api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                     string.sub(debug.getinfo(1, 'S').source, 1),
                                     _eventId,
-                                    _eventProperties.buildSnappyConRequested.eventName,
+                                    _eventProperties.conBuilt.eventName,
                                     {
                                         conId = conId,
                                         conParams = conParamsBak,
@@ -560,6 +608,7 @@ function data()
                         logger.warn('buildConstruction callback failed')
                         logger.warn('buildConstruction proposal =') logger.warningDebugPrint(proposal)
                         logger.warn('buildConstruction result =') logger.warningDebugPrint(result)
+                        -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
                     end
                 end
             )
@@ -605,11 +654,17 @@ function data()
             -- context.gatherBuildings = true -- default is false
             -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
+            local isErrorsOtherThanCollision, isWarnings = _utils.checkProposalUpfront(proposal, context)
+            if isErrorsOtherThanCollision or isWarnings then
+                logger.warn('buildSnappyConstruction made a dangerous proposal')
+                return
+            end
             api.cmd.sendCommand(
-                api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
+                -- LOLLO TODO let's try without force and see if the random crashes go away, yes they do, some of them.
+                -- Only checking for collisions won't do, we may have to use a parametric con since the transf cannot be perfect in curves
+                api.cmd.make.buildProposal(proposal, context, false), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
-                    logger.print('buildSnappyConstruction callback, success =', success)
-                    -- logger.debugPrint(result)
+                    logger.print('buildSnappyConstruction callback, success =', success) -- logger.debugPrint(result)
                     if success then
                         local newConId = result.resultEntities[1]
                         logger.print('buildSnappyConstruction succeeded, stationConId = ', newConId)
@@ -1193,8 +1248,9 @@ function data()
                         _actions.removeEdge(edgeIdsBetweenNodes[1], _eventProperties.buildConRequested.eventName, args)
                     elseif name == _eventProperties.buildConRequested.eventName then
                         _actions.buildConstruction(args.node0Id, args.node1Id, args.transf0, args.transf1, args.transfMid, args.streetType)
-                    elseif name == _eventProperties.buildSnappyConRequested.eventName then
+                    elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
+                        -- _utils.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.upgradeConRequested.eventName then
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     end

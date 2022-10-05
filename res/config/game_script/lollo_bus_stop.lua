@@ -10,10 +10,10 @@ local transfUtilsUG = require('transf')
 
 local _eventId = '__lolloStreetsidePassengerStopsEvent__'
 local _eventProperties = {
-    buildConRequested = { conName = nil, eventName = 'buildConRequested' },
+    segmentRemoved = { conName = nil, eventName = 'segmentRemoved' },
     conBuilt = { conName = nil, eventName = 'conBuilt' },
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
-    removeEdgeBetween = { conName = nil, eventName = 'removeEdgeBetween' },
+    secondSplitDone = { conName = nil, eventName = 'secondSplitDone' },
     secondSplitRequested = { conName = nil, eventName = 'secondSplitRequested'},
     snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
 }
@@ -425,9 +425,8 @@ function data()
         end,
     }
     local _actions = {
-        buildConstruction = function(node0Id, node1Id, transf0, transf1, transfMid, streetType)
+        buildConstruction = function(node0Id, node1Id, streetType)
             logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
-            logger.print('transfMid =') logger.debugPrint(transfMid)
 
             local baseNode0 = api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE)
             local baseNode1 = api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE)
@@ -498,6 +497,7 @@ function data()
                 unknownTransf[9] = -sinZX
                 unknownTransf[10] = 0
                 unknownTransf[11] = cosZX
+                logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
                 local conTransf = unknownTransf
                 logger.print('conTransf =') logger.debugPrint(conTransf)
@@ -1133,22 +1133,30 @@ function data()
                         local length = edgeUtils.getEdgeLength(args.edgeId)
                         if length < constants.outerEdgeX * 2 then return end -- LOLLO TODO if everything else works, join adjacent edges until one is long enough
 
-                        local transf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
-                        local transf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
+                        local transf0Outer = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
+                        local transf1Outer = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
+                        local transf0Inner = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.innerEdgeX)
+                        local transf1Inner = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.innerEdgeX)
                         -- these are identical to the ones above, except they only have the position
-                        local pos0 = transfUtils.getVec123Transformed({constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        local pos1 = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        logger.print('transf0 =') logger.debugPrint(transf0)
-                        logger.print('transf1 =') logger.debugPrint(transf1)
-                        logger.print('pos0 =') logger.debugPrint(pos0)
-                        logger.print('pos1 =') logger.debugPrint(pos1)
+                        local pos0Outer = transfUtils.getVec123Transformed({constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        local pos1Outer = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        local pos0Inner = transfUtils.getVec123Transformed({constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        local pos1Inner = transfUtils.getVec123Transformed({-constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        logger.print('transf0Outer =') logger.debugPrint(transf0Outer)
+                        logger.print('transf1Outer =') logger.debugPrint(transf1Outer)
+                        logger.print('pos0Outer =') logger.debugPrint(pos0Outer)
+                        logger.print('pos1Outer =') logger.debugPrint(pos1Outer)
+                        logger.print('transf0Inner =') logger.debugPrint(transf0Inner)
+                        logger.print('transf1Inner =') logger.debugPrint(transf1Inner)
+                        logger.print('pos0Inner =') logger.debugPrint(pos0Inner)
+                        logger.print('pos1Inner =') logger.debugPrint(pos1Inner)
 
                         local nodeBetween = edgeUtils.getNodeBetweenByPosition(
                             args.edgeId,
                             {
-                                x = transf0[13],
-                                y = transf0[14],
-                                z = transf0[15],
+                                x = transf0Outer[13],
+                                y = transf0Outer[14],
+                                z = transf0Outer[15],
                             }
                         )
                         logger.print('first nodeBetween =') logger.debugPrint(nodeBetween)
@@ -1158,8 +1166,8 @@ function data()
                             _eventProperties.secondSplitRequested.eventName,
                             {
                                 streetType = args.streetType,
-                                transf0 = transf0,
-                                transf1 = transf1,
+                                transf0Outer = transf0Outer,
+                                transf1Outer = transf1Outer,
                                 transfMid = args.edgeObjectTransf,
                             }
                         )
@@ -1173,9 +1181,9 @@ function data()
                         local getSplitData = function()
                             local edgeId2BeSplit = nil
                             local nodeBetween = nil
-                            logger.print('args.transf1[13] =', args.transf1[13])
-                            logger.print('args.transf1[14] =', args.transf1[14])
-                            logger.print('args.transf1[15] =', args.transf1[15])
+                            logger.print('args.transf1Outer[13] =', args.transf1Outer[13])
+                            logger.print('args.transf1Outer[14] =', args.transf1Outer[14])
+                            logger.print('args.transf1Outer[15] =', args.transf1Outer[15])
                             local minDistance = 9999.9
                             for _, edgeId in pairs(args.node0EdgeIds) do
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
@@ -1188,15 +1196,15 @@ function data()
                                         local testNodeBetween = edgeUtils.getNodeBetweenByPosition(
                                             edgeId,
                                             {
-                                                x = args.transf1[13],
-                                                y = args.transf1[14],
-                                                z = args.transf1[15],
+                                                x = args.transf1Outer[13],
+                                                y = args.transf1Outer[14],
+                                                z = args.transf1Outer[15],
                                             }
                                             -- logger.getIsExtendedLog()
                                         )
                                         logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
                                         if testNodeBetween ~= nil then
-                                            local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.transf1))
+                                            local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.transf1Outer))
                                             logger.print('currentDistance =') logger.debugPrint(currentDistance)
                                             if currentDistance ~= nil and currentDistance < minDistance then
                                                 logger.print('setting nodeBetween')
@@ -1221,8 +1229,8 @@ function data()
                         end
 
                         logger.print('final nodeBetween =') logger.debugPrint(nodeBetween)
-                        _actions.splitEdge(edgeId2BeSplit, nodeBetween, _eventProperties.removeEdgeBetween.eventName, args)
-                    elseif name == _eventProperties.removeEdgeBetween.eventName then
+                        _actions.splitEdge(edgeId2BeSplit, nodeBetween, _eventProperties.secondSplitDone.eventName, args)
+                    elseif name == _eventProperties.secondSplitDone.eventName then
                         if not(edgeUtils.isValidAndExistingId(args.node0Id)) or not(edgeUtils.isValidAndExistingId(args.node1Id)) then
                             logger.warn('node0Id or node1Id is invalid')
                             return
@@ -1248,9 +1256,9 @@ function data()
                             return
                         end
 
-                        _actions.removeEdge(edgeIdsBetweenNodes[1], _eventProperties.buildConRequested.eventName, args)
-                    elseif name == _eventProperties.buildConRequested.eventName then
-                        _actions.buildConstruction(args.node0Id, args.node1Id, args.transf0, args.transf1, args.transfMid, args.streetType)
+                        _actions.removeEdge(edgeIdsBetweenNodes[1], _eventProperties.segmentRemoved.eventName, args)
+                    elseif name == _eventProperties.segmentRemoved.eventName then
+                        _actions.buildConstruction(args.node0Id, args.node1Id, args.streetType)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)

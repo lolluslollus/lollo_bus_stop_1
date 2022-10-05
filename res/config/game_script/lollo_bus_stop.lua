@@ -14,8 +14,10 @@ local _eventProperties = {
     segmentRemoved = { conName = nil, eventName = 'segmentRemoved' },
     conBuilt = { conName = nil, eventName = 'conBuilt' },
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
-    secondSplitDone = { conName = nil, eventName = 'secondSplitDone' },
-    secondSplitRequested = { conName = nil, eventName = 'secondSplitRequested'},
+    firstOuterSplitDone = { conName = nil, eventName = 'firstOuterSplitDone'},
+    secondOuterSplitDone = { conName = nil, eventName = 'secondOuterSplitDone' },
+    firstInnerSplitDone = { conName = nil, eventName = 'firstInnerSplitDone'},
+    secondInnerSplitDone = { conName = nil, eventName = 'secondInnerSplitDone' },
     snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
 }
 
@@ -197,6 +199,31 @@ function data()
                 end
             )
         end,
+        -- get ids of edges that start or end at the given nodes
+        getEdgeIdsLinkingNodes = function(node0Id, node1Id)
+            if not(edgeUtils.isValidAndExistingId(node0Id)) or not(edgeUtils.isValidAndExistingId(node1Id)) then
+                logger.warn('getEdgeIdsLinkingNodes got invalid node0Id or node1Id')
+                return {}
+            end
+
+            local _map = api.engine.system.streetSystem.getNode2SegmentMap()
+            local connectedEdgeIdsUserdata0 = _map[node0Id] -- userdata
+            local connectedEdgeIdsUserdata1 = _map[node1Id] -- userdata
+            if connectedEdgeIdsUserdata0 == nil or connectedEdgeIdsUserdata1 == nil then
+                logger.warn('getEdgeIdsLinkingNodes: the edges between node0Id and node1Id are not connected to their nodes, this should never happen')
+                return {}
+            end
+            local edgeIdsBetweenNodes = {}
+            for _, edge0Id in pairs(connectedEdgeIdsUserdata0) do
+                for _, edge1Id in pairs(connectedEdgeIdsUserdata1) do
+                    if edge0Id == edge1Id then
+                        arrayUtils.addUnique(edgeIdsBetweenNodes, edge0Id)
+                    end
+                end
+            end
+
+            return edgeIdsBetweenNodes
+        end,
         -- this is not so good, UG TODO must make a proper upfront estimator
         getIsProposalOK = function(proposal, context)
             logger.print('getIsProposalOK starting')
@@ -331,6 +358,51 @@ function data()
                 logger.print('nodeId found, it is ' .. tostring(nodeIds[1]))
                 return nodeIds[1]
             end
+        end,
+        -- get data to start the second split after the first succeeded
+        getSplit1Data = function(transf1, node0EdgeIds)
+            logger.print('getSplit1Data starting')
+            local edgeId2BeSplit = nil
+            local nodeBetween = nil
+            logger.print('outerTransf1[13] =', transf1[13])
+            logger.print('outerTransf1[14] =', transf1[14])
+            logger.print('outerTransf1[15] =', transf1[15])
+            local minDistance = 9999.9
+            for _, edgeId in pairs(node0EdgeIds) do
+                local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+                if baseEdge ~= nil then
+                    local baseNode0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
+                    local baseNode1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
+                    logger.print('baseNode0.position =') logger.debugPrint(baseNode0.position)
+                    logger.print('baseNode1.position =') logger.debugPrint(baseNode1.position)
+                    if baseNode0 ~= nil and baseNode1 ~= nil then
+                        local testNodeBetween = edgeUtils.getNodeBetweenByPosition(
+                            edgeId,
+                            {
+                                x = transf1[13],
+                                y = transf1[14],
+                                z = transf1[15],
+                            }
+                            -- logger.getIsExtendedLog()
+                        )
+                        logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
+                        if testNodeBetween ~= nil then
+                            local currentDistance = transfUtils.getPositionsDistance(
+                                testNodeBetween.position,
+                                transfUtils.transf2Position(transf1)
+                            )
+                            logger.print('currentDistance =') logger.debugPrint(currentDistance)
+                            if currentDistance ~= nil and currentDistance < minDistance then
+                                logger.print('setting nodeBetween')
+                                edgeId2BeSplit = edgeId
+                                minDistance = currentDistance
+                                nodeBetween = arrayUtils.cloneDeepOmittingFields(testNodeBetween)
+                            end
+                        end
+                    end
+                end
+            end
+            return edgeId2BeSplit, nodeBetween
         end,
         getWhichEdgeGetsEdgeObjectAfterSplit = function(edgeObjPosition, node0pos, node1pos, nodeBetween)
             local result = {
@@ -1069,9 +1141,15 @@ function data()
                                     if not(successEventArgs.outerNode0Id) then
                                         successEventArgs.outerNode0Id = newlyBuiltNodeId
                                         successEventArgs.outerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                                    else
+                                    elseif not(successEventArgs.outerNode1Id) then
                                         successEventArgs.outerNode1Id = newlyBuiltNodeId
                                         successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                    elseif not(successEventArgs.innerNode0Id) then
+                                        successEventArgs.innerNode0Id = newlyBuiltNodeId
+                                        successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                    elseif not(successEventArgs.innerNode1Id) then
+                                        successEventArgs.innerNode1Id = newlyBuiltNodeId
+                                        successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
                                     end
                                     api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                         string.sub(debug.getinfo(1, 'S').source, 1),
@@ -1136,7 +1214,7 @@ function data()
                                 edgeId,
                                 edgeObjectId,
                                 _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName,
-                                { 
+                                {
                                     edgeObjectTransf = edgeObjectTransf_yz0,
                                     streetType = baseEdgeStreet.streetType,
                                 }
@@ -1160,28 +1238,35 @@ function data()
                     -- LOLLO if everything else works, add a function to rebuild the road after deleting.
                     -- The params with the node ids are in place.
                     if name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
-                        if not(edgeUtils.isValidAndExistingId(args.edgeId)) or edgeUtils.isEdgeFrozen(args.edgeId) then return end
+                        if not(edgeUtils.isValidAndExistingId(args.edgeId)) or edgeUtils.isEdgeFrozen(args.edgeId) then
+                            logger.warn('edge invalid or frozen')
+                            return
+                        end
 
                         local length = edgeUtils.getEdgeLength(args.edgeId)
-                        if length < constants.outerEdgeX * 2 then return end -- LOLLO TODO if everything else works, join adjacent edges until one is long enough
+                        if length < constants.outerEdgeX * 2 then
+                            -- LOLLO TODO if everything else works, join adjacent edges until one is long enough
+                            logger.warn('edge too short')
+                            return
+                        end
 
                         local outerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
                         local outerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
-                        local transf0Inner = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.innerEdgeX)
-                        local transf1Inner = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.innerEdgeX)
+                        local innerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.innerEdgeX)
+                        local innerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.innerEdgeX)
                         -- these are identical to the ones above, except they only have the position
-                        local pos0Outer = transfUtils.getVec123Transformed({constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        local pos1Outer = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        local pos0Inner = transfUtils.getVec123Transformed({constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        local pos1Inner = transfUtils.getVec123Transformed({-constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        local outerPos0 = transfUtils.getVec123Transformed({constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        local outerPos1 = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        local innerPos0 = transfUtils.getVec123Transformed({constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
+                        local innerPos1 = transfUtils.getVec123Transformed({-constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
                         logger.print('outerTransf0 =') logger.debugPrint(outerTransf0)
                         logger.print('outerTransf1 =') logger.debugPrint(outerTransf1)
-                        logger.print('pos0Outer =') logger.debugPrint(pos0Outer)
-                        logger.print('pos1Outer =') logger.debugPrint(pos1Outer)
-                        logger.print('transf0Inner =') logger.debugPrint(transf0Inner)
-                        logger.print('transf1Inner =') logger.debugPrint(transf1Inner)
-                        logger.print('pos0Inner =') logger.debugPrint(pos0Inner)
-                        logger.print('pos1Inner =') logger.debugPrint(pos1Inner)
+                        logger.print('outerPos0 =') logger.debugPrint(outerPos0)
+                        logger.print('outerPos1 =') logger.debugPrint(outerPos1)
+                        logger.print('innerTransf0 =') logger.debugPrint(innerTransf0)
+                        logger.print('innerTransf1 =') logger.debugPrint(innerTransf1)
+                        logger.print('innerPos0 =') logger.debugPrint(innerPos0)
+                        logger.print('innerPos1 =') logger.debugPrint(innerPos1)
 
                         local nodeBetween = edgeUtils.getNodeBetweenByPosition(
                             args.edgeId,
@@ -1191,67 +1276,32 @@ function data()
                                 z = outerTransf0[15],
                             }
                         )
-                        logger.print('first nodeBetween =') logger.debugPrint(nodeBetween)
+                        logger.print('first outer nodeBetween =') logger.debugPrint(nodeBetween)
                         _actions.splitEdge(
                             args.edgeId,
                             nodeBetween,
-                            _eventProperties.secondSplitRequested.eventName,
+                            _eventProperties.firstOuterSplitDone.eventName,
                             {
                                 streetType = args.streetType,
+                                innerTransf0 = innerTransf0,
+                                innerTransf1 = innerTransf1,
                                 outerTransf0 = outerTransf0,
                                 outerTransf1 = outerTransf1,
                                 transfMid = args.edgeObjectTransf,
                             }
                         )
-                    elseif name == _eventProperties.secondSplitRequested.eventName then
+                    elseif name == _eventProperties.firstOuterSplitDone.eventName then
                         -- find out which edge needs splitting
                         logger.print('args.outerNode0EdgeIds') logger.debugPrint(args.outerNode0EdgeIds)
                         if #args.outerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second split')
                             return
                         end
-                        local getSplitData = function()
-                            local edgeId2BeSplit = nil
-                            local nodeBetween = nil
-                            logger.print('args.outerTransf1[13] =', args.outerTransf1[13])
-                            logger.print('args.outerTransf1[14] =', args.outerTransf1[14])
-                            logger.print('args.outerTransf1[15] =', args.outerTransf1[15])
-                            local minDistance = 9999.9
-                            for _, edgeId in pairs(args.outerNode0EdgeIds) do
-                                local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-                                if baseEdge ~= nil then
-                                    local baseNode0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
-                                    local baseNode1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
-                                    logger.print('baseNode0.position =') logger.debugPrint(baseNode0.position)
-                                    logger.print('baseNode1.position =') logger.debugPrint(baseNode1.position)
-                                    if baseNode0 ~= nil and baseNode1 ~= nil then
-                                        local testNodeBetween = edgeUtils.getNodeBetweenByPosition(
-                                            edgeId,
-                                            {
-                                                x = args.outerTransf1[13],
-                                                y = args.outerTransf1[14],
-                                                z = args.outerTransf1[15],
-                                            }
-                                            -- logger.getIsExtendedLog()
-                                        )
-                                        logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
-                                        if testNodeBetween ~= nil then
-                                            local currentDistance = transfUtils.getPositionsDistance(testNodeBetween.position, transfUtils.transf2Position(args.outerTransf1))
-                                            logger.print('currentDistance =') logger.debugPrint(currentDistance)
-                                            if currentDistance ~= nil and currentDistance < minDistance then
-                                                logger.print('setting nodeBetween')
-                                                edgeId2BeSplit = edgeId
-                                                minDistance = currentDistance
-                                                nodeBetween = arrayUtils.cloneDeepOmittingFields(testNodeBetween)
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                            return edgeId2BeSplit, nodeBetween
-                        end
-                        local edgeId2BeSplit, nodeBetween = getSplitData()
-                        if not(edgeId2BeSplit) then
+                        local edgeIdToBeSplit, nodeBetween = _utils.getSplit1Data(
+                            args.outerTransf1,
+                            args.outerNode0EdgeIds
+                        )
+                        if not(edgeIdToBeSplit) then
                             logger.warn('cannot decide on an edge id for the second split')
                             return
                         end
@@ -1260,29 +1310,10 @@ function data()
                             return
                         end
 
-                        logger.print('final nodeBetween =') logger.debugPrint(nodeBetween)
-                        _actions.splitEdge(edgeId2BeSplit, nodeBetween, _eventProperties.secondSplitDone.eventName, args)
-                    elseif name == _eventProperties.secondSplitDone.eventName then
-                        if not(edgeUtils.isValidAndExistingId(args.outerNode0Id)) or not(edgeUtils.isValidAndExistingId(args.outerNode1Id)) then
-                            logger.warn('outerNode0Id or outerNode1Id is invalid')
-                            return
-                        end
-
-                        local _map = api.engine.system.streetSystem.getNode2SegmentMap()
-                        local connectedEdgeIdsUserdata0 = _map[args.outerNode0Id] -- userdata
-                        local connectedEdgeIdsUserdata1 = _map[args.outerNode1Id] -- userdata
-                        if connectedEdgeIdsUserdata0 == nil or connectedEdgeIdsUserdata1 == nil then
-                            logger.warn('the edges between outerNode0Id and outerNode1Id are not connected to their nodes, this should never happen')
-                            return
-                        end
-                        local edgeIdsBetweenNodes = {}
-                        for _, edge0Id in pairs(connectedEdgeIdsUserdata0) do
-                            for _, edge1Id in pairs(connectedEdgeIdsUserdata1) do
-                                if edge0Id == edge1Id then
-                                    arrayUtils.addUnique(edgeIdsBetweenNodes, edge0Id)
-                                end
-                            end
-                        end
+                        logger.print('final second outer nodeBetween =') logger.debugPrint(nodeBetween)
+                        _actions.splitEdge(edgeIdToBeSplit, nodeBetween, _eventProperties.secondOuterSplitDone.eventName, args)
+                    elseif name == _eventProperties.secondOuterSplitDone.eventName then
+                        local edgeIdsBetweenNodes = _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.outerNode1Id)
                         if #edgeIdsBetweenNodes ~= 1 then
                             logger.warn('no edges or too many edges found between outerNode0Id and outerNode1Id')
                             return

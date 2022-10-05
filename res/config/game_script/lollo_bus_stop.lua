@@ -15,7 +15,7 @@ local _eventProperties = {
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
     removeEdgeBetween = { conName = nil, eventName = 'removeEdgeBetween' },
     secondSplitRequested = { conName = nil, eventName = 'secondSplitRequested'},
-    upgradeConRequested = { conName = nil, eventName = 'upgradeConRequested'},
+    snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
 }
 
 local _guiConstants = {
@@ -675,7 +675,7 @@ function data()
                                 api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                     string.sub(debug.getinfo(1, 'S').source, 1),
                                     _eventId,
-                                    _eventProperties.upgradeConRequested.eventName,
+                                    _eventProperties.snappyConBuilt.eventName,
                                     {
                                         conId = newConId,
                                         conParams = conParamsBak,
@@ -1251,9 +1251,9 @@ function data()
                     elseif name == _eventProperties.buildConRequested.eventName then
                         _actions.buildConstruction(args.node0Id, args.node1Id, args.transf0, args.transf1, args.transfMid, args.streetType)
                     elseif name == _eventProperties.conBuilt.eventName then
-                        -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
+                        _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
-                    elseif name == _eventProperties.upgradeConRequested.eventName then
+                    elseif name == _eventProperties.snappyConBuilt.eventName then
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     end
                 end,

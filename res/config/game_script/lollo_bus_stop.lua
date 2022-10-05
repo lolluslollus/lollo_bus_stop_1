@@ -426,13 +426,13 @@ function data()
         end,
     }
     local _actions = {
-        buildConstruction = function(node0Id, node1Id, streetType)
+        buildConstruction = function(outerNode0Id, outerNode1Id, streetType)
             logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
 
-            local baseNode0 = api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE)
-            local baseNode1 = api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE)
+            local baseNode0 = api.engine.getComponent(outerNode0Id, api.type.ComponentType.BASE_NODE)
+            local baseNode1 = api.engine.getComponent(outerNode1Id, api.type.ComponentType.BASE_NODE)
             if baseNode0 == nil or baseNode1 == nil then
-                logger.warn('cannot find node0Id or node1Id')
+                logger.warn('cannot find outerNode0Id or outerNode1Id')
                 return
             end
             local getConTransf = function()
@@ -568,8 +568,8 @@ function data()
                 lolloBusStop_direction = 0,
                 lolloBusStop_driveOnLeft = 0,
                 lolloBusStop_model = 5, -- it's easier to see transf problems
-                lolloBusStop_node0Id = node0Id, -- this stays across upgrades because it's an integer
-                lolloBusStop_node1Id = node1Id, -- idem
+                lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
+                lolloBusStop_outerNode1Id = outerNode1Id, -- idem
                 lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
                 -- lolloBusStop_snapNodes = 3,
                 lolloBusStop_snapNodes = 0,
@@ -1066,12 +1066,12 @@ function data()
                             function ()
                                 local newlyBuiltNodeId = _utils.getNewlyBuiltNodeId(result)
                                 if edgeUtils.isValidAndExistingId(newlyBuiltNodeId) then
-                                    if not(successEventArgs.node0Id) then
-                                        successEventArgs.node0Id = newlyBuiltNodeId
-                                        successEventArgs.node0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                    if not(successEventArgs.outerNode0Id) then
+                                        successEventArgs.outerNode0Id = newlyBuiltNodeId
+                                        successEventArgs.outerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
                                     else
-                                        successEventArgs.node1Id = newlyBuiltNodeId
-                                        successEventArgs.node1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                        successEventArgs.outerNode1Id = newlyBuiltNodeId
+                                        successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
                                     end
                                     api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                         string.sub(debug.getinfo(1, 'S').source, 1),
@@ -1205,8 +1205,8 @@ function data()
                         )
                     elseif name == _eventProperties.secondSplitRequested.eventName then
                         -- find out which edge needs splitting
-                        logger.print('args.node0EdgeIds') logger.debugPrint(args.node0EdgeIds)
-                        if #args.node0EdgeIds == 0 then
+                        logger.print('args.outerNode0EdgeIds') logger.debugPrint(args.outerNode0EdgeIds)
+                        if #args.outerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second split')
                             return
                         end
@@ -1217,7 +1217,7 @@ function data()
                             logger.print('args.transf1Outer[14] =', args.transf1Outer[14])
                             logger.print('args.transf1Outer[15] =', args.transf1Outer[15])
                             local minDistance = 9999.9
-                            for _, edgeId in pairs(args.node0EdgeIds) do
+                            for _, edgeId in pairs(args.outerNode0EdgeIds) do
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
                                 if baseEdge ~= nil then
                                     local baseNode0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
@@ -1263,16 +1263,16 @@ function data()
                         logger.print('final nodeBetween =') logger.debugPrint(nodeBetween)
                         _actions.splitEdge(edgeId2BeSplit, nodeBetween, _eventProperties.secondSplitDone.eventName, args)
                     elseif name == _eventProperties.secondSplitDone.eventName then
-                        if not(edgeUtils.isValidAndExistingId(args.node0Id)) or not(edgeUtils.isValidAndExistingId(args.node1Id)) then
-                            logger.warn('node0Id or node1Id is invalid')
+                        if not(edgeUtils.isValidAndExistingId(args.outerNode0Id)) or not(edgeUtils.isValidAndExistingId(args.outerNode1Id)) then
+                            logger.warn('outerNode0Id or outerNode1Id is invalid')
                             return
                         end
 
                         local _map = api.engine.system.streetSystem.getNode2SegmentMap()
-                        local connectedEdgeIdsUserdata0 = _map[args.node0Id] -- userdata
-                        local connectedEdgeIdsUserdata1 = _map[args.node1Id] -- userdata
+                        local connectedEdgeIdsUserdata0 = _map[args.outerNode0Id] -- userdata
+                        local connectedEdgeIdsUserdata1 = _map[args.outerNode1Id] -- userdata
                         if connectedEdgeIdsUserdata0 == nil or connectedEdgeIdsUserdata1 == nil then
-                            logger.warn('the edges between node0Id and node1Id are not connected to their nodes, this should never happen')
+                            logger.warn('the edges between outerNode0Id and outerNode1Id are not connected to their nodes, this should never happen')
                             return
                         end
                         local edgeIdsBetweenNodes = {}
@@ -1284,13 +1284,13 @@ function data()
                             end
                         end
                         if #edgeIdsBetweenNodes ~= 1 then
-                            logger.warn('no edges or too many edges found between node0Id and node1Id')
+                            logger.warn('no edges or too many edges found between outerNode0Id and outerNode1Id')
                             return
                         end
 
                         _actions.removeEdge(edgeIdsBetweenNodes[1], _eventProperties.segmentRemoved.eventName, args)
                     elseif name == _eventProperties.segmentRemoved.eventName then
-                        _actions.buildConstruction(args.node0Id, args.node1Id, args.streetType)
+                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)

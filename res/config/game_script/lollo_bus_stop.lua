@@ -197,44 +197,47 @@ function data()
             )
         end,
         -- this is not so good, UG TODO must make a proper upfront estimator
-        checkProposalUpfront = function(proposal, context)
-            logger.print('checkProposalUpfront starting')
-            if not(proposal) then logger.err('checkProposalUpfront got no proposal') return nil, nil end
-            if not(context) then logger.err('checkProposalUpfront got no context') return nil, nil end
+        getIsProposalOK = function(proposal, context)
+            logger.print('getIsProposalOK starting')
+            if not(proposal) then logger.err('getIsProposalOK got no proposal') return false end
+            if not(context) then logger.err('getIsProposalOK got no context') return false end
 
-            local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
-            logger.print('checkProposalUpfront proposalData =') logger.debugPrint(proposalData)
             local isErrorsOtherThanCollision = false
             local isWarnings = false
+            xpcall(
+                function()
+                    -- this tries to build the construction, it calls con.updateFn()
+                    local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
+                    logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
 
-            if proposalData.errorState ~= nil
-            and proposalData.errorState.critical == false
-            and proposalData.errorState.messages ~= nil
-            then
-                for _, message in pairs(proposalData.errorState.messages) do
-                    logger.print('looping over messages ONE, message =', message)
-                    if message ~= 'Collision' then
-                        isErrorsOtherThanCollision = true
-                        break
+                    if proposalData.errorState ~= nil then
+                        if proposalData.errorState.critical == true then
+                            logger.print('proposalData.errorState.critical is true')
+                            isErrorsOtherThanCollision = true
+                        else
+                            for _, message in pairs(proposalData.errorState.messages or {}) do
+                                logger.print('looping over messages, message found =', message)
+                                if message ~= 'Collision' then
+                                    isErrorsOtherThanCollision = true
+                                    break
+                                end
+                            end
+                            for _, warning in pairs(proposalData.errorState.warnings or {}) do
+                                logger.print('looping over warnings, warning found =', warning)
+                                isWarnings = true
+                                break
+                            end
+                        end
                     end
+                end,
+                function(error)
+                    isErrorsOtherThanCollision = true
+                    logger.xpWarningHandler(error)
                 end
-                for _, warning in pairs(proposalData.errorState.warnings) do
-                    logger.print('looping over warnings ONE, warnings =', warning)
-                    isWarnings = true
-                    break
-                end
-                -- for i = 1, #proposalData.errorState.messages, 1 do
-                --     local message = proposalData.errorState.messages[i]
-                --     logger.print('looping over messages TWO, message =', message)
-                --     if message ~= 'Collision' then
-                --         isErrorsOtherThanCollision = true
-                --         break
-                --     end
-                -- end
-            end
-            logger.print('checkProposalUpfront isErrorsOtherThanCollision =', isErrorsOtherThanCollision)
-            logger.print('checkProposalUpfront isWarnings =', isWarnings)
-            return isErrorsOtherThanCollision, isWarnings
+            )
+            logger.print('getIsProposalOK isErrorsOtherThanCollision =', isErrorsOtherThanCollision)
+            logger.print('getIsProposalOK isWarnings =', isWarnings)
+            return not(isErrorsOtherThanCollision) and not(isWarnings)
         end,
         getNewlyBuiltEdgeId = function(result)
             -- result.proposal.proposal.addedSegments[1].entity is not always available, UG TODO this api should always return an edgeId
@@ -495,7 +498,6 @@ function data()
                 unknownTransf[9] = -sinZX
                 unknownTransf[10] = 0
                 unknownTransf[11] = cosZX
-                -- logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
                 local conTransf = unknownTransf
                 logger.print('conTransf =') logger.debugPrint(conTransf)
@@ -503,17 +505,16 @@ function data()
                 local vecX1Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecX1), conTransf)
                 local vecYTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecY0), conTransf)
                 local vecZ0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0), conTransf)
-                -- local vecZ0TiltedTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0Tilted), conTransf)
                 if logger.getIsExtendedLog() then
                     print('vecX0 straight and transformed =') debugPrint(vecX0) debugPrint(vecX0Transformed)
                     print('should be') debugPrint({x0, y0, z0})
                     print('vecX1 straight and transformed =') debugPrint(vecX1) debugPrint(vecX1Transformed)
+                    print('should be') debugPrint({x1, y1, z1})
                     print('vecY0 straight and transformed =') debugPrint(vecY0) debugPrint(vecYTransformed)
                     print('should be') debugPrint({xMid - sinYX, yMid + cosYX, zMid})
                     print('vecZ0 straight and transformed =') debugPrint(vecZ0) debugPrint(vecZ0Transformed)
                     print('should be (vertical)') debugPrint({xMid, yMid, zMid + 1})
                     print('or, it should be (perpendicular)') debugPrint({xMid - sinZX, yMid, zMid + cosZX})
-                    -- print('vecZ0Tilted straight and transformed =') debugPrint(vecZ0Tilted) debugPrint(vecZ0TiltedTransformed)
                     print('x0, x1 =', x0, x1)
                     print('y0, y1 =', y0, y1)
                     print('z0, z1 =', z0, z1)
@@ -574,8 +575,8 @@ function data()
             -- context.gatherBuildings = true -- default is false
             -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
-            local isErrorsOtherThanCollision, isWarnings = _utils.checkProposalUpfront(proposal, context)
-            if isErrorsOtherThanCollision or isWarnings then
+            local isProposalOK = _utils.getIsProposalOK(proposal, context)
+            if not(isProposalOK) then
                 logger.warn('buildConstruction made a dangerous proposal')
                 -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
                 return
@@ -655,8 +656,8 @@ function data()
             -- context.gatherBuildings = true -- default is false
             -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
-            local isErrorsOtherThanCollision, isWarnings = _utils.checkProposalUpfront(proposal, context)
-            if isErrorsOtherThanCollision or isWarnings then
+            local isProposalOK = _utils.getIsProposalOK(proposal, context)
+            if not(isProposalOK) then
                 logger.warn('buildSnappyConstruction made a dangerous proposal')
                 return
             end

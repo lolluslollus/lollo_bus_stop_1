@@ -37,8 +37,8 @@ function data()
 					params.lolloBusStop_streetType_ = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
 					logger.print('updateFn.script set params.lolloBusStop_streetType_ to') debugPrint(params.lolloBusStop_streetType_)
 				else
-					logger.print('updateFn.script params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
-					logger.print('updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
+					-- logger.print('updateFn.script params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
+					-- logger.print('updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
 				end
 				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
@@ -54,7 +54,7 @@ function data()
 			logger.print('updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
 			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
-			logger.print('updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
+			-- logger.print('updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
@@ -65,7 +65,7 @@ function data()
 			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
-			logger.print('updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
+			-- logger.print('updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
             local result = {
                 colliders = {},
                 cost = 1000,
@@ -249,7 +249,8 @@ function data()
 			end
             terminateConstructionHook()
 
-            logger.print('updateFn.script result = ') logger.debugPrint(result)
+			-- logger.print('updateFn.script result = ') logger.debugPrint(result)
+			logger.print('updateFn.script() ending')
 			return result
 		end,
 --[[  	

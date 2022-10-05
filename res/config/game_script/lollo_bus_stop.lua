@@ -1206,6 +1206,7 @@ function data()
                             logger.print('baseEdge.objects[1][2] =', baseEdge.objects[1][2])
                             -- if baseEdge.objects[1][2] == 1 then yShift = -yShift end -- NO!
                             local edgeObjectTransf_y0 = transfUtils.getTransfYShiftedBy(edgeObjectTransf, yShift)
+                            -- LOLLO TODO check for crashes with and without this
                             local edgeObjectTransf_yz0 = transfUtils.getTransfZShiftedBy(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
                             logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                             logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)

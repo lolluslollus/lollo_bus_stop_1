@@ -236,7 +236,7 @@ function data()
                 function()
                     -- this tries to build the construction, it calls con.updateFn()
                     local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
-                    -- logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
+                    logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
 
                     if proposalData.errorState ~= nil then
                         if proposalData.errorState.critical == true then
@@ -692,7 +692,7 @@ function data()
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
                     logger.print('buildConstruction callback, success =', success)
-                    -- logger.debugPrint(result)
+                    logger.debugPrint(result)
                     if success then
                         local conId = result.resultEntities[1]
                         logger.print('buildConstruction succeeded, stationConId = ', conId)

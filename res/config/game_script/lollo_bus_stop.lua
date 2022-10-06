@@ -810,7 +810,7 @@ function data()
             local proposal = api.type.SimpleProposal.new()
             proposal.constructionsToAdd[1] = newCon
             proposal.constructionsToRemove = { oldConId }
-            proposal.old2new = { {oldConId, 1} } -- LOLLO TODO check this
+            proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
 
             local context = api.type.Context:new()
             -- context.checkTerrainAlignment = true -- default is false
@@ -1481,10 +1481,10 @@ function data()
                     elseif name == _eventProperties.edgesRemoved.eventName then
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
-                        -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
+                        _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.snappyConBuilt.eventName then
-                        -- _utils.upgradeCon(args.conId, args.conParams)
+                        _utils.upgradeCon(args.conId, args.conParams)
                     end
                 end,
                 logger.xpErrorHandler

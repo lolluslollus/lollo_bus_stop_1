@@ -527,10 +527,11 @@ function data()
                 local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
                 local vecZTilted = {0, 0, 1} -- transforms to
                 -- {
-                    -- xMid -math.sin(math.atan2((z1-z0), (x1-x0))),
-                    -- yMid -math.sin(math.atan2((z1-z0), (y1-y0))),
+                    -- xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX
+                    -- yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX
                     -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
                 -- }
+                -- vecXYZ transformed with transf is:
                 --[[
                     x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
                     y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
@@ -565,11 +566,11 @@ function data()
                 logger.print('unknownTransf straight =') logger.debugPrint(unknownTransf)
                 -- solving for vecZ0 tilted
                 -- this makes buildings perpendicular to the road, the points match. Curves seem to get less angry.
-                -- LOLLO TODO these three are still wrong
-                -- xMid -math.sin(math.atan2((z1-z0), (x1-x0)) = unknownTransf[9] + xMid
-                unknownTransf[9] = -math.sin(math.atan2((z1-z0), (x1-x0)))
-                -- yMid -math.sin(math.atan2((z1-z0), (y1-y0))) = unknownTransf[10] + yMid
-                unknownTransf[10] = -math.sin(math.atan2((z1-z0), (y1-y0)))
+                -- LOLLO TODO these three are fine for the edges but tilt the construction models, the con should compensate for it
+                -- xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX = unknownTransf[9] + xMid
+                unknownTransf[9] = -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX
+                -- yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX = unknownTransf[10] + yMid
+                unknownTransf[10] = -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX
                 -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX))) = unknownTransf[11] + zMid
                 unknownTransf[11] = math.cos(math.atan2((z1-z0), (ipotenusaYX)))
                 logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
@@ -589,10 +590,9 @@ function data()
                     print('should be') debugPrint({xMid - sinYX, yMid + cosYX, zMid})
                     print('vecZ0 straight and transformed =') debugPrint(vecZ0) debugPrint(vecZ0Transformed)
                     print('should be (vertical)') debugPrint({xMid, yMid, zMid + 1})
-                    -- print('or, it should be (perpendicular)') debugPrint({xMid - sinZ_X, yMid, zMid + cosZ_X})
                     print('or, it should be (perpendicular fixed)') debugPrint({
-                        xMid -math.sin(math.atan2((z1-z0), (x1-x0))),
-                        yMid -math.sin(math.atan2((z1-z0), (y1-y0))),
+                        xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX,
+                        yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX,
                         zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
                     })
                     print('x0, x1 =', x0, x1)

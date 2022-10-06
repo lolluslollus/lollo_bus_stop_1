@@ -1,5 +1,3 @@
-local matrixUtils = require('lollo_bus_stop.matrix')
-
 if math.atan2 == nil then
     math.atan2 = function(dy, dx)
         local result = 0
@@ -23,6 +21,8 @@ if math.atan2 == nil then
         end
     end
 end
+
+local matrixUtils = require('lollo_bus_stop.matrix')
 
 local utils = {}
 

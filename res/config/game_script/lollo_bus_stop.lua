@@ -11,7 +11,7 @@ local transfUtilsUG = require('transf')
 
 local _eventId = '__lolloStreetsidePassengerStopsEvent__'
 local _eventProperties = {
-    segmentRemoved = { conName = nil, eventName = 'segmentRemoved' },
+    segmentsRemoved = { conName = nil, eventName = 'segmentsRemoved' },
     conBuilt = { conName = nil, eventName = 'conBuilt' },
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
     firstOuterSplitDone = { conName = nil, eventName = 'firstOuterSplitDone'},
@@ -361,12 +361,9 @@ function data()
         end,
         -- get data to start the second split after the first succeeded
         getSplit1Data = function(transf1, node0EdgeIds)
-            logger.print('getSplit1Data starting')
+            logger.print('getSplit1Data starting, transf1 =') logger.debugPrint(transf1)
             local edgeId2BeSplit = nil
             local nodeBetween = nil
-            logger.print('outerTransf1[13] =', transf1[13])
-            logger.print('outerTransf1[14] =', transf1[14])
-            logger.print('outerTransf1[15] =', transf1[15])
             local minDistance = 9999.9
             for _, edgeId in pairs(node0EdgeIds) do
                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
@@ -385,7 +382,9 @@ function data()
                             }
                             -- logger.getIsExtendedLog()
                         )
-                        logger.print('testNodeBetween =') logger.debugPrint(testNodeBetween)
+                        if testNodeBetween == nil then logger.print('testNodeBetween is NIL')
+                        else logger.print('testNodeBetween.position =') logger.debugPrint(testNodeBetween.position)
+                        end
                         if testNodeBetween ~= nil then
                             local currentDistance = transfUtils.getPositionsDistance(
                                 testNodeBetween.position,
@@ -839,47 +838,68 @@ function data()
                 end
             )
         end,
-        removeEdge = function(oldEdgeId, successEventName, successEventArgs)
-            logger.print('removeEdge starting')
-            -- removes an edge even if it has a street type, which has changed or disappeared
-            if not(edgeUtils.isValidAndExistingId(oldEdgeId)) then return end
-
-            local proposal = api.type.SimpleProposal.new()
-            local oldBaseEdge = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE)
-            logger.print('oldBaseEdge =') logger.debugPrint(oldBaseEdge)
-            local oldEdgeStreet = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE_STREET)
-            logger.print('oldEdgeStreet =') logger.debugPrint(oldEdgeStreet)
-            -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
-            if oldBaseEdge == nil or oldEdgeStreet == nil then return end
-
-            local orphanNodeIds = {}
-            local _map = api.engine.system.streetSystem.getNode2SegmentMap()
-            if #_map[oldBaseEdge.node0] == 1 then
-                orphanNodeIds[#orphanNodeIds+1] = oldBaseEdge.node0
+        removeEdges = function(oldEdgeIds, successEventName, successEventArgs)
+            logger.print('removeEdges starting, oldEdgeIds =') logger.print(oldEdgeIds)
+            -- removes edges even if they have a street type, which has changed or disappeared
+            if not(oldEdgeIds) then
+                logger.warn('removeEdges got no oldEdgeIds')
+                return
             end
-            if #_map[oldBaseEdge.node1] == 1 then
-                orphanNodeIds[#orphanNodeIds+1] = oldBaseEdge.node1
-            end
-
-            proposal.streetProposal.edgesToRemove[1] = oldEdgeId
-            for i = 1, #orphanNodeIds, 1 do
-                proposal.streetProposal.nodesToRemove[i] = orphanNodeIds[i]
-            end
-
-            if oldBaseEdge.objects then
-                for edgeObj = 1, #oldBaseEdge.objects do
-                    proposal.streetProposal.edgeObjectsToRemove[#proposal.streetProposal.edgeObjectsToRemove+1] = oldBaseEdge.objects[edgeObj][1]
+            for _, oldEdgeId in pairs(oldEdgeIds) do
+                if not(edgeUtils.isValidAndExistingId(oldEdgeId)) then
+                    logger.warn('removeEdges got an invalid oldEdgeId')
+                    return
                 end
             end
+
+            local proposal = api.type.SimpleProposal.new()
+            local _map = api.engine.system.streetSystem.getNode2SegmentMap()
+            local _isNodeAttachedToSomethingElse = function(edgeIds)
+                for _, edgeId in pairs(edgeIds) do
+                    if arrayUtils.findIndex(oldEdgeIds, nil, edgeId) == -1 then return true end
+                end
+                return false
+            end
+            local orphanNodeIds_Indexed = {}
+            for _, oldEdgeId in pairs(oldEdgeIds) do
+                local oldBaseEdge = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE)
+                logger.print('oldBaseEdge =') logger.debugPrint(oldBaseEdge)
+                local oldEdgeStreet = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE_STREET)
+                logger.print('oldEdgeStreet =') logger.debugPrint(oldEdgeStreet)
+                -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
+                if oldBaseEdge ~= nil and oldEdgeStreet ~= nil then
+                    if not(_isNodeAttachedToSomethingElse(_map[oldBaseEdge.node0])) then
+                        orphanNodeIds_Indexed[oldBaseEdge.node0] = true
+                    end
+                    if not(_isNodeAttachedToSomethingElse(_map[oldBaseEdge.node1])) then
+                        orphanNodeIds_Indexed[oldBaseEdge.node1] = true
+                    end
+
+                    proposal.streetProposal.edgesToRemove[#proposal.streetProposal.edgesToRemove + 1] = oldEdgeId
+
+                    if oldBaseEdge.objects then
+                        for edgeObj = 1, #oldBaseEdge.objects do
+                            proposal.streetProposal.edgeObjectsToRemove[#proposal.streetProposal.edgeObjectsToRemove + 1] = oldBaseEdge.objects[edgeObj][1]
+                        end
+                    end
+                else
+                    if oldBaseEdge == nil then logger.warn('removeEdges found oldBaseEdge == nil for edgeId =', oldEdgeId or 'NIL') end
+                    if oldEdgeStreet == nil then logger.warn('removeEdges found oldEdgeStreet == nil for edgeId =', oldEdgeId or 'NIL') end
+                end
+            end
+            for nodeId, _ in pairs(orphanNodeIds_Indexed) do
+                proposal.streetProposal.nodesToRemove[#proposal.streetProposal.nodesToRemove + 1] = nodeId
+            end
+            -- logger.print('proposal =') logger.debugPrint(proposal)
 
             api.cmd.sendCommand(
                 api.cmd.make.buildProposal(proposal, nil, true),
                 function(result, success)
                     if not(success) then
-                        logger.warn('removeEdge failed, proposal = ') logger.warningDebugPrint(proposal)
-                        logger.warn('removeEdge failed, result = ') logger.warningDebugPrint(result)
+                        logger.warn('removeEdges failed, proposal = ') logger.warningDebugPrint(proposal)
+                        logger.warn('removeEdges failed, result = ') logger.warningDebugPrint(result)
                     else
-                        logger.print('removeEdge succeeded, result =') --logger.debugPrint(result)
+                        logger.print('removeEdges succeeded, result =') --logger.debugPrint(result)
                         if not(successEventName) then return end
 
                         xpcall(
@@ -1310,11 +1330,11 @@ function data()
                             args.outerNode0EdgeIds
                         )
                         if not(edgeIdToBeSplit) then
-                            logger.warn('cannot decide on an edge id for the second split')
+                            logger.warn('cannot decide on an edge id for the second outer split')
                             return
                         end
                         if not(nodeBetween) then
-                            logger.warn('cannot find out nodeBetween')
+                            logger.warn('cannot find out nodeBetween for the second outer split')
                             return
                         end
 
@@ -1327,8 +1347,64 @@ function data()
                             return
                         end
 
-                        _actions.removeEdge(edgeIdsBetweenNodes[1], _eventProperties.segmentRemoved.eventName, args)
-                    elseif name == _eventProperties.segmentRemoved.eventName then
+                        local nodeBetween = edgeUtils.getNodeBetweenByPosition(
+                            edgeIdsBetweenNodes[1],
+                            {
+                                x = args.innerTransf0[13],
+                                y = args.innerTransf0[14],
+                                z = args.innerTransf0[15],
+                            }
+                        )
+                        logger.print('first inner nodeBetween =') logger.debugPrint(nodeBetween)
+                        _actions.splitEdge(
+                            edgeIdsBetweenNodes[1],
+                            nodeBetween,
+                            _eventProperties.firstInnerSplitDone.eventName,
+                            args
+                        )
+                    elseif name == _eventProperties.firstInnerSplitDone.eventName then
+                        -- find out which edge needs splitting
+                        logger.print('args.innerNode0EdgeIds =') logger.debugPrint(args.innerNode0EdgeIds)
+                        if #args.innerNode0EdgeIds == 0 then
+                            logger.warn('cannot find an edge for the second inner split')
+                            return
+                        end
+                        local edgeIdToBeSplit, nodeBetween = _utils.getSplit1Data(
+                            args.innerTransf1,
+                            args.innerNode0EdgeIds
+                        )
+                        if not(edgeIdToBeSplit) then
+                            logger.warn('cannot decide on an edge id for the second inner split')
+                            return
+                        end
+                        if not(nodeBetween) then
+                            logger.warn('cannot find out nodeBetween for the second inner split')
+                            return
+                        end
+
+                        logger.print('final second inner nodeBetween =') logger.debugPrint(nodeBetween)
+                        _actions.splitEdge(edgeIdToBeSplit, nodeBetween, _eventProperties.secondInnerSplitDone.eventName, args)
+                    elseif name == _eventProperties.secondInnerSplitDone.eventName then
+                        local edgeIdsBetweenNodesNested = {
+                            _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.innerNode0Id),
+                            _utils.getEdgeIdsLinkingNodes(args.innerNode0Id, args.innerNode1Id),
+                            _utils.getEdgeIdsLinkingNodes(args.innerNode1Id, args.outerNode1Id),
+                        }
+                        logger.print('edgeIdsBetweenNodesNested =') logger.debugPrint(edgeIdsBetweenNodesNested)
+                        local edgeIdsBetweenNodes = {}
+                        for index, edgeIds in pairs(edgeIdsBetweenNodesNested) do
+                            if #edgeIds == 1 then
+                                edgeIdsBetweenNodes[index] = edgeIds[1]
+                            else
+                                logger.warn('no edges or too many edges found between split nodes; edgeIdsBetweenNodesNested =')
+                                logger.warningDebugPrint(edgeIdsBetweenNodesNested)
+                                return
+                            end
+                        end
+                        logger.print('edgeIdsBetweenNodes =') logger.debugPrint(edgeIdsBetweenNodes)
+                        logger.print('type(edgeIdsBetweenNodes) =', type(edgeIdsBetweenNodes))
+                        _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.segmentsRemoved.eventName, args)
+                    elseif name == _eventProperties.segmentsRemoved.eventName then
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)

@@ -9,6 +9,7 @@ function data()
 	return {
 		updateFn = function(params, two)
 			logger.print('updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
+			-- no api, no game, and I cannot pass the api as a param
 			local getSnapNodes = function()
 				if params.lolloBusStop_direction == 0 then
 					if params.lolloBusStop_snapNodes == 0 then return {}

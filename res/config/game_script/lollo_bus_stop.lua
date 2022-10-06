@@ -11,7 +11,7 @@ local transfUtilsUG = require('transf')
 
 local _eventId = '__lolloStreetsidePassengerStopsEvent__'
 local _eventProperties = {
-    segmentsRemoved = { conName = nil, eventName = 'segmentsRemoved' },
+    edgesRemoved = { conName = nil, eventName = 'edgesRemoved' },
     conBuilt = { conName = nil, eventName = 'conBuilt' },
     ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
     firstOuterSplitDone = { conName = nil, eventName = 'firstOuterSplitDone'},
@@ -28,8 +28,7 @@ local _guiConstants = {
 
 function data()
     local _utils = {
-        -- this is no good, it bulldozes the houses.
-        -- Plus, it fails at random.
+        -- this is no good coz it bulldozes the houses.
         buildSnappyRoadsUNUSED = function(oldNode0Id, oldNode1Id, conId, fileName, conParams)
             logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
             logger.print('oldNode0Id =', oldNode0Id) logger.print('oldNode1Id =', oldNode1Id)
@@ -497,8 +496,9 @@ function data()
         end,
     }
     local _actions = {
-        buildConstruction = function(outerNode0Id, outerNode1Id, streetType)
+        buildConstruction = function(outerNode0Id, outerNode1Id, streetType, dataForCon)
             logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
+            logger.print('dataForCon =') logger.debugPrint(dataForCon)
 
             local baseNode0 = api.engine.getComponent(outerNode0Id, api.type.ComponentType.BASE_NODE)
             local baseNode1 = api.engine.getComponent(outerNode1Id, api.type.ComponentType.BASE_NODE)
@@ -619,8 +619,8 @@ function data()
                 return
             end
             local newParams = {
-                lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
-                lolloBusStop_testVeryLarge = 100000000.123455, -- it becomes 1.2345678901235e+19
+                -- lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
+                -- lolloBusStop_testVeryLarge = 100000000.123455, -- this works
                 -- these disappear at the first upgrade
                 -- lolloBusStop_testTable = {123, 456},
                 -- lolloBusStop_testDec = {-123.456},
@@ -653,19 +653,49 @@ function data()
                 lolloBusStop_snapNodes = 0,
                 -- LOLLO TODO This needs upgradeConstruction anyway, and it fails in curves even with shorter con edges. Check it.
                 -- The sharper the bends, the more the trouble - and some crashes appear.
-                -- On a deeper analysis, the transf is not good for curves, and I doubt it can be adjusted
+                -- On a deeper analysis, the transf is not good for curves, and I doubt it can be adjusted,
+                -- so we make the con curved.
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
                 lolloBusStop_tramTrack = 0,
                 seed = math.abs(math.ceil(conTransf[13] * 1000)),
             }
             -- these work
-            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt1', 'testVeryLargeDec1', -15000.00000001, 'lolloBusStop_')
-            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt2', 'testVeryLargeDec2', -15000.000000001, 'lolloBusStop_')
-            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt3', 'testVeryLargeDec3', -15000.0000000001, 'lolloBusStop_')
-            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt4', 'testVeryLargeDec4', 15000.00000001, 'lolloBusStop_')
-            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt5', 'testVeryLargeDec5', 15000.000000001, 'lolloBusStop_')
-            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt6', 'testVeryLargeDec6', 15000.0000000001, 'lolloBusStop_')
-            moduleHelpers.setIntParamsFromFloat(newParams, 'testVeryLargeInt7', 'testVeryLargeDec7', 1.5000e-5, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0XInt', 'edge0Tan0XDec', dataForCon.edge0Tan0[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0YInt', 'edge0Tan0YDec', dataForCon.edge0Tan0[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0ZInt', 'edge0Tan0ZDec', dataForCon.edge0Tan0[3], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1XInt', 'edge0Tan1XDec', dataForCon.edge0Tan1[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1YInt', 'edge0Tan1YDec', dataForCon.edge0Tan1[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1ZInt', 'edge0Tan1ZDec', dataForCon.edge0Tan1[3], 'lolloBusStop_')
+
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0XInt', 'edge1Tan0XDec', dataForCon.edge1Tan0[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0YInt', 'edge1Tan0YDec', dataForCon.edge1Tan0[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0ZInt', 'edge1Tan0ZDec', dataForCon.edge1Tan0[3], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1XInt', 'edge1Tan1XDec', dataForCon.edge1Tan1[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1YInt', 'edge1Tan1YDec', dataForCon.edge1Tan1[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1ZInt', 'edge1Tan1ZDec', dataForCon.edge1Tan1[3], 'lolloBusStop_')
+
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0XInt', 'edge2Tan0XDec', dataForCon.edge2Tan0[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0YInt', 'edge2Tan0YDec', dataForCon.edge2Tan0[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0ZInt', 'edge2Tan0ZDec', dataForCon.edge2Tan0[3], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1XInt', 'edge2Tan1XDec', dataForCon.edge2Tan1[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1YInt', 'edge2Tan1YDec', dataForCon.edge2Tan1[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1ZInt', 'edge2Tan1ZDec', dataForCon.edge2Tan1[3], 'lolloBusStop_')
+
+            moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosXInt', 'innerNode0PosXDec', dataForCon.innerNode0Pos[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosYInt', 'innerNode0PosYDec', dataForCon.innerNode0Pos[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosZInt', 'innerNode0PosZDec', dataForCon.innerNode0Pos[3], 'lolloBusStop_')
+
+            moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosXInt', 'innerNode1PosXDec', dataForCon.innerNode1Pos[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosYInt', 'innerNode1PosYDec', dataForCon.innerNode1Pos[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosZInt', 'innerNode1PosZDec', dataForCon.innerNode1Pos[3], 'lolloBusStop_')
+
+            moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosXInt', 'outerNode0PosXDec', dataForCon.outerNode0Pos[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosYInt', 'outerNode0PosYDec', dataForCon.outerNode0Pos[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosZInt', 'outerNode0PosZDec', dataForCon.outerNode0Pos[3], 'lolloBusStop_')
+
+            moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosXInt', 'outerNode1PosXDec', dataForCon.outerNode1Pos[1], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosYInt', 'outerNode1PosYDec', dataForCon.outerNode1Pos[2], 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZInt', 'outerNode1PosZDec', dataForCon.outerNode1Pos[3], 'lolloBusStop_')
             -- clone your own variable, it's safer than cloning newCon.params, which is userdata
             local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
             newCon.params = newParams
@@ -863,9 +893,9 @@ function data()
             local orphanNodeIds_Indexed = {}
             for _, oldEdgeId in pairs(oldEdgeIds) do
                 local oldBaseEdge = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE)
-                logger.print('oldBaseEdge =') logger.debugPrint(oldBaseEdge)
+                -- logger.print('oldBaseEdge =') logger.debugPrint(oldBaseEdge)
                 local oldEdgeStreet = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE_STREET)
-                logger.print('oldEdgeStreet =') logger.debugPrint(oldEdgeStreet)
+                -- logger.print('oldEdgeStreet =') logger.debugPrint(oldEdgeStreet)
                 -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
                 if oldBaseEdge ~= nil and oldEdgeStreet ~= nil then
                     if not(_isNodeAttachedToSomethingElse(_map[oldBaseEdge.node0])) then
@@ -1402,10 +1432,34 @@ function data()
                             end
                         end
                         logger.print('edgeIdsBetweenNodes =') logger.debugPrint(edgeIdsBetweenNodes)
-                        logger.print('type(edgeIdsBetweenNodes) =', type(edgeIdsBetweenNodes))
-                        _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.segmentsRemoved.eventName, args)
-                    elseif name == _eventProperties.segmentsRemoved.eventName then
-                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType)
+                        local outerBaseNode0 = api.engine.getComponent(args.outerNode0Id, api.type.ComponentType.BASE_NODE)
+                        local innerBaseNode0 = api.engine.getComponent(args.innerNode0Id, api.type.ComponentType.BASE_NODE)
+                        local innerBaseNode1 = api.engine.getComponent(args.innerNode1Id, api.type.ComponentType.BASE_NODE)
+                        local outerBaseNode1 = api.engine.getComponent(args.outerNode1Id, api.type.ComponentType.BASE_NODE)
+                        local edge0Base = api.engine.getComponent(edgeIdsBetweenNodes[1], api.type.ComponentType.BASE_EDGE)
+                        local edge1Base = api.engine.getComponent(edgeIdsBetweenNodes[2], api.type.ComponentType.BASE_EDGE)
+                        local edge2Base = api.engine.getComponent(edgeIdsBetweenNodes[3], api.type.ComponentType.BASE_EDGE)
+                        if outerBaseNode0 == nil or innerBaseNode0 == nil or innerBaseNode1 == nil or outerBaseNode1 == nil
+                        or edge0Base == nil or edge1Base == nil or edge2Base == nil then
+                            logger.warn('some edges or nodes cannot be read')
+                            return
+                        end
+                        args.dataForCon = {
+                            outerNode0Pos = transfUtils.xYZ2OneTwoThree(outerBaseNode0.position),
+                            innerNode0Pos = transfUtils.xYZ2OneTwoThree(innerBaseNode0.position),
+                            innerNode1Pos = transfUtils.xYZ2OneTwoThree(innerBaseNode1.position),
+                            outerNode1Pos = transfUtils.xYZ2OneTwoThree(outerBaseNode1.position),
+                            edge0Tan0 = transfUtils.xYZ2OneTwoThree(edge0Base.tangent0),
+                            edge0Tan1 = transfUtils.xYZ2OneTwoThree(edge0Base.tangent1),
+                            edge1Tan0 = transfUtils.xYZ2OneTwoThree(edge1Base.tangent0),
+                            edge1Tan1 = transfUtils.xYZ2OneTwoThree(edge1Base.tangent1),
+                            edge2Tan0 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent0),
+                            edge2Tan1 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent1),
+                        }
+
+                        _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)
+                    elseif name == _eventProperties.edgesRemoved.eventName then
+                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)

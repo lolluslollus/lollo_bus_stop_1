@@ -15,10 +15,10 @@ local test3 = moduleHelpers.getFloatFromIntParams(params, 'aa3', 'ab3')
 moduleHelpers.setIntParamsFromFloat(params, 'aa4', 'ab4', -1000)
 local test4 = moduleHelpers.getFloatFromIntParams(params, 'aa4', 'ab4')
 
-moduleHelpers.setIntParamsFromFloat(params, 'aa5', 'ab5', 1000.000000001)
+moduleHelpers.setIntParamsFromFloat(params, 'aa5', 'ab5', 0.000000001)
 local test5 = moduleHelpers.getFloatFromIntParams(params, 'aa5', 'ab5')
 
-moduleHelpers.setIntParamsFromFloat(params, 'aa6', 'ab6', -1000.000000001)
+moduleHelpers.setIntParamsFromFloat(params, 'aa6', 'ab6', -0.000000001)
 local test6 = moduleHelpers.getFloatFromIntParams(params, 'aa6', 'ab6')
 
 moduleHelpers.setIntParamsFromFloat(params, 'aa7', 'ab7', 1000000000.0000000001)

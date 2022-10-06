@@ -8,9 +8,13 @@ local transfUtilsUG = require('transf')
 function data()
 	return {
 		updateFn = function(params, two)
-			logger.print('updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
+			logger.print('stopParametric.updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
 			-- no api, no game, and I cannot pass the api as a param
-			local getSnapNodes = function()
+
+			local function _getInverseTan(tan)
+				return {-tan[1], -tan[2], -tan[3]}
+			end
+			local function getSnapNodes()
 				if params.lolloBusStop_direction == 0 then
 					if params.lolloBusStop_snapNodes == 0 then return {}
 					elseif params.lolloBusStop_snapNodes == 1 then return { 0, }
@@ -36,26 +40,81 @@ function data()
 				if params.lolloBusStop_direction ~= 0 and params.lolloBusStop_direction ~= 1 then params.lolloBusStop_direction = 1 end
 				if not(params.lolloBusStop_streetType_) or not(two.globalStreetData[params.lolloBusStop_streetType_ + 1]) then
 					params.lolloBusStop_streetType_ = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
-					logger.print('updateFn.script set params.lolloBusStop_streetType_ to') debugPrint(params.lolloBusStop_streetType_)
+					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType_ to') debugPrint(params.lolloBusStop_streetType_)
 				else
-					-- logger.print('updateFn.script params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
-					-- logger.print('updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
+					-- logger.print('stopParametric.updateFn.script params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
+					-- logger.print('stopParametric.updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
 				end
 				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
 					params.lolloBusStop_model = 0
-					logger.print('updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
+					logger.print('stopParametric.updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
 				else
-					logger.print('updateFn.script params.lolloBusStop_model =', params.lolloBusStop_model)
+					logger.print('stopParametric.updateFn.script params.lolloBusStop_model =', params.lolloBusStop_model)
 				end
 			end
 			_initParams()
+			local _dyn = {}
+			local function _readDynamiParams()
+				_dyn.tan00 = {
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0XInt', 'edge0Tan0XDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0YInt', 'edge0Tan0YDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0ZInt', 'edge0Tan0ZDec', 'lolloBusStop_'),
+				}
+				_dyn.tan01 = {
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1XInt', 'edge0Tan1XDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1YInt', 'edge0Tan1YDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1ZInt', 'edge0Tan1ZDec', 'lolloBusStop_'),
+				}
+				_dyn.tan10 = {
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0XInt', 'edge1Tan0XDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0YInt', 'edge1Tan0YDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0ZInt', 'edge1Tan0ZDec', 'lolloBusStop_'),
+				}
+				_dyn.tan11 = {
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1XInt', 'edge1Tan1XDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1YInt', 'edge1Tan1YDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1ZInt', 'edge1Tan1ZDec', 'lolloBusStop_'),
+				}
+				_dyn.tan20 = {
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0XInt', 'edge2Tan0XDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0YInt', 'edge2Tan0YDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0ZInt', 'edge2Tan0ZDec', 'lolloBusStop_'),
+				}
+				_dyn.tan21 = {
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1XInt', 'edge2Tan1XDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1YInt', 'edge2Tan1YDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1ZInt', 'edge2Tan1ZDec', 'lolloBusStop_'),
+				}
+				_dyn.outerPos0 = {
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosXInt', 'outerNode0PosXDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosYInt', 'outerNode0PosYDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosZInt', 'outerNode0PosZDec', 'lolloBusStop_'),
+				}
+				_dyn.outerPos1 = {
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosXInt', 'outerNode1PosXDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosYInt', 'outerNode1PosYDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosZInt', 'outerNode1PosZDec', 'lolloBusStop_'),
+				}
+				_dyn.innerPos0 = {
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosXInt', 'innerNode0PosXDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosYInt', 'innerNode0PosYDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosZInt', 'innerNode0PosZDec', 'lolloBusStop_'),
+				}
+				_dyn.innerPos1 = {
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosXInt', 'innerNode1PosXDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosYInt', 'innerNode1PosYDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosZInt', 'innerNode1PosZDec', 'lolloBusStop_'),
+				}
+			end
+			_readDynamiParams()
+			logger.print('stopParametric.updateFn _dyn =') logger.debugPrint(_dyn)
 
 			local _pitchAngle = pitchHelpers.getPitchAngle(params)
-			logger.print('updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
+			logger.print('stopParametric.updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
 			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
-			-- logger.print('updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
+			-- logger.print('stopParametric.updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
@@ -66,7 +125,7 @@ function data()
 			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
-			-- logger.print('updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
+			-- logger.print('stopParametric.updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
             local result = {
                 colliders = {},
                 cost = 1000,
@@ -81,41 +140,41 @@ function data()
                         edges = params.lolloBusStop_direction == 0
 						and {
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeXCon, 0, 0 }
+								_dyn.outerPos0,  _getInverseTan(_dyn.tan00)
 							},  -- node 0
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength + constants.outerEdgeXCon, 0, 0 }
+								_dyn.innerPos0, _getInverseTan(_dyn.tan01)
 							},  -- node 1
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength * 2, 0, 0 }
+								_dyn.innerPos0, _getInverseTan(_dyn.tan10)
 							},  -- node 2
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength * 2, 0, 0 }
+								_dyn.innerPos1, _getInverseTan(_dyn.tan11)
 							},  -- node 3
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.outerEdgeXCon -constants.halfEdgeLength, 0, 0 }
+								_dyn.innerPos1, _getInverseTan(_dyn.tan20)
 							},  -- node 4
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXCon, 0, 0 }),  { constants.outerEdgeXCon -constants.halfEdgeLength, 0, 0 }
+								_dyn.outerPos1, _getInverseTan(_dyn.tan21)
 							},  -- node 5
                         } or {
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXCon, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
+								_dyn.outerPos1, _dyn.tan21
 							},  -- node 0
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
+								_dyn.innerPos1, _dyn.tan20
 							},  -- node 1
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength * 2, 0, 0 }
+								_dyn.innerPos1, _dyn.tan11
 							},  -- node 2
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { -constants.halfEdgeLength * 2, 0, 0 }
+								_dyn.innerPos0, _dyn.tan10
 							},  -- node 3
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.halfEdgeLength, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
+								_dyn.innerPos0, _dyn.tan01
 							},  -- node 4
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { constants.halfEdgeLength -constants.outerEdgeXCon, 0, 0 }
+								_dyn.outerPos0,  _dyn.tan00
 							},  -- node 5
                         },
 						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
@@ -250,8 +309,8 @@ function data()
 			end
             terminateConstructionHook()
 
-			-- logger.print('updateFn.script result = ') logger.debugPrint(result)
-			logger.print('updateFn.script() ending')
+			logger.print('stopParametric.updateFn.script result = ') logger.debugPrint(result)
+			logger.print('stopParametric.updateFn.script() ending')
 			return result
 		end,
 --[[  	

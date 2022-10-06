@@ -1,5 +1,29 @@
 local matrixUtils = require('lollo_bus_stop.matrix')
 
+if math.atan2 == nil then
+    math.atan2 = function(dy, dx)
+        local result = 0
+        if dx == 0 then
+            result = math.pi * 0.5
+        else
+            result = math.atan(dy / dx)
+        end
+
+        if dx > 0 then
+            return result
+        elseif dx < 0 and dy >= 0 then
+            return result + math.pi
+        elseif dx < 0 and dy < 0 then
+            return result - math.pi
+        elseif dy > 0 then
+            return result
+        elseif dy < 0 then
+            return - result
+        else return false
+        end
+    end
+end
+
 local utils = {}
 
 local _getMatrix = function(transf)

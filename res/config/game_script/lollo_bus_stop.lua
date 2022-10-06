@@ -236,7 +236,7 @@ function data()
                 function()
                     -- this tries to build the construction, it calls con.updateFn()
                     local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
-                    logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
+                    -- logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
 
                     if proposalData.errorState ~= nil then
                         if proposalData.errorState.critical == true then
@@ -525,10 +525,12 @@ function data()
                 logger.print('ipotenusaYX =', ipotenusaYX, 'sinYX =', sinYX, 'cosYX =', cosYX)
                 local vecY0 = {0, 1, 0} -- transforms to {xMid - sinYX, yMid + cosYX, zMid}
                 local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
-                local ipotenusaZX = math.sqrt((x1 - x0)^2 + (z1 - z0)^2)
-                local sinZX = (z1-z0) / ipotenusaZX
-                local cosZX = (x1-x0) / ipotenusaZX
-                local vecZTilted = {0, 0, 1} -- transforms to {xMid - sinZX, yMid, zMid + cosZX}
+                local vecZTilted = {0, 0, 1} -- transforms to
+                -- {
+                    -- xMid -math.sin(math.atan2((z1-z0), (x1-x0))),
+                    -- yMid -math.sin(math.atan2((z1-z0), (y1-y0))),
+                    -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
+                -- }
                 --[[
                     x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
                     y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
@@ -552,9 +554,6 @@ function data()
                 -- unknownTransf[2] = (y1 - yMid) / constants.outerEdgeX
                 -- unknownTransf[3] = (z1 - zMid) / constants.outerEdgeX
                 -- solving for vecY0
-                -- local xyz = {xMid - sinYX, yMid + cosYX, zMid}
-                -- unknownTransf[5] = (y1 > y0) and (-math.abs(sinYX)) or (math.abs(sinYX))
-                -- unknownTransf[6] = (x1 > x0) and (math.abs(cosYX)) or (-math.abs(cosYX))
                 unknownTransf[5] = -sinYX
                 unknownTransf[6] = cosYX
                 unknownTransf[7] = 0
@@ -566,10 +565,13 @@ function data()
                 logger.print('unknownTransf straight =') logger.debugPrint(unknownTransf)
                 -- solving for vecZ0 tilted
                 -- this makes buildings perpendicular to the road, the points match. Curves seem to get less angry.
-                -- LOLLO TODO decide on this or its twin above
-                unknownTransf[9] = -sinZX
-                unknownTransf[10] = 0
-                unknownTransf[11] = cosZX
+                -- LOLLO TODO these three are still wrong
+                -- xMid -math.sin(math.atan2((z1-z0), (x1-x0)) = unknownTransf[9] + xMid
+                unknownTransf[9] = -math.sin(math.atan2((z1-z0), (x1-x0)))
+                -- yMid -math.sin(math.atan2((z1-z0), (y1-y0))) = unknownTransf[10] + yMid
+                unknownTransf[10] = -math.sin(math.atan2((z1-z0), (y1-y0)))
+                -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX))) = unknownTransf[11] + zMid
+                unknownTransf[11] = math.cos(math.atan2((z1-z0), (ipotenusaYX)))
                 logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
                 local conTransf = unknownTransf
@@ -587,7 +589,12 @@ function data()
                     print('should be') debugPrint({xMid - sinYX, yMid + cosYX, zMid})
                     print('vecZ0 straight and transformed =') debugPrint(vecZ0) debugPrint(vecZ0Transformed)
                     print('should be (vertical)') debugPrint({xMid, yMid, zMid + 1})
-                    print('or, it should be (perpendicular)') debugPrint({xMid - sinZX, yMid, zMid + cosZX})
+                    -- print('or, it should be (perpendicular)') debugPrint({xMid - sinZ_X, yMid, zMid + cosZ_X})
+                    print('or, it should be (perpendicular fixed)') debugPrint({
+                        xMid -math.sin(math.atan2((z1-z0), (x1-x0))),
+                        yMid -math.sin(math.atan2((z1-z0), (y1-y0))),
+                        zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
+                    })
                     print('x0, x1 =', x0, x1)
                     print('y0, y1 =', y0, y1)
                     print('z0, z1 =', z0, z1)
@@ -692,7 +699,7 @@ function data()
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
                     logger.print('buildConstruction callback, success =', success)
-                    logger.debugPrint(result)
+                    -- logger.debugPrint(result)
                     if success then
                         local conId = result.resultEntities[1]
                         logger.print('buildConstruction succeeded, stationConId = ', conId)
@@ -1207,7 +1214,6 @@ function data()
                             logger.print('baseEdge.objects[1][2] =', baseEdge.objects[1][2])
                             -- if baseEdge.objects[1][2] == 1 then yShift = -yShift end -- NO!
                             local edgeObjectTransf_y0 = transfUtils.getTransfYShiftedBy(edgeObjectTransf, yShift)
-                            -- LOLLO TODO check for crashes with and without this
                             local edgeObjectTransf_yz0 = transfUtils.getTransfZShiftedBy(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
                             logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                             logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
@@ -1294,7 +1300,7 @@ function data()
                         )
                     elseif name == _eventProperties.firstOuterSplitDone.eventName then
                         -- find out which edge needs splitting
-                        logger.print('args.outerNode0EdgeIds') logger.debugPrint(args.outerNode0EdgeIds)
+                        logger.print('args.outerNode0EdgeIds =') logger.debugPrint(args.outerNode0EdgeIds)
                         if #args.outerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second split')
                             return

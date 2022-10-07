@@ -215,7 +215,13 @@ function data()
 						or modelTransfLeft
 				}
 			end
--- if true then return result end
+-- LOLLO TEST CODE BEGIN
+-- if true then
+-- 	logger.print('stopParametric.updateFn.script result = ') logger.debugPrint(result)
+-- 	logger.print('stopParametric.updateFn.script() ending')
+-- 	return result
+-- end
+-- LOLLO TEST CODE END
 			local vehicleEdgeTransfLeft = transfUtilsUG.mul(
 				transfUtils.getTransf2FitObjectBetweenPositions(_dyn.innerPos0, _dyn.innerPos1, 2 * constants.innerEdgeX),
 				{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}

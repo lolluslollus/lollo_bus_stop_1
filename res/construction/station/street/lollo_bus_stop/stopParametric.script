@@ -15,10 +15,6 @@ function data()
 			local function _getInverseTan(tan)
 				return {-tan[1], -tan[2], -tan[3]}
 			end
-			-- -- LOLLO TODO this is not the best, the trouble is, edge tangents are reversed sometimes
-			-- local function _getTanFromPos(pos0, pos1)
-			-- 	return {pos1[1] - pos0[1], pos1[2] - pos0[2], pos1[3] - pos0[3]}
-			-- end
 			local function getSnapNodes()
 				if params.lolloBusStop_direction == 0 then
 					if params.lolloBusStop_snapNodes == 0 then return {}
@@ -182,7 +178,7 @@ function data()
 								_dyn.outerPos0,  _getInverseTan(_dyn.tan00)
 							},  -- node 5
                         },
-						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
+						-- freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},
                     },

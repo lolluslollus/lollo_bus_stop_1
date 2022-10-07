@@ -527,109 +527,14 @@ function data()
                 logger.warn('cannot find outerNode0Id or outerNode1Id')
                 return
             end
-            -- local getConTransf = function()
-            --     local x0 = baseNode0.position.x
-            --     local x1 = baseNode1.position.x
-            --     local y0 = baseNode0.position.y
-            --     local y1 = baseNode1.position.y
-            --     local z0 = baseNode0.position.z
-            --     local z1 = baseNode1.position.z
-            --     local xMid = (x0 + x1) / 2
-            --     local yMid = (y0 + y1) / 2
-            --     local zMid = (z0 + z1) / 2
-            --     local vecX0 = {-constants.outerEdgeX, 0, 0} -- transforms to {x0, y0, z0}
-            --     local vecX1 = {constants.outerEdgeX, 0, 0} -- transforms to {x1, y1, z1}
-            --     local ipotenusaYX = math.sqrt((x1 - x0)^2 + (y1 - y0)^2)
-            --     local sinYX = (y1-y0) / ipotenusaYX
-            --     local cosYX = (x1-x0) / ipotenusaYX
-            --     logger.print('ipotenusaYX =', ipotenusaYX, 'sinYX =', sinYX, 'cosYX =', cosYX)
-            --     local vecY0 = {0, 1, 0} -- transforms to {xMid - sinYX, yMid + cosYX, zMid}
-            --     local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
-            --     local vecZTilted = {0, 0, 1} -- transforms to
-            --     -- {
-            --         -- xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX
-            --         -- yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX
-            --         -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
-            --     -- }
-            --     -- vecXYZ transformed with transf is:
-            --     --[[
-            --         x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
-            --         y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
-            --         z = vecXYZ.x * transf[3] + vecXYZ.y * transf[7] + vecXYZ.z * transf[11] + transf[15]
-            --     ]]
-            --     local unknownTransf = {}
-            --     unknownTransf[4] = 0
-            --     unknownTransf[8] = 0
-            --     unknownTransf[12] = 0
-            --     unknownTransf[16] = 1
-            --     unknownTransf[13] = xMid
-            --     unknownTransf[14] = yMid
-            --     unknownTransf[15] = zMid
-            --     -- solving for vecX0
-            --     -- local xyz = {x0, y0, z0}
-            --     unknownTransf[1] = (x0 - xMid) / (-constants.outerEdgeX)
-            --     unknownTransf[2] = (y0 - yMid) / (-constants.outerEdgeX)
-            --     unknownTransf[3] = (z0 - zMid) / (-constants.outerEdgeX)
-            --     -- solving for vecX1 (same result)
-            --     -- unknownTransf[1] = (x1 - xMid) / constants.outerEdgeX
-            --     -- unknownTransf[2] = (y1 - yMid) / constants.outerEdgeX
-            --     -- unknownTransf[3] = (z1 - zMid) / constants.outerEdgeX
-            --     -- solving for vecY0
-            --     unknownTransf[5] = -sinYX
-            --     unknownTransf[6] = cosYX
-            --     unknownTransf[7] = 0
-            --     -- solving for vecZ0 vertical
-            --     -- this makes buildings vertical, the points match
-            --     unknownTransf[9] = 0
-            --     unknownTransf[10] = 0
-            --     unknownTransf[11] = 1
-            --     logger.print('unknownTransf straight =') logger.debugPrint(unknownTransf)
-            --     -- solving for vecZ0 tilted
-            --     -- this makes buildings perpendicular to the road, the points match. Curves seem to get less angry.
-            --     -- LOLLO TODO these three are fine for the edges but tilt the construction models, the con should compensate for it
-            --     -- xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX = unknownTransf[9] + xMid
-            --     unknownTransf[9] = -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX
-            --     -- yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX = unknownTransf[10] + yMid
-            --     unknownTransf[10] = -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX
-            --     -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX))) = unknownTransf[11] + zMid
-            --     unknownTransf[11] = math.cos(math.atan2((z1-z0), (ipotenusaYX)))
-            --     logger.print('unknownTransf tilted =') logger.debugPrint(unknownTransf)
 
-            --     local conTransf = unknownTransf
-            --     logger.print('conTransf =') logger.debugPrint(conTransf)
-            --     local vecX0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecX0), conTransf)
-            --     local vecX1Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecX1), conTransf)
-            --     local vecYTransformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecY0), conTransf)
-            --     local vecZ0Transformed = transfUtils.getVecTransformed(transfUtils.oneTwoThree2XYZ(vecZ0), conTransf)
-            --     if logger.getIsExtendedLog() then
-            --         print('vecX0 straight and transformed =') debugPrint(vecX0) debugPrint(vecX0Transformed)
-            --         print('should be') debugPrint({x0, y0, z0})
-            --         print('vecX1 straight and transformed =') debugPrint(vecX1) debugPrint(vecX1Transformed)
-            --         print('should be') debugPrint({x1, y1, z1})
-            --         print('vecY0 straight and transformed =') debugPrint(vecY0) debugPrint(vecYTransformed)
-            --         print('should be') debugPrint({xMid - sinYX, yMid + cosYX, zMid})
-            --         print('vecZ0 straight and transformed =') debugPrint(vecZ0) debugPrint(vecZ0Transformed)
-            --         print('should be (vertical)') debugPrint({xMid, yMid, zMid + 1})
-            --         print('or, it should be (perpendicular fixed)') debugPrint({
-            --             xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX,
-            --             yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX,
-            --             zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
-            --         })
-            --         print('x0, x1 =', x0, x1)
-            --         print('y0, y1 =', y0, y1)
-            --         print('z0, z1 =', z0, z1)
-            --         print('xMid, yMid, zMid =', xMid, yMid, zMid)
-            --     end
-            --     return conTransf
-            -- end
-            -- local conTransf = getConTransf()
             local conTransf = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2) --, logger)
             local _inverseConTransf = transfUtils.getInverseTransf(conTransf)
             logger.print('_inverseConTransf =') logger.debugPrint(_inverseConTransf)
 
             local newCon = api.type.SimpleProposal.ConstructionEntity.new()
             -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
-            newCon.fileName = 'station/street/lollo_bus_stop/stop_3.con' -- LOLLO TODO try the new parametric construction so it sticks to curves
+            newCon.fileName = 'station/street/lollo_bus_stop/stop_3.con' -- LOLLO TODO the new parametric construction does not play well with curves, try Proposal instead of SimpleProposal
             local allStreetData = streetUtils.getGlobalStreetData()
             -- logger.print('allStreetData =') logger.debugPrint(allStreetData)
             local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
@@ -674,11 +579,8 @@ function data()
                 lolloBusStop_outerNode1Id = outerNode1Id, -- idem
                 lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
                 -- lolloBusStop_snapNodes = 3,
-                lolloBusStop_snapNodes = 0,
-                -- LOLLO TODO This needs upgradeConstruction anyway, and it fails in curves even with shorter con edges. Check it.
+                lolloBusStop_snapNodes = 0, -- this needs upgradeConstruction anyway, and it fails in curves even with shorter con edges.
                 -- The sharper the bends, the more the trouble - and some crashes appear.
-                -- On a deeper analysis, the transf is not good for curves, and I doubt it can be adjusted,
-                -- so we make the con curved.
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
                 lolloBusStop_tramTrack = 0,
                 seed = math.abs(math.ceil(conTransf[13] * 1000)),
@@ -748,7 +650,7 @@ function data()
                 return
             end
             api.cmd.sendCommand(
-                -- LOLLO TODO let's try without force and see if the random crashes go away. Not a good idea
+                -- let's try without force and see if the random crashes go away. Not a good idea
                 -- coz it fails to build very often, because of collisions
                 api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
@@ -863,8 +765,8 @@ function data()
                 return
             end
             api.cmd.sendCommand(
-                -- LOLLO TODO let's try without force and see if the random crashes go away, yes they do, some of them.
-                -- Only checking for collisions won't do, we may have to use a parametric con since the transf cannot be perfect in curves
+                -- let's try without force and see if the random crashes go away, yes they do, some of them.
+                -- Only checking for collisions won't do, even a parametric con does not cut it
                 api.cmd.make.buildProposal(proposal, context, false), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
                     logger.print('makeConstructionSnappy callback, success =', success) -- logger.debugPrint(result)

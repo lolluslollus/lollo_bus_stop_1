@@ -97,7 +97,7 @@ function data()
                                 { -2 * constants.outerEdgeXCon, 0, 0 }
 							},  -- node 1
                         },
-						freeNodes = {0, 1}, -- useless? LOLLO TODO try switching it on and off. It really seems useless
+						freeNodes = {0, 1}, -- useless?
 						snapNodes = {0, 1},
                         -- tag2Nodes = {},
                     },

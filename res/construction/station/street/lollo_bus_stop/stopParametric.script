@@ -3,6 +3,7 @@ local constants = require('lollo_bus_stop.constants')
 local logger = require('lollo_bus_stop.logger')
 local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
 local pitchHelpers = require('lollo_bus_stop.pitchHelper')
+local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
 
 function data()
@@ -210,9 +211,15 @@ function data()
 						or modelTransfLeft
 				}
 			end
-
-			local vehicleEdgeTransfLeft = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1})
-			local vehicleEdgeTransfRight = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1})
+-- if true then return result end
+			local vehicleEdgeTransfLeft = transfUtilsUG.mul(
+				transfUtils.getTransf2FitObjectBetweenPositions(_dyn.innerPos0, _dyn.innerPos1, 2 * constants.halfEdgeLength, logger),
+				{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}
+			)
+			local vehicleEdgeTransfRight = transfUtilsUG.mul(
+				transfUtils.getTransf2FitObjectBetweenPositions(_dyn.innerPos1, _dyn.innerPos0, 2 * constants.halfEdgeLength, logger),
+				{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}
+			)
 			result.models[#result.models+1] = {
 				id = 'lollo_bus_stop/vehicle_edge_left.mdl',
 				-- tag = 'stationTag',

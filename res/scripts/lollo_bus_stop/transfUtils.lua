@@ -560,6 +560,105 @@ utils.get1MModelTransf = function(pos1, pos2)
     return result
 end
 
+-- gets a transf to fit something with length xObjectLength between two positions. x size is scaled, y and z sizes are preserved
+utils.getTransf2FitObjectBetweenPositions = function(pos0, pos1, xObjectLength, logger)
+    local _absX0I = xObjectLength / 2
+    local _logger = logger == nil and {print = function() end, debugPrint = function() end, getIsExtendedLog = function() return false end} or logger
+    local x0 = pos0.x or pos0[1]
+    local x1 = pos1.x or pos1[1]
+    local y0 = pos0.y or pos0[2]
+    local y1 = pos1.y or pos1[2]
+    local z0 = pos0.z or pos0[3]
+    local z1 = pos1.z or pos1[3]
+    local xMid = (x0 + x1) / 2
+    local yMid = (y0 + y1) / 2
+    local zMid = (z0 + z1) / 2
+    local vecX0 = {-_absX0I, 0, 0} -- transforms to {x0, y0, z0}
+    local vecX1 = {_absX0I, 0, 0} -- transforms to {x1, y1, z1}
+    local ipotenusaYX = math.sqrt((x1 - x0)^2 + (y1 - y0)^2)
+    local sinYX = (y1-y0) / ipotenusaYX
+    local cosYX = (x1-x0) / ipotenusaYX
+    _logger.print('ipotenusaYX =', ipotenusaYX, 'sinYX =', sinYX, 'cosYX =', cosYX)
+    local vecY0 = {0, 1, 0} -- transforms to {xMid - sinYX, yMid + cosYX, zMid}
+    local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
+    local vecZTilted = {0, 0, 1} -- transforms to
+    -- {
+        -- xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX
+        -- yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX
+        -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
+    -- }
+    -- vecXYZ transformed with transf is:
+    --[[
+        x = vecXYZ.x * transf[1] + vecXYZ.y * transf[5] + vecXYZ.z * transf[9] + transf[13],
+        y = vecXYZ.x * transf[2] + vecXYZ.y * transf[6] + vecXYZ.z * transf[10] + transf[14],
+        z = vecXYZ.x * transf[3] + vecXYZ.y * transf[7] + vecXYZ.z * transf[11] + transf[15]
+    ]]
+    local unknownTransf = {}
+    unknownTransf[4] = 0
+    unknownTransf[8] = 0
+    unknownTransf[12] = 0
+    unknownTransf[16] = 1
+    unknownTransf[13] = xMid
+    unknownTransf[14] = yMid
+    unknownTransf[15] = zMid
+    -- solving for vecX0
+    -- local xyz = {x0, y0, z0}
+    unknownTransf[1] = (x0 - xMid) / (-_absX0I)
+    unknownTransf[2] = (y0 - yMid) / (-_absX0I)
+    unknownTransf[3] = (z0 - zMid) / (-_absX0I)
+    -- solving for vecX1 (same result)
+    -- unknownTransf[1] = (x1 - xMid) / absX0I
+    -- unknownTransf[2] = (y1 - yMid) / absX0I
+    -- unknownTransf[3] = (z1 - zMid) / absX0I
+    -- solving for vecY0
+    unknownTransf[5] = -sinYX
+    unknownTransf[6] = cosYX
+    unknownTransf[7] = 0
+    -- solving for vecZ0 vertical
+    -- this makes buildings vertical, the points match
+    unknownTransf[9] = 0
+    unknownTransf[10] = 0
+    unknownTransf[11] = 1
+    _logger.print('unknownTransf straight =') _logger.debugPrint(unknownTransf)
+    -- solving for vecZ0 tilted
+    -- this makes buildings perpendicular to the road, the points match. Curves seem to get less angry.
+    -- LOLLO TODO these three are fine for the edges but tilt the construction models, the con should compensate for it
+    -- xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX = unknownTransf[9] + xMid
+    unknownTransf[9] = -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX
+    -- yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX = unknownTransf[10] + yMid
+    unknownTransf[10] = -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX
+    -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX))) = unknownTransf[11] + zMid
+    unknownTransf[11] = math.cos(math.atan2((z1-z0), (ipotenusaYX)))
+    _logger.print('unknownTransf tilted =') _logger.debugPrint(unknownTransf)
+
+    local result = unknownTransf
+    _logger.print('result =') _logger.debugPrint(result)
+    local vecX0Transformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecX0), result)
+    local vecX1Transformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecX1), result)
+    local vecYTransformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecY0), result)
+    local vecZ0Transformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecZ0), result)
+    if _logger.getIsExtendedLog() then
+        print('vecX0 straight and transformed =') debugPrint(vecX0) debugPrint(vecX0Transformed)
+        print('should be') debugPrint({x0, y0, z0})
+        print('vecX1 straight and transformed =') debugPrint(vecX1) debugPrint(vecX1Transformed)
+        print('should be') debugPrint({x1, y1, z1})
+        print('vecY0 straight and transformed =') debugPrint(vecY0) debugPrint(vecYTransformed)
+        print('should be') debugPrint({xMid - sinYX, yMid + cosYX, zMid})
+        print('vecZ0 straight and transformed =') debugPrint(vecZ0) debugPrint(vecZ0Transformed)
+        print('should be (vertical)') debugPrint({xMid, yMid, zMid + 1})
+        print('or, it should be (perpendicular fixed)') debugPrint({
+            xMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * cosYX,
+            yMid -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX,
+            zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX)))
+        })
+        print('x0, x1 =', x0, x1)
+        print('y0, y1 =', y0, y1)
+        print('z0, z1 =', z0, z1)
+        print('xMid, yMid, zMid =', xMid, yMid, zMid)
+    end
+    return result
+end
+
 utils.getPosTanX2Normalised = function(posTanX2, targetLength)
     local pos1 = {posTanX2[1][1][1], posTanX2[1][1][2], posTanX2[1][1][3]}
     local tan1 = utils.getVectorNormalised(posTanX2[1][2], targetLength)

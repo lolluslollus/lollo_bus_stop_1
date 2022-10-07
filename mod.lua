@@ -135,7 +135,7 @@ function data()
             local geldedBusStopModels = getGeldedBusStopModels()
             logger.print('geldedBusStopModels =') logger.debugPrint(geldedBusStopModels)
 
-            local function addCon(sourceFileName, targetFileName, scriptFileName)
+            local function addCon(sourceFileName, targetFileName, scriptFileName, yearFrom, yearTo)
                 local staticCon = api.res.constructionRep.get(
                     api.res.constructionRep.find(
                         sourceFileName
@@ -147,8 +147,8 @@ function data()
                 newCon.snapping = staticCon.snapping
                 newCon.description = staticCon.description
                 -- newCon.availability = { yearFrom = 1925, yearTo = 0 } -- this dumps, the api wants it different
-                newCon.availability.yearFrom = 1925 -- same year as modern streets
-                newCon.availability.yearTo = 0
+                newCon.availability.yearFrom = yearFrom
+                newCon.availability.yearTo = yearTo
                 newCon.buildMode = staticCon.buildMode
                 newCon.categories = staticCon.categories
                 newCon.order = staticCon.order
@@ -185,12 +185,16 @@ function data()
             addCon(
                 'station/street/lollo_bus_stop/stop.con',
                 'station/street/lollo_bus_stop/stop_2.con',
-                'construction/station/street/lollo_bus_stop/stop'
+                'construction/station/street/lollo_bus_stop/stop',
+                1925, -- same year as modern streets
+                0 -- never expire
             )
             addCon(
                 'station/street/lollo_bus_stop/stop.con',
                 'station/street/lollo_bus_stop/stop_3.con',
-                'construction/station/street/lollo_bus_stop/stopParametric'
+                'construction/station/street/lollo_bus_stop/stopParametric',
+                -1,
+                -1
             )
         end,
     }

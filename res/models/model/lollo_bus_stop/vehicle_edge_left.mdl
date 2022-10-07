@@ -23,11 +23,11 @@ function data()
 					{
 						linkable = false,
 						nodes = {
-							{{ -constants.halfEdgeLength, 0, 0 }, { constants.halfEdgeLength, 0, constants.vehicleNodeZ, }, 3}, -- edge 0 -- node 0
-							{{ 0, 0, constants.vehicleNodeZ }, { constants.halfEdgeLength, 0, constants.vehicleNodeZ, }, 3}, -- node 1
+							{{ -constants.innerEdgeX, 0, 0 }, { constants.innerEdgeX, 0, constants.vehicleNodeZ, }, 3}, -- edge 0 -- node 0
+							{{ 0, 0, constants.vehicleNodeZ }, { constants.innerEdgeX, 0, constants.vehicleNodeZ, }, 3}, -- node 1
 
-							{{ 0, 0, constants.vehicleNodeZ }, { constants.halfEdgeLength, 0, -constants.vehicleNodeZ }, 3}, -- edge 1 -- node 2
-							{{ constants.halfEdgeLength, 0, 0 }, { constants.halfEdgeLength, 0, -constants.vehicleNodeZ }, 3}, -- node 3
+							{{ 0, 0, constants.vehicleNodeZ }, { constants.innerEdgeX, 0, -constants.vehicleNodeZ }, 3}, -- edge 1 -- node 2
+							{{ constants.innerEdgeX, 0, 0 }, { constants.innerEdgeX, 0, -constants.vehicleNodeZ }, 3}, -- node 3
 						},
 						speedLimit = 30,
 						transportModes = { 'BUS', 'ELECTRIC_TRAM', 'TRAM', 'TRUCK' },

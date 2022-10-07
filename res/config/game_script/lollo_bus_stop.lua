@@ -409,6 +409,9 @@ function data()
             local result = transfUtils.getVec123Transformed(pos, transf)
             return result
         end,
+        getTanReversed = function(tan)
+            return {-tan[1], -tan[2], -tan[3]}
+        end,
         getTanTransformed = function(tan, transf)
             local _rotateTransf = {
                 transf[1], transf[2], transf[3], transf[4],
@@ -1478,7 +1481,21 @@ function data()
                             edge2Tan0 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent0),
                             edge2Tan1 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent1),
                         }
-
+                        if edge0Base.node0 ~= args.outerNode0Id then
+                            logger.print('reversing edge0')
+                            args.dataForCon.edge0Tan0 = _utils.getTanReversed(args.dataForCon.edge0Tan0)
+                            args.dataForCon.edge0Tan1 = _utils.getTanReversed(args.dataForCon.edge0Tan1)
+                        end
+                        if edge1Base.node0 ~= args.innerNode0Id then
+                            logger.print('reversing edge1')
+                            args.dataForCon.edge1Tan0 = _utils.getTanReversed(args.dataForCon.edge1Tan0)
+                            args.dataForCon.edge1Tan1 = _utils.getTanReversed(args.dataForCon.edge1Tan1)
+                        end
+                        if edge2Base.node0 ~= args.innerNode1Id then
+                            logger.print('reversing edge2')
+                            args.dataForCon.edge2Tan0 = _utils.getTanReversed(args.dataForCon.edge2Tan0)
+                            args.dataForCon.edge2Tan1 = _utils.getTanReversed(args.dataForCon.edge2Tan1)
+                        end
                         _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.dataForCon)

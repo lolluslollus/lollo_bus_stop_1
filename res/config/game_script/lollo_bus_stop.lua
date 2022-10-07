@@ -781,84 +781,6 @@ function data()
                 end
             )
         end,
-        buildSnappyConstruction = function(oldConId, conParams, conTransf)
-            logger.print('buildSnappyConstruction starting, oldConId =', oldConId or 'NIL')
-            logger.print('conParams =') logger.debugPrint(conParams)
-            logger.print('conTransf =') logger.debugPrint(conTransf)
-
-            if not(edgeUtils.isValidAndExistingId(oldConId)) then
-                logger.err('buildSnappyConstruction got an invalid conId =', oldConId or 'NIL')
-                return
-            end
-            local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
-            if not(oldCon) then
-                logger.err('buildSnappyConstruction got an invalid con =')
-                return
-            end
-
-            local newCon = api.type.SimpleProposal.ConstructionEntity.new()
-            newCon.fileName = oldCon.fileName
-            local newParams = conParams
-            newParams.lolloBusStop_snapNodes = 3
-            newParams.seed = conParams.seed + 1
-            -- clone your own variable, it's safer than cloning newCon.params, which is userdata
-            local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
-            logger.print('buildSnappyConstruction just made conParamsBak, it is') logger.debugPrint(conParamsBak)
-            newCon.params = newParams
-            newCon.playerEntity = api.engine.util.getPlayer()
-            newCon.transf = api.type.Mat4f.new(
-                api.type.Vec4f.new(conTransf[1], conTransf[2], conTransf[3], conTransf[4]),
-                api.type.Vec4f.new(conTransf[5], conTransf[6], conTransf[7], conTransf[8]),
-                api.type.Vec4f.new(conTransf[9], conTransf[10], conTransf[11], conTransf[12]),
-                api.type.Vec4f.new(conTransf[13], conTransf[14], conTransf[15], conTransf[16])
-            )
-            local proposal = api.type.SimpleProposal.new()
-            proposal.constructionsToAdd[1] = newCon
-            proposal.constructionsToRemove = { oldConId }
-            proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
-
-            local context = api.type.Context:new()
-            -- context.checkTerrainAlignment = true -- default is false
-            -- context.cleanupStreetGraph = true -- default is false
-            -- context.gatherBuildings = true -- default is false
-            -- context.gatherFields = true -- default is true
-            context.player = api.engine.util.getPlayer()
-            local isProposalOK = _utils.getIsProposalOK(proposal, context)
-            if not(isProposalOK) then
-                logger.warn('buildSnappyConstruction made a dangerous proposal')
-                return
-            end
-            api.cmd.sendCommand(
-                -- LOLLO TODO let's try without force and see if the random crashes go away, yes they do, some of them.
-                -- Only checking for collisions won't do, we may have to use a parametric con since the transf cannot be perfect in curves
-                api.cmd.make.buildProposal(proposal, context, false), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
-                function(result, success)
-                    logger.print('buildSnappyConstruction callback, success =', success) -- logger.debugPrint(result)
-                    if success then
-                        local newConId = result.resultEntities[1]
-                        logger.print('buildSnappyConstruction succeeded, stationConId = ', newConId)
-                        xpcall(
-                            function ()
-                                api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
-                                    string.sub(debug.getinfo(1, 'S').source, 1),
-                                    _eventId,
-                                    _eventProperties.snappyConBuilt.eventName,
-                                    {
-                                        conId = newConId,
-                                        conParams = conParamsBak,
-                                    }
-                                ))
-                            end,
-                            logger.xpErrorHandler
-                        )
-                    else
-                        logger.warn('buildSnappyConstruction callback failed')
-                        logger.warn('buildSnappyConstruction proposal =') logger.warningDebugPrint(proposal)
-                        logger.warn('buildSnappyConstruction result =') logger.warningDebugPrint(result)
-                    end
-                end
-            )
-        end,
         bulldozeConstruction = function(constructionId)
             -- print('constructionId =', constructionId)
             if type(constructionId) ~= 'number' or constructionId < 0 then
@@ -889,6 +811,84 @@ function data()
                         logger.warn('bulldozeConstruction result =') logger.warningDebugPrint(result)
                     else
                         logger.print('bulldozeConstruction callback succeeded')
+                    end
+                end
+            )
+        end,
+        makeConstructionSnappy = function(oldConId, conParams, conTransf)
+            logger.print('makeConstructionSnappy starting, oldConId =', oldConId or 'NIL')
+            logger.print('conParams =') logger.debugPrint(conParams)
+            logger.print('conTransf =') logger.debugPrint(conTransf)
+
+            if not(edgeUtils.isValidAndExistingId(oldConId)) then
+                logger.err('makeConstructionSnappy got an invalid conId =', oldConId or 'NIL')
+                return
+            end
+            local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
+            if not(oldCon) then
+                logger.err('makeConstructionSnappy got an invalid con =')
+                return
+            end
+
+            local newCon = api.type.SimpleProposal.ConstructionEntity.new()
+            newCon.fileName = oldCon.fileName
+            local newParams = conParams
+            newParams.lolloBusStop_snapNodes = 3
+            newParams.seed = conParams.seed + 1
+            -- clone your own variable, it's safer than cloning newCon.params, which is userdata
+            local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
+            logger.print('makeConstructionSnappy just made conParamsBak, it is') logger.debugPrint(conParamsBak)
+            newCon.params = newParams
+            newCon.playerEntity = api.engine.util.getPlayer()
+            newCon.transf = api.type.Mat4f.new(
+                api.type.Vec4f.new(conTransf[1], conTransf[2], conTransf[3], conTransf[4]),
+                api.type.Vec4f.new(conTransf[5], conTransf[6], conTransf[7], conTransf[8]),
+                api.type.Vec4f.new(conTransf[9], conTransf[10], conTransf[11], conTransf[12]),
+                api.type.Vec4f.new(conTransf[13], conTransf[14], conTransf[15], conTransf[16])
+            )
+            local proposal = api.type.SimpleProposal.new()
+            proposal.constructionsToAdd[1] = newCon
+            proposal.constructionsToRemove = { oldConId }
+            proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
+
+            local context = api.type.Context:new()
+            -- context.checkTerrainAlignment = true -- default is false
+            -- context.cleanupStreetGraph = true -- default is false
+            -- context.gatherBuildings = true -- default is false
+            -- context.gatherFields = true -- default is true
+            context.player = api.engine.util.getPlayer()
+            local isProposalOK = _utils.getIsProposalOK(proposal, context)
+            if not(isProposalOK) then
+                logger.warn('makeConstructionSnappy made a dangerous proposal')
+                return
+            end
+            api.cmd.sendCommand(
+                -- LOLLO TODO let's try without force and see if the random crashes go away, yes they do, some of them.
+                -- Only checking for collisions won't do, we may have to use a parametric con since the transf cannot be perfect in curves
+                api.cmd.make.buildProposal(proposal, context, false), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
+                function(result, success)
+                    logger.print('makeConstructionSnappy callback, success =', success) -- logger.debugPrint(result)
+                    if success then
+                        local newConId = result.resultEntities[1]
+                        logger.print('makeConstructionSnappy succeeded, stationConId = ', newConId)
+                        xpcall(
+                            function ()
+                                api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                                    string.sub(debug.getinfo(1, 'S').source, 1),
+                                    _eventId,
+                                    _eventProperties.snappyConBuilt.eventName,
+                                    {
+                                        conId = newConId,
+                                        conParams = conParamsBak,
+                                    }
+                                ))
+                            end,
+                            logger.xpErrorHandler
+                        )
+                    else
+                        logger.warn('makeConstructionSnappy callback failed')
+                        logger.warn('makeConstructionSnappy proposal =') logger.warningDebugPrint(proposal)
+                        logger.warn('makeConstructionSnappy result =') logger.warningDebugPrint(result)
                     end
                 end
             )
@@ -1503,7 +1503,7 @@ function data()
                     elseif name == _eventProperties.edgesRemoved.eventName then
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
-                        -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
+                        -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.snappyConBuilt.eventName then
                         _utils.upgradeCon(args.conId, args.conParams)

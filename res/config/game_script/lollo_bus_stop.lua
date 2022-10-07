@@ -519,7 +519,7 @@ function data()
     local _actions = {
         buildConstruction = function(outerNode0Id, outerNode1Id, streetType, dataForCon)
             logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
-            logger.print('dataForCon =') logger.debugPrint(dataForCon)
+            -- logger.print('dataForCon =') logger.debugPrint(dataForCon)
 
             local baseNode0 = api.engine.getComponent(outerNode0Id, api.type.ComponentType.BASE_NODE)
             local baseNode1 = api.engine.getComponent(outerNode1Id, api.type.ComponentType.BASE_NODE)
@@ -623,7 +623,7 @@ function data()
             --     return conTransf
             -- end
             -- local conTransf = getConTransf()
-            local conTransf = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2, logger)
+            local conTransf = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2) --, logger)
             local _inverseConTransf = transfUtils.getInverseTransf(conTransf)
             logger.print('_inverseConTransf =') logger.debugPrint(_inverseConTransf)
 
@@ -720,7 +720,7 @@ function data()
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosXInt', 'outerNode1PosXDec', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosYInt', 'outerNode1PosYDec', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZInt', 'outerNode1PosZDec', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
-            logger.print('newParams =') logger.debugPrint(newParams)
+            -- logger.print('newParams =') logger.debugPrint(newParams)
             -- clone your own variable, it's safer than cloning newCon.params, which is userdata
             local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
             newCon.params = newParams
@@ -1485,22 +1485,25 @@ function data()
                             logger.print('reversing edge0')
                             args.dataForCon.edge0Tan0 = _utils.getTanReversed(args.dataForCon.edge0Tan0)
                             args.dataForCon.edge0Tan1 = _utils.getTanReversed(args.dataForCon.edge0Tan1)
+                            args.dataForCon.edge0Tan0, args.dataForCon.edge0Tan1 = args.dataForCon.edge0Tan1, args.dataForCon.edge0Tan0
                         end
                         if edge1Base.node0 ~= args.innerNode0Id then
                             logger.print('reversing edge1')
                             args.dataForCon.edge1Tan0 = _utils.getTanReversed(args.dataForCon.edge1Tan0)
                             args.dataForCon.edge1Tan1 = _utils.getTanReversed(args.dataForCon.edge1Tan1)
+                            args.dataForCon.edge1Tan0, args.dataForCon.edge1Tan1 = args.dataForCon.edge1Tan1, args.dataForCon.edge1Tan0
                         end
                         if edge2Base.node0 ~= args.innerNode1Id then
                             logger.print('reversing edge2')
                             args.dataForCon.edge2Tan0 = _utils.getTanReversed(args.dataForCon.edge2Tan0)
                             args.dataForCon.edge2Tan1 = _utils.getTanReversed(args.dataForCon.edge2Tan1)
+                            args.dataForCon.edge2Tan0, args.dataForCon.edge2Tan1 = args.dataForCon.edge2Tan1, args.dataForCon.edge2Tan0
                         end
                         _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
-                        _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
+                        -- _actions.buildSnappyConstruction(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.snappyConBuilt.eventName then
                         _utils.upgradeCon(args.conId, args.conParams)

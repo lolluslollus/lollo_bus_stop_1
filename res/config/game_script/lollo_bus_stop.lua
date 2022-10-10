@@ -28,6 +28,26 @@ local _guiConstants = {
 
 function data()
     local _utils = {
+        getConOfStationGroup = function(stationGroupId)
+            if not(edgeUtils.isValidAndExistingId(stationGroupId)) then return nil end
+
+            local stationGroupProps = api.engine.getComponent(stationGroupId, api.type.ComponentType.STATION_GROUP)
+            if not(stationGroupProps) then return nil end
+
+            for _, stationId in pairs(stationGroupProps.stations) do
+                if edgeUtils.isValidAndExistingId(stationId) then
+                    local conId = api.engine.system.streetConnectorSystem.getConstructionEntityForStation(stationId)
+                    if edgeUtils.isValidAndExistingId(conId) then
+                        local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
+                        if con ~= nil and con.fileName == constants.conFileName then
+                            return conId, con
+                        end
+                    end
+                end
+            end
+
+            return nil
+        end,
         -- get ids of edges that start or end at the given nodes
         getEdgeIdsLinkingNodes = function(node0Id, node1Id)
             if not(edgeUtils.isValidAndExistingId(node0Id)) or not(edgeUtils.isValidAndExistingId(node1Id)) then
@@ -396,7 +416,7 @@ function data()
 
             local newCon = api.type.SimpleProposal.ConstructionEntity.new()
             -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
-            newCon.fileName = 'station/street/lollo_bus_stop/stop_3.con'
+            newCon.fileName = constants.conFileName
             local allStreetData = streetUtils.getGlobalStreetData()
             -- logger.print('allStreetData =') logger.debugPrint(allStreetData)
             local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
@@ -563,7 +583,7 @@ function data()
         -- LOLLO NOTE the new parametric construction does not play well with curves, unless I rebuild adjacent roads snappy.
         -- I tried Proposal instead of SimpleProposal but it is not meant to be.
         -- The trouble seems to be with collisions between external edges and inner edges.
-        buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId)
+        buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId, successEventName, successEventArgs)
             logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
             logger.print('oldNode0Id =', oldNode0Id) logger.print('oldNode1Id =', oldNode1Id)
             if not(edgeUtils.isValidAndExistingId(oldNode0Id)) or not(edgeUtils.isValidAndExistingId(oldNode1Id)) then
@@ -717,13 +737,15 @@ function data()
                         logger.warn('buildSnappyRoads failed, result =') logger.warningDebugPrint(result)
                         _utils.setStateWorking(false)
                     else
+                        if not(successEventName) then return end
+
                         xpcall(
                             function ()
                                 api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                     string.sub(debug.getinfo(1, 'S').source, 1),
                                     _eventId,
-                                    _eventProperties.snappyRoadsBuilt.eventName,
-                                    { }
+                                    successEventName,
+                                    successEventArgs
                                 ))
                             end,
                             logger.xpErrorHandler
@@ -1257,74 +1279,87 @@ function data()
         guiHandleEvent = function(id, name, args)
             -- logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') -- logger.debugPrint(args)
             -- LOLLO NOTE param can have different types, even boolean, depending on the event id and name
-            if (name ~= 'builder.apply' or id ~= 'streetTerminalBuilder') then return end
+            if (name == 'select' and id == 'mainView') then
+                xpcall(
+                    function()
+                        logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') logger.debugPrint(args)
+                        local conId, con = _utils.getConOfStationGroup(args)
+                        if not(conId) or not(con) then return end
 
-            -- waypoint or streetside stations have been built
-            xpcall(
-                function()
-                    logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') -- logger.debugPrint(args)
-                    if (args and args.proposal and args.proposal.proposal
-                    and args.proposal.proposal.edgeObjectsToAdd
-                    and args.proposal.proposal.edgeObjectsToAdd[1]
-                    and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance)
-                    then
-                        if _guiConstants._ploppablePassengersModelId
-                        and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiConstants._ploppablePassengersModelId
+                        logger.print('selected station with conId =', conId, 'and con.fileName =', con.fileName)
+                        -- LOLLO TODO call here my own config UI for construction con
+                    end,
+                    logger.xpErrorHandler
+                )
+            elseif (name == 'builder.apply' and id == 'streetTerminalBuilder') then
+-- id =	temp.view.entity_28693	name =	idAdded
+                -- waypoint or streetside stations have been built
+                xpcall(
+                    function()
+                        logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') -- logger.debugPrint(args)
+                        if (args and args.proposal and args.proposal.proposal
+                        and args.proposal.proposal.edgeObjectsToAdd
+                        and args.proposal.proposal.edgeObjectsToAdd[1]
+                        and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance)
                         then
-                            -- logger.print('args =') logger.debugPrint(args)
-                            local edgeObjectId = args.proposal.proposal.edgeObjectsToAdd[1].resultEntity
-                            logger.print('edgeObjectId =') logger.debugPrint(edgeObjectId)
-                            local edgeId = args.proposal.proposal.edgeObjectsToAdd[1].segmentEntity
-                            logger.print('edgeId =') logger.debugPrint(edgeId)
-                            local edgeObjectTransf = edgeUtils.getObjectTransf(edgeObjectId)
-                            logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
-                            if not(edgeUtils.isValidAndExistingId(edgeId))
-                            or edgeUtils.isEdgeFrozen(edgeId)
-                            or not(edgeUtils.isValidAndExistingId(edgeObjectId))
-                            or not(edgeObjectTransf)
+                            if _guiConstants._ploppablePassengersModelId
+                            and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiConstants._ploppablePassengersModelId
                             then
-                                return false
+                                -- logger.print('args =') logger.debugPrint(args)
+                                local edgeObjectId = args.proposal.proposal.edgeObjectsToAdd[1].resultEntity
+                                logger.print('edgeObjectId =') logger.debugPrint(edgeObjectId)
+                                local edgeId = args.proposal.proposal.edgeObjectsToAdd[1].segmentEntity
+                                logger.print('edgeId =') logger.debugPrint(edgeId)
+                                local edgeObjectTransf = edgeUtils.getObjectTransf(edgeObjectId)
+                                logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
+                                if not(edgeUtils.isValidAndExistingId(edgeId))
+                                or edgeUtils.isEdgeFrozen(edgeId)
+                                or not(edgeUtils.isValidAndExistingId(edgeObjectId))
+                                or not(edgeObjectTransf)
+                                then
+                                    return false
+                                end
+                                if state and state.isWorking then
+                                    -- LOLLO NOTE this could interfere and delaying is not trivial, so I use a model that clearly says "bulldoze me"
+                                    -- _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
+                                    return false
+                                end
+                                local edgeLength = edgeUtils.getEdgeLength(edgeId)
+                                if edgeLength < constants.minInitialEdgeLength then
+                                    guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
+                                    _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
+                                    return false
+                                end
+                                local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+                                -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
+                                local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)
+                                -- logger.print('baseEdgeStreet =') logger.debugPrint(baseEdgeStreet)
+                                local streetTypeProps = api.res.streetTypeRep.get(baseEdgeStreet.streetType)
+                                -- logger.print('streetTypeProps =') logger.debugPrint(streetTypeProps)
+                                local yShift = -(streetTypeProps.streetWidth + streetTypeProps.sidewalkWidth) / 2
+                                logger.print('baseEdge.objects[1][2] =', baseEdge.objects[1][2])
+                                -- if baseEdge.objects[1][2] == 1 then yShift = -yShift end -- NO!
+                                local edgeObjectTransf_y0 = transfUtils.getTransfYShiftedBy(edgeObjectTransf, yShift)
+                                local edgeObjectTransf_yz0 = transfUtils.getTransfZShiftedBy(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
+                                logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
+                                logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
+                                logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
+                                _utils.setStateWorking(
+                                    true,
+                                    _eventProperties.waypointPlaced.eventName,
+                                    {
+                                        edgeId = edgeId,
+                                        edgeObjectId = edgeObjectId,
+                                        edgeObjectTransf = edgeObjectTransf_yz0,
+                                        streetType = baseEdgeStreet.streetType,
+                                    }
+                                )
                             end
-                            if state and state.isWorking then
-                                -- LOLLO NOTE this could interfere and delaying is not trivial, so I use a model that clearly says "bulldoze me"
-                                -- _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
-                                return false
-                            end
-                            local edgeLength = edgeUtils.getEdgeLength(edgeId)
-                            if edgeLength < constants.minInitialEdgeLength then
-                                guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
-                                _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
-                                return false
-                            end
-                            local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-                            -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
-                            local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)
-                            -- logger.print('baseEdgeStreet =') logger.debugPrint(baseEdgeStreet)
-                            local streetTypeProps = api.res.streetTypeRep.get(baseEdgeStreet.streetType)
-                            -- logger.print('streetTypeProps =') logger.debugPrint(streetTypeProps)
-                            local yShift = -(streetTypeProps.streetWidth + streetTypeProps.sidewalkWidth) / 2
-                            logger.print('baseEdge.objects[1][2] =', baseEdge.objects[1][2])
-                            -- if baseEdge.objects[1][2] == 1 then yShift = -yShift end -- NO!
-                            local edgeObjectTransf_y0 = transfUtils.getTransfYShiftedBy(edgeObjectTransf, yShift)
-                            local edgeObjectTransf_yz0 = transfUtils.getTransfZShiftedBy(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
-                            logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
-                            logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
-                            logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
-                            _utils.setStateWorking(
-                                true,
-                                _eventProperties.waypointPlaced.eventName,
-                                {
-                                    edgeId = edgeId,
-                                    edgeObjectId = edgeObjectId,
-                                    edgeObjectTransf = edgeObjectTransf_yz0,
-                                    streetType = baseEdgeStreet.streetType,
-                                }
-                            )
                         end
-                    end
-                end,
-                logger.xpErrorHandler
-            )
+                    end,
+                    logger.xpErrorHandler
+                )
+            end
         end,
         guiInit = function()
             _guiConstants._ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
@@ -1565,7 +1600,7 @@ function data()
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
-                        _actions.buildSnappyRoads(args.outerNode0Id, args.outerNode1Id, args.conId)
+                        _actions.buildSnappyRoads(args.outerNode0Id, args.outerNode1Id, args.conId, _eventProperties.snappyRoadsBuilt.eventName, {})
                     elseif name == _eventProperties.snappyConBuilt.eventName then
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.setStateWorking.eventName then

@@ -29,4 +29,6 @@ return {
         0, 0, 1, 0,
         0, 0, 0, 1,
     },
+
+    conFileName = 'station/street/lollo_bus_stop/stop_3.con',
 }

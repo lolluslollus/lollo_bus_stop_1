@@ -58,54 +58,54 @@ function data()
 			local _dyn = {}
 			local function _readDynamiParams()
 				_dyn.tan00 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0XInt', 'edge0Tan0XDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0YInt', 'edge0Tan0YDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0ZInt', 'edge0Tan0ZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0X', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0Y', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0Z', 'lolloBusStop_'),
 				}
 				_dyn.tan01 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1XInt', 'edge0Tan1XDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1YInt', 'edge0Tan1YDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1ZInt', 'edge0Tan1ZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1X', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1Y', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1Z', 'lolloBusStop_'),
 				}
 				_dyn.tan10 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0XInt', 'edge1Tan0XDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0YInt', 'edge1Tan0YDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0ZInt', 'edge1Tan0ZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0X', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0Y', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0Z', 'lolloBusStop_'),
 				}
 				_dyn.tan11 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1XInt', 'edge1Tan1XDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1YInt', 'edge1Tan1YDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1ZInt', 'edge1Tan1ZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1X', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1Y', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1Z', 'lolloBusStop_'),
 				}
 				_dyn.tan20 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0XInt', 'edge2Tan0XDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0YInt', 'edge2Tan0YDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0ZInt', 'edge2Tan0ZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0X', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0Y', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0Z', 'lolloBusStop_'),
 				}
 				_dyn.tan21 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1XInt', 'edge2Tan1XDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1YInt', 'edge2Tan1YDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1ZInt', 'edge2Tan1ZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1X', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1Y', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1Z', 'lolloBusStop_'),
 				}
 				_dyn.outerPos0 = {
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosXInt', 'outerNode0PosXDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosYInt', 'outerNode0PosYDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosZInt', 'outerNode0PosZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosX', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosY', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosZ', 'lolloBusStop_'),
 				}
 				_dyn.outerPos1 = {
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosXInt', 'outerNode1PosXDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosYInt', 'outerNode1PosYDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosZInt', 'outerNode1PosZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosX', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosY', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosZ', 'lolloBusStop_'),
 				}
 				_dyn.innerPos0 = {
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosXInt', 'innerNode0PosXDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosYInt', 'innerNode0PosYDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosZInt', 'innerNode0PosZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosX', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosY', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosZ', 'lolloBusStop_'),
 				}
 				_dyn.innerPos1 = {
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosXInt', 'innerNode1PosXDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosYInt', 'innerNode1PosYDec', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosZInt', 'innerNode1PosZDec', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosX', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosY', 'lolloBusStop_'),
+					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosZ', 'lolloBusStop_'),
 				}
 			end
 			_readDynamiParams()

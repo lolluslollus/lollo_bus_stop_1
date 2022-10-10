@@ -183,29 +183,43 @@ helpers.updateParamValues_model = function(params, modelData)
 end
 
 local _decimalFiguresCount = 9 -- must be smaller than 2147483648
-helpers.getFloatFromIntParams = function(params, name1, name2, paramNamePrefix)
-    local _name1 = tostring(paramNamePrefix or '') .. name1
-    local _name2 = tostring(paramNamePrefix or '') .. name2
-    local _integerNum = (params[_name1] or 0)
-    local _decimalNum = (params[_name2] or 0)
-    local result = _integerNum + _decimalNum * (10 ^ -_decimalFiguresCount)
+local _getFloatParamNames = function(paramNamePrefix, name)
+    local _nameSuffixInt = 'Int'
+    local _nameSuffixDec1 = 'Dec1'
+    local _nameSuffixDec2 = 'Dec2'
+
+    local _nameInt = tostring(paramNamePrefix or '') .. name .. _nameSuffixInt
+    local _nameDec1 = tostring(paramNamePrefix or '') .. name .. _nameSuffixDec1
+    local _nameDec2 = tostring(paramNamePrefix or '') .. name .. _nameSuffixDec2
+
+    return _nameInt, _nameDec1, _nameDec2
+end
+helpers.getFloatFromIntParams = function(params, name, paramNamePrefix)
+    local _nameInt, _nameDec1, _nameDec2 = _getFloatParamNames(paramNamePrefix, name)
+    local _integerNum = (params[_nameInt] or 0)
+    local _decimalNum1 = (params[_nameDec1] or 0)
+    local _decimalNum2 = (params[_nameDec2] or 0)
+    local result = _integerNum + _decimalNum1 * (10 ^ -_decimalFiguresCount) + _decimalNum2 * (10 ^ (-2 * _decimalFiguresCount))
     return result
 end
-helpers.setIntParamsFromFloat = function(params, name1, name2, float, paramNamePrefix)
-    local _name1 = tostring(paramNamePrefix or '') .. name1
-    local _name2 = tostring(paramNamePrefix or '') .. name2
+helpers.setIntParamsFromFloat = function(params, name, float, paramNamePrefix)
+    local _nameInt, _nameDec1, _nameDec2 = _getFloatParamNames(paramNamePrefix, name)
     local _float = type(float) ~= 'number' and 0.0 or float
-    local _format = '%.' .. tostring(_decimalFiguresCount) .. 'f' -- floating point number with (_decimalFiguresCount) decimal figures
+    local _format = '%.' .. tostring(_decimalFiguresCount * 2) .. 'f' -- floating point number with (_decimalFiguresCount) decimal figures
     local _floatStr = _format:format(_float)
     -- logger.print('_floatStr =', _floatStr)
-    local integerStr, decimalStr = table.unpack(stringUtils.stringSplit(_floatStr, '.'))
-    -- logger.print('integerStr =', integerStr)
-    -- logger.print('decimalStr =', decimalStr)
-    if not(integerStr) then integerStr = '0' end
-    if not(decimalStr) then decimalStr = '0' end
-    if stringUtils.stringStartsWith(integerStr, '-') then decimalStr = '-' .. decimalStr end
+    local intStr, dec1Str = table.unpack(stringUtils.stringSplit(_floatStr, '.'))
+    -- logger.print('intStr =', intStr)
+    -- logger.print('dec1Str =', dec1Str)
+    if not(intStr) then intStr = '0' end
+    if not(dec1Str) then dec1Str = '0' end
+    local dec2Str = dec1Str:sub(_decimalFiguresCount + 1) or '0'
+    -- logger.print('dec2Str =', dec2Str)
+    dec1Str = dec1Str:sub(1, _decimalFiguresCount)
+    if stringUtils.stringStartsWith(intStr, '-') then dec1Str = '-' .. dec1Str dec2Str = '-' .. dec2Str end
 
-    params[_name1] = tonumber(integerStr)
-    params[_name2] = tonumber(decimalStr)
+    params[_nameInt] = tonumber(intStr)
+    params[_nameDec1] = tonumber(dec1Str)
+    params[_nameDec2] = tonumber(dec2Str)
 end
 return helpers

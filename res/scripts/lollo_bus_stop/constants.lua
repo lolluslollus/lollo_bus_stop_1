@@ -8,7 +8,7 @@ return {
     vehicleNodeZ = 0,
     minInitialEdgeLength = 2.5, -- must be >= 2 * outerEdgeX
 
-    eventId = '__lolloStreetsidePassengerStopsEvent__',
+    eventId = '__lolloBusStopEvent__',
     eventProperties = {
         edgesRemoved = { conName = nil, eventName = 'edgesRemoved' },
         conBuilt = { conName = nil, eventName = 'conBuilt' },

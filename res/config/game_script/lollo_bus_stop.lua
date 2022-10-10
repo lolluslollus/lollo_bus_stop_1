@@ -10,6 +10,10 @@ local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
 
 -- LOLLO TODO once the con has been built, you cannot configure it or it will unsnap and stay unsnapped: fix it
+-- Narrow angle
+-- and
+-- Construction not possible
+-- stand in the way
 
 -- LOLLO NOTE you can only update the state from the worker thread
 local state = {}
@@ -1170,7 +1174,7 @@ function data()
                     )
                     if assignment.assignToSide == 0 then
                         -- LOLLO NOTE if we skip this check,
-                        -- one can split a road between left and right terminals of a streetside staion
+                        -- one can split a road between left and right terminals of a streetside station
                         -- and add more terminals on the new segments.
                         -- local stationGroupId = api.engine.system.stationGroupSystem.getStationGroup(edgeObj[1])
                         -- if arrayUtils.arrayHasValue(edge1StationGroups, stationGroupId) then return end -- don't split station groups
@@ -1251,6 +1255,7 @@ function data()
     }
     return {
         guiHandleEvent = function(id, name, args)
+            -- logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') -- logger.debugPrint(args)
             -- LOLLO NOTE param can have different types, even boolean, depending on the event id and name
             if (name ~= 'builder.apply' or id ~= 'streetTerminalBuilder') then return end
 

@@ -178,7 +178,7 @@ function data()
 								_dyn.outerPos0,  _getInverseTan(_dyn.tan00)
 							},  -- node 5
                         },
-						-- freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
+						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},
                     },
@@ -242,6 +242,17 @@ function data()
 						or vehicleEdgeTransfLeft
 				}
 			end
+-- LOLLO TEST CODE BEGIN
+			result.models[#result.models+1] = {
+				id = 'lollo_bus_stop/icon/blue.mdl',
+				transf = {
+					1, 0, 0, 0,
+					0, 1, 0, 0,
+					0, 0, 1, 0,
+					_dyn.outerPos0[1], _dyn.outerPos0[2], _dyn.outerPos0[3], 1
+				}
+			}
+-- LOLLO TEST CODE END
 
 			-- LOLLO TEST CODE BEGIN
 --[[

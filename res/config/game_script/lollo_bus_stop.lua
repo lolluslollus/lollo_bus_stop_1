@@ -578,8 +578,8 @@ function data()
                 lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
                 lolloBusStop_outerNode1Id = outerNode1Id, -- idem
                 lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
-                -- lolloBusStop_snapNodes = 3,
-                lolloBusStop_snapNodes = 0, -- this needs upgradeConstruction anyway, and it fails in curves even with shorter con edges.
+                lolloBusStop_snapNodes = 3,
+                -- lolloBusStop_snapNodes = 0, -- this needs upgradeConstruction anyway, and it fails in curves even with shorter con edges.
                 -- The sharper the bends, the more the trouble - and some crashes appear.
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
                 lolloBusStop_tramTrack = 0,

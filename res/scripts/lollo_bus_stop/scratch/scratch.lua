@@ -3,10 +3,10 @@ package.path = package.path .. ';C:/Program Files (x86)/Steam/steamapps/common/T
 
 local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
 local params = {}
-moduleHelpers.setIntParamsFromFloat(params, 'aa1', 1000.0001)
+moduleHelpers.setIntParamsFromFloat(params, 'aa1', 1000.000100020003000400050006000700080009)
 local test1 = moduleHelpers.getFloatFromIntParams(params, 'aa1')
 
-moduleHelpers.setIntParamsFromFloat(params, 'aa2', -1000.0001)
+moduleHelpers.setIntParamsFromFloat(params, 'aa2', -1000.000100020003000400050006000700080009)
 local test2 = moduleHelpers.getFloatFromIntParams(params, 'aa2')
 
 moduleHelpers.setIntParamsFromFloat(params, 'aa3', 1000)

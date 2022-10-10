@@ -187,23 +187,36 @@ local _getFloatParamNames = function(paramNamePrefix, name)
     local _nameSuffixInt = 'Int'
     local _nameSuffixDec1 = 'Dec1'
     local _nameSuffixDec2 = 'Dec2'
+    local _nameSuffixDec3 = 'Dec3'
 
     local _nameInt = tostring(paramNamePrefix or '') .. name .. _nameSuffixInt
     local _nameDec1 = tostring(paramNamePrefix or '') .. name .. _nameSuffixDec1
     local _nameDec2 = tostring(paramNamePrefix or '') .. name .. _nameSuffixDec2
+    local _nameDec3 = tostring(paramNamePrefix or '') .. name .. _nameSuffixDec3
 
-    return _nameInt, _nameDec1, _nameDec2
+    return _nameInt, _nameDec1, _nameDec2, _nameDec3
+end
+local _padRight = function(str)
+    while str:len() < _decimalFiguresCount do
+        str = str .. '0'
+    end
+    return str
 end
 helpers.getFloatFromIntParams = function(params, name, paramNamePrefix)
-    local _nameInt, _nameDec1, _nameDec2 = _getFloatParamNames(paramNamePrefix, name)
+    local _nameInt, _nameDec1, _nameDec2, _nameDec3 = _getFloatParamNames(paramNamePrefix, name)
     local _integerNum = (params[_nameInt] or 0)
     local _decimalNum1 = (params[_nameDec1] or 0)
     local _decimalNum2 = (params[_nameDec2] or 0)
-    local result = _integerNum + _decimalNum1 * (10 ^ -_decimalFiguresCount) + _decimalNum2 * (10 ^ (-2 * _decimalFiguresCount))
+    local _decimalNum3 = (params[_nameDec3] or 0)
+    local result =
+        _integerNum
+        + _decimalNum1 * (10 ^ -_decimalFiguresCount)
+        + _decimalNum2 * (10 ^ (-2 * _decimalFiguresCount))
+        + _decimalNum3 * (10 ^ (-3 * _decimalFiguresCount))
     return result
 end
 helpers.setIntParamsFromFloat = function(params, name, float, paramNamePrefix)
-    local _nameInt, _nameDec1, _nameDec2 = _getFloatParamNames(paramNamePrefix, name)
+    local _nameInt, _nameDec1, _nameDec2, _nameDec3 = _getFloatParamNames(paramNamePrefix, name)
     local _float = type(float) ~= 'number' and 0.0 or float
     local _format = '%.' .. tostring(_decimalFiguresCount * 2) .. 'f' -- floating point number with (_decimalFiguresCount) decimal figures
     local _floatStr = _format:format(_float)
@@ -213,13 +226,20 @@ helpers.setIntParamsFromFloat = function(params, name, float, paramNamePrefix)
     -- logger.print('dec1Str =', dec1Str)
     if not(intStr) then intStr = '0' end
     if not(dec1Str) then dec1Str = '0' end
-    local dec2Str = dec1Str:sub(_decimalFiguresCount + 1) or '0'
+    local dec3Str = _padRight(dec1Str:sub(2 * _decimalFiguresCount + 1, 3 * _decimalFiguresCount) or '0')
+    local dec2Str = _padRight(dec1Str:sub(_decimalFiguresCount + 1, 2 * _decimalFiguresCount) or '0')
     -- logger.print('dec2Str =', dec2Str)
-    dec1Str = dec1Str:sub(1, _decimalFiguresCount)
-    if stringUtils.stringStartsWith(intStr, '-') then dec1Str = '-' .. dec1Str dec2Str = '-' .. dec2Str end
+    -- logger.print('dec3Str =', dec3Str)
+    dec1Str = _padRight(dec1Str:sub(1, _decimalFiguresCount) or '0')
+    if stringUtils.stringStartsWith(intStr, '-') then
+        dec1Str = '-' .. dec1Str
+        dec2Str = '-' .. dec2Str
+        dec3Str = '-' .. dec3Str
+    end
 
     params[_nameInt] = tonumber(intStr)
     params[_nameDec1] = tonumber(dec1Str)
     params[_nameDec2] = tonumber(dec2Str)
+    params[_nameDec3] = tonumber(dec3Str)
 end
 return helpers

@@ -370,7 +370,12 @@ function data()
                 logger.warn('cannot find street type index', streetType or 'NIL')
                 return
             end
-            local sidewalkHeight = (allStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
+            local _sidewalkHeight = (allStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
+            local _pitchAngle = math.atan2(
+				dataForCon.outerNode1Pos[3] - dataForCon.outerNode0Pos[3],
+				math.sqrt((dataForCon.outerNode1Pos[1] - dataForCon.outerNode0Pos[1])^2 + (dataForCon.outerNode1Pos[2] - dataForCon.outerNode0Pos[2])^2)
+					-- * ((dataForCon.outerNode1Pos[1] > dataForCon.outerNode0Pos[1]) and 1 or -1)
+			)
             local newParams = {
                 -- lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
                 -- lolloBusStop_testVeryLarge = 100000000.123455, -- this works
@@ -402,6 +407,7 @@ function data()
                 lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
                 lolloBusStop_outerNode1Id = outerNode1Id, -- idem
                 lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
+                lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
                 lolloBusStop_snapNodes = 3,
                 -- lolloBusStop_snapNodes = 0,
                 lolloBusStop_streetType_ = streetTypeIndexBase0,
@@ -446,7 +452,8 @@ function data()
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosY', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZ', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
 
-            moduleHelpers.setIntParamsFromFloat(newParams, 'sidewalkHeight', sidewalkHeight, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'sidewalkHeight', _sidewalkHeight, 'lolloBusStop_')
+            moduleHelpers.setIntParamsFromFloat(newParams, 'pitchAngle', _pitchAngle, 'lolloBusStop_')
             -- logger.print('newParams =') logger.debugPrint(newParams)
             -- clone your own variable, it's safer than cloning newCon.params, which is userdata
             local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
@@ -640,8 +647,8 @@ function data()
             proposal.streetProposal.edgesToAdd[2] = newEdge1
             local context = api.type.Context:new()
             -- context.checkTerrainAlignment = true -- default is false
-            context.cleanupStreetGraph = true
-            context.gatherBuildings = true -- default is false
+            -- context.cleanupStreetGraph = true
+            -- context.gatherBuildings = true -- default is false
             -- context.gatherFields = true -- default is true
             context.player = api.engine.util.getPlayer()
             api.cmd.sendCommand(

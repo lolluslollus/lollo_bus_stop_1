@@ -2,7 +2,6 @@ local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local constants = require('lollo_bus_stop.constants')
 local logger = require('lollo_bus_stop.logger')
 local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
-local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
 
@@ -107,14 +106,12 @@ function data()
 					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosY', 'lolloBusStop_'),
 					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosZ', 'lolloBusStop_'),
 				}
+				_dyn.pitchAngle = moduleHelpers.getFloatFromIntParams(params, 'pitchAngle', 'lolloBusStop_')
 				_dyn.sidewalkHeight = moduleHelpers.getFloatFromIntParams(params, 'sidewalkHeight', 'lolloBusStop_')
 			end
 			_readDynamiParams()
 			logger.print('stopParametric.updateFn _dyn =') logger.debugPrint(_dyn)
 
-			local _pitchAngle = pitchHelpers.getPitchAngle(params)
-			logger.print('stopParametric.updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
-			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
 			-- logger.print('stopParametric.updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
@@ -194,6 +191,9 @@ function data()
 				} },
             }
 
+			local _pitchTransf = transfUtilsUG.rotY(_dyn.pitchAngle)
+			logger.print('stopParametric.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
+			-- _pitchTransf = constants.idTransf
 			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, _dyn.sidewalkHeight, 1})
 			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, _dyn.sidewalkHeight, 1})
 			result.models[#result.models+1] = {

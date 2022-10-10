@@ -21,5 +21,12 @@ return {
         snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
         snappyRoadsBuilt = { conName = nil, eventName = 'snappyRoadsBuilt'},
         waypointBulldozeRequested = { conName = nil, eventName = 'waypointBulldozeRequested' }
-    }
+    },
+
+    idTransf = {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+    },
 }

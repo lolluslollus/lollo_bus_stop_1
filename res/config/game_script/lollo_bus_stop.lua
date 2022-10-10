@@ -1595,6 +1595,16 @@ function data()
                     isWorking = false,
                 }
             end
+            if not(api.gui) then -- this is the one call from the worker thread, when starting
+                -- (there are actually two calls on start, not one, never mind)
+                -- loadedState is the last saved state from the save file (eg lollo-test-01.sav.lua)
+                -- use it to reset the state if it gets stuck, which should never happen
+                state = {
+                    isWorking = false,
+                }
+                logger.print('script.load firing from the worker thread, state =') logger.debugPrint(state)
+            end
+
         end,
     }
 end

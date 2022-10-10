@@ -413,14 +413,14 @@ function data()
             return {-tan[1], -tan[2], -tan[3]}
         end,
         getTanTransformed = function(tan, transf)
-            local _rotateTransf = {
+            local _rotateScaleTransf = {
                 transf[1], transf[2], transf[3], transf[4],
                 transf[5], transf[6], transf[7], transf[8],
                 transf[9], transf[10], transf[11], transf[12],
                 0, 0, 0, 1
             }
 
-            local result = transfUtils.getVec123Transformed(tan, _rotateTransf)
+            local result = transfUtils.getVec123Transformed(tan, _rotateScaleTransf)
             return result
         end,
         getWhichEdgeGetsEdgeObjectAfterSplit = function(edgeObjPosition, node0pos, node1pos, nodeBetween)
@@ -1383,24 +1383,43 @@ function data()
                             edge2Tan0 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent0),
                             edge2Tan1 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent1),
                         }
+                        local isEdgeNodesOK = true
+                        if not(
+                            (edge0Base.node0 == args.outerNode0Id and edge0Base.node1 == args.innerNode0Id)
+                            or (edge0Base.node1 == args.outerNode0Id and edge0Base.node0 == args.innerNode0Id)
+                        ) then
+                            isEdgeNodesOK = false
+                            logger.warn('### edge0 nodes are screwed up, edge0Base =') logger.warningDebugPrint(edge0Base)
+                        end
+                        if not(
+                            (edge1Base.node0 == args.innerNode0Id and edge1Base.node1 == args.innerNode1Id)
+                            or (edge1Base.node1 == args.innerNode0Id and edge1Base.node0 == args.innerNode1Id)
+                        ) then
+                            isEdgeNodesOK = false
+                            logger.warn('### edge1 nodes are screwed up, edge1Base =') logger.warningDebugPrint(edge1Base)
+                        end
+                        if not(
+                            (edge2Base.node0 == args.innerNode1Id and edge2Base.node1 == args.outerNode1Id)
+                            or (edge2Base.node1 == args.innerNode1Id and edge2Base.node0 == args.outerNode1Id)
+                        ) then
+                            isEdgeNodesOK = false
+                            logger.warn('### edge2 nodes are screwed up, edge2Base =') logger.warningDebugPrint(edge2Base)
+                        end
+                        if not(isEdgeNodesOK) then return end
+
                         if edge0Base.node0 ~= args.outerNode0Id then
                             logger.print('reversing edge0')
-                            args.dataForCon.edge0Tan0 = _utils.getTanReversed(args.dataForCon.edge0Tan0)
-                            args.dataForCon.edge0Tan1 = _utils.getTanReversed(args.dataForCon.edge0Tan1)
-                            args.dataForCon.edge0Tan0, args.dataForCon.edge0Tan1 = args.dataForCon.edge0Tan1, args.dataForCon.edge0Tan0
+                            args.dataForCon.edge0Tan0, args.dataForCon.edge0Tan1 = _utils.getTanReversed(args.dataForCon.edge0Tan1), _utils.getTanReversed(args.dataForCon.edge0Tan0)
                         end
                         if edge1Base.node0 ~= args.innerNode0Id then
                             logger.print('reversing edge1')
-                            args.dataForCon.edge1Tan0 = _utils.getTanReversed(args.dataForCon.edge1Tan0)
-                            args.dataForCon.edge1Tan1 = _utils.getTanReversed(args.dataForCon.edge1Tan1)
-                            args.dataForCon.edge1Tan0, args.dataForCon.edge1Tan1 = args.dataForCon.edge1Tan1, args.dataForCon.edge1Tan0
+                            args.dataForCon.edge1Tan0, args.dataForCon.edge1Tan1 = _utils.getTanReversed(args.dataForCon.edge1Tan1), _utils.getTanReversed(args.dataForCon.edge1Tan0)
                         end
                         if edge2Base.node0 ~= args.innerNode1Id then
                             logger.print('reversing edge2')
-                            args.dataForCon.edge2Tan0 = _utils.getTanReversed(args.dataForCon.edge2Tan0)
-                            args.dataForCon.edge2Tan1 = _utils.getTanReversed(args.dataForCon.edge2Tan1)
-                            args.dataForCon.edge2Tan0, args.dataForCon.edge2Tan1 = args.dataForCon.edge2Tan1, args.dataForCon.edge2Tan0
+                            args.dataForCon.edge2Tan0, args.dataForCon.edge2Tan1 = _utils.getTanReversed(args.dataForCon.edge2Tan1), _utils.getTanReversed(args.dataForCon.edge2Tan0)
                         end
+
                         _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.dataForCon)

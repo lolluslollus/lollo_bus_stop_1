@@ -406,7 +406,7 @@ local function _getStreetTypesWithApi()
             laneCount = #(streetProperties.laneConfigs),
             name = streetProperties.name,
             rightLaneWidth = (streetProperties.laneConfigs[2] or {}).width or 0,
-            sidewalkHeight = streetProperties.sidewalkHeight,
+            sidewalkHeight = streetProperties.sidewalkHeight or 0,
             sidewalkWidth = streetProperties.sidewalkWidth,
             streetWidth = streetProperties.streetWidth,
             -- LOLLO NOTE isVisible may return true even if street.visibility = false.

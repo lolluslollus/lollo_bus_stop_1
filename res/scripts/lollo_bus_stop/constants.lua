@@ -5,5 +5,21 @@ return {
     outerEdgeXCon = 1,
     innerEdgeX = 0.5,
     innerEdgeXCon = 0.5,
-    vehicleNodeZ = 0
+    vehicleNodeZ = 0,
+    minInitialEdgeLength = 2.5, -- must be >= 2 * outerEdgeX
+
+    eventId = '__lolloStreetsidePassengerStopsEvent__',
+    eventProperties = {
+        edgesRemoved = { conName = nil, eventName = 'edgesRemoved' },
+        conBuilt = { conName = nil, eventName = 'conBuilt' },
+        hideWarnings = { conName = nil, eventName = 'hideWarnings' },
+        ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
+        firstOuterSplitDone = { conName = nil, eventName = 'firstOuterSplitDone'},
+        secondOuterSplitDone = { conName = nil, eventName = 'secondOuterSplitDone' },
+        firstInnerSplitDone = { conName = nil, eventName = 'firstInnerSplitDone'},
+        secondInnerSplitDone = { conName = nil, eventName = 'secondInnerSplitDone' },
+        snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
+        snappyRoadsBuilt = { conName = nil, eventName = 'snappyRoadsBuilt'},
+        waypointBulldozeRequested = { conName = nil, eventName = 'waypointBulldozeRequested' }
+    }
 }

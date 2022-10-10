@@ -1,6 +1,7 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local constants = require('lollo_bus_stop.constants')
 local edgeUtils = require('lollo_bus_stop.edgeUtils')
+local guiHelpers = require('lollo_bus_stop.guiHelpers')
 local logger = require('lollo_bus_stop.logger')
 local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
 local pitchHelpers = require('lollo_bus_stop.pitchHelper')
@@ -8,19 +9,10 @@ local streetUtils = require('lollo_bus_stop.streetUtils')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
 
+-- LOLLO TODO once the con has been built, you cannot configure it or it will unsnap and stay unsnapped: fix it
 
-local _eventId = '__lolloStreetsidePassengerStopsEvent__'
-local _eventProperties = {
-    edgesRemoved = { conName = nil, eventName = 'edgesRemoved' },
-    conBuilt = { conName = nil, eventName = 'conBuilt' },
-    ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
-    firstOuterSplitDone = { conName = nil, eventName = 'firstOuterSplitDone'},
-    secondOuterSplitDone = { conName = nil, eventName = 'secondOuterSplitDone' },
-    firstInnerSplitDone = { conName = nil, eventName = 'firstInnerSplitDone'},
-    secondInnerSplitDone = { conName = nil, eventName = 'secondInnerSplitDone' },
-    snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
-    snappyRoadsBuilt = { conName = nil, eventName = 'snappyRoadsBuilt'},
-}
+local _eventId = constants.eventId
+local _eventProperties = constants.eventProperties
 
 local _guiConstants = {
     _ploppablePassengersModelId = false,
@@ -378,6 +370,7 @@ function data()
                 logger.warn('cannot find street type index', streetType or 'NIL')
                 return
             end
+            local sidewalkHeight = (allStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
             local newParams = {
                 -- lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
                 -- lolloBusStop_testVeryLarge = 100000000.123455, -- this works
@@ -452,6 +445,8 @@ function data()
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosX', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosY', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
             moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZ', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
+
+            moduleHelpers.setIntParamsFromFloat(newParams, 'sidewalkHeight', sidewalkHeight, 'lolloBusStop_')
             -- logger.print('newParams =') logger.debugPrint(newParams)
             -- clone your own variable, it's safer than cloning newCon.params, which is userdata
             local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
@@ -1168,7 +1163,13 @@ function data()
                             or not(edgeUtils.isValidAndExistingId(edgeObjectId))
                             or not(edgeObjectTransf)
                             then
-                                return
+                                return false
+                            end
+                            local edgeLength = edgeUtils.getEdgeLength(edgeId)
+                            if edgeLength < constants.minInitialEdgeLength then
+                                guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
+                                _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
+                                return false
                             end
                             local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
                             -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
@@ -1218,8 +1219,7 @@ function data()
                         end
 
                         local length = edgeUtils.getEdgeLength(args.edgeId)
-                        if length < constants.outerEdgeX * 2 then
-                            -- LOLLO TODO if everything else works, join adjacent edges until one is long enough
+                        if length < constants.minInitialEdgeLength then
                             logger.warn('edge too short')
                             return
                         end

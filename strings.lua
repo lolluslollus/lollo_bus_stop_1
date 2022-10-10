@@ -16,6 +16,11 @@ function data()
 			["streetTypeName"] = "Street Type",
 			["tramTrackName"] = "Tram Track",
 
+			-- UI messages
+			["EdgeTooShort"] = "Road segment too short",
+			["GoBack"] = "Go back",
+			["GoThere"] = "Go there",
+			["WarningWindowTitle"] = "Warning",
 		},
 	}
 end

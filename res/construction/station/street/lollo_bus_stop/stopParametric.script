@@ -107,6 +107,7 @@ function data()
 					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosY', 'lolloBusStop_'),
 					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosZ', 'lolloBusStop_'),
 				}
+				_dyn.sidewalkHeight = moduleHelpers.getFloatFromIntParams(params, 'sidewalkHeight', 'lolloBusStop_')
 			end
 			_readDynamiParams()
 			logger.print('stopParametric.updateFn _dyn =') logger.debugPrint(_dyn)
@@ -193,8 +194,8 @@ function data()
 				} },
             }
 
-			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, 0, 1})
-			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, 0, 1})
+			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, _dyn.sidewalkHeight, 1})
+			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, _dyn.sidewalkHeight, 1})
 			result.models[#result.models+1] = {
 				id = _selectedModel.fileName,
 				-- tag = 'stationTag',

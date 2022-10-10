@@ -100,37 +100,6 @@ guiHelpers.showWarningWindowWithGoto = function(text, wrongObjectId, similarObje
     window:addHideOnCloseHandler()
 end
 
--- guiHelpers.showWarningWindowWithState = function(text)
---     guiHelpers.isShowingWarning = true
---     local layout = api.gui.layout.BoxLayout.new('VERTICAL')
---     local window = api.gui.util.getById(_warningWindowWithStateId)
---     if window == nil then
---         window = api.gui.comp.Window.new(_texts.warningWindowTitle, layout)
---         window:setId(_warningWindowWithStateId)
---     else
---         window:setContent(layout)
---         window:setVisible(true, false)
---     end
-
---     layout:addItem(api.gui.comp.TextView.new(text))
-
---     window:setHighlighted(true)
---     local position = api.gui.util.getMouseScreenPos()
---     window:setPosition(position.x + _windowXShift, position.y + _windowYShift)
---     -- window:addHideOnCloseHandler()
---     window:onClose(
---         function()
---             window:setVisible(false, false)
---             api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
---                 string.sub(debug.getinfo(1, 'S').source, 1),
---                 _constants.eventId,
---                 _constants.eventProperties.hideWarnings.eventName,
---                 {}
---             ))
---         end
---     )
--- end
-
 guiHelpers.hideAllWarnings = function()
     local window = api.gui.util.getById(_warningWindowWithGotoId)
     if window ~= nil then

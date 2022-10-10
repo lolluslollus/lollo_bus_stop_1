@@ -11,6 +11,9 @@ local transfUtilsUG = require('transf')
 
 -- LOLLO TODO once the con has been built, you cannot configure it or it will unsnap and stay unsnapped: fix it
 
+-- LOLLO NOTE you can only update the state from the worker thread
+local state = {}
+
 local _eventId = constants.eventId
 local _eventProperties = constants.eventProperties
 
@@ -308,6 +311,33 @@ function data()
             -- logger.print('LOLLO assignment =') logger.debugPrint(result)
             return result
         end,
+        setStateWorking = function(isWorking, successEventName, successEventArgs)
+            logger.print('setStateWorking starting, isWorking =', tostring(isWorking or false))
+
+            xpcall(
+                function ()
+                    api.cmd.sendCommand(
+                        api.cmd.make.sendScriptEvent(
+                            string.sub(debug.getinfo(1, 'S').source, 1),
+                            _eventId,
+                            _eventProperties.setStateWorking.eventName,
+                            { isWorking = isWorking }
+                        ),
+                        function(result, success)
+                            if not(successEventName) then return end
+
+                            api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                                string.sub(debug.getinfo(1, 'S').source, 1),
+                                _eventId,
+                                successEventName,
+                                successEventArgs
+                            ))
+                        end
+                    )
+                end,
+                logger.xpErrorHandler
+            )
+        end,
         upgradeCon = function(conId, conParams)
             logger.print('upgradeCon starting, conId =', (conId or 'NIL'))
             local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
@@ -342,11 +372,17 @@ function data()
         buildConstruction = function(outerNode0Id, outerNode1Id, streetType, dataForCon)
             logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
             -- logger.print('dataForCon =') logger.debugPrint(dataForCon)
+            if not(edgeUtils.isValidAndExistingId(outerNode0Id)) or not(edgeUtils.isValidAndExistingId(outerNode1Id)) then
+                logger.warn('buildConstruction received an invalid node id')
+                _utils.setStateWorking(false)
+                return
+            end
 
             local baseNode0 = api.engine.getComponent(outerNode0Id, api.type.ComponentType.BASE_NODE)
             local baseNode1 = api.engine.getComponent(outerNode1Id, api.type.ComponentType.BASE_NODE)
             if baseNode0 == nil or baseNode1 == nil then
                 logger.warn('cannot find outerNode0Id or outerNode1Id')
+                _utils.setStateWorking(false)
                 return
             end
 
@@ -356,18 +392,19 @@ function data()
 
             local newCon = api.type.SimpleProposal.ConstructionEntity.new()
             -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
-            local _conFileName = 'station/street/lollo_bus_stop/stop_3.con'
-            newCon.fileName = _conFileName
+            newCon.fileName = 'station/street/lollo_bus_stop/stop_3.con'
             local allStreetData = streetUtils.getGlobalStreetData()
             -- logger.print('allStreetData =') logger.debugPrint(allStreetData)
             local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
             if type(streetTypeFileName) ~= 'string' then
                 logger.warn('cannot find street type', streetType or 'NIL')
+                _utils.setStateWorking(false)
                 return
             end
             local streetTypeIndexBase0 = arrayUtils.findIndex(allStreetData, 'fileName', streetTypeFileName) - 1 -- base 0
             if streetTypeIndexBase0 < 0 then
                 logger.warn('cannot find street type index', streetType or 'NIL')
+                _utils.setStateWorking(false)
                 return
             end
             local _sidewalkHeight = (allStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
@@ -479,6 +516,7 @@ function data()
             if not(isProposalOK) then
                 logger.warn('buildConstruction made a dangerous proposal')
                 -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
+                _utils.setStateWorking(false)
                 return
             end
             api.cmd.sendCommand(
@@ -488,7 +526,13 @@ function data()
                 function(result, success)
                     logger.print('buildConstruction callback, success =', success)
                     -- logger.debugPrint(result)
-                    if success then
+                    if not(success) then
+                        logger.warn('buildConstruction callback failed')
+                        logger.warn('buildConstruction proposal =') logger.warningDebugPrint(proposal)
+                        logger.warn('buildConstruction result =') logger.warningDebugPrint(result)
+                        _utils.setStateWorking(false)
+                        -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
+                    else
                         local conId = result.resultEntities[1]
                         logger.print('buildConstruction succeeded, stationConId = ', conId)
                         xpcall(
@@ -498,7 +542,6 @@ function data()
                                     _eventId,
                                     _eventProperties.conBuilt.eventName,
                                     {
-                                        conFileName = _conFileName,
                                         conId = conId,
                                         conParams = conParamsBak,
                                         conTransf = conTransf,
@@ -509,11 +552,6 @@ function data()
                             end,
                             logger.xpErrorHandler
                         )
-                    else
-                        logger.warn('buildConstruction callback failed')
-                        logger.warn('buildConstruction proposal =') logger.warningDebugPrint(proposal)
-                        logger.warn('buildConstruction result =') logger.warningDebugPrint(result)
-                        -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
                     end
                 end
             )
@@ -521,12 +559,23 @@ function data()
         -- LOLLO NOTE the new parametric construction does not play well with curves, unless I rebuild adjacent roads snappy.
         -- I tried Proposal instead of SimpleProposal but it is not meant to be.
         -- The trouble seems to be with collisions between external edges and inner edges.
-        buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId, fileName, conParams)
+        buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId)
             logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
             logger.print('oldNode0Id =', oldNode0Id) logger.print('oldNode1Id =', oldNode1Id)
+            if not(edgeUtils.isValidAndExistingId(oldNode0Id)) or not(edgeUtils.isValidAndExistingId(oldNode1Id)) then
+                logger.warn('buildSnappyRoads received an invalid node id')
+                _utils.setStateWorking(false)
+                return
+            end
+            if not(edgeUtils.isValidAndExistingId(conId)) then
+                logger.warn('buildSnappyRoads received an invalid conId')
+                _utils.setStateWorking(false)
+                return
+            end
             local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
             if con == nil then
-                logger.warn('cannot find con')
+                logger.warn('buildSnappyRoads cannot find con')
+                _utils.setStateWorking(false)
                 return
             end
 
@@ -585,7 +634,11 @@ function data()
                 return endNode0Id, endNode1Id
             end
             local newNode0Id, newNode1Id = getNewNodeIds()
-            if newNode0Id == nil or newNode1Id == nil then return end
+            if newNode0Id == nil or newNode1Id == nil then
+                logger.warn('buildSnappyRoads cannot find its node ids')
+                _utils.setStateWorking(false)
+                return
+            end
 
             local oldEdge0Id = edgeUtils.getConnectedEdgeIds({oldNode0Id})[1]
             local oldEdge1Id = edgeUtils.getConnectedEdgeIds({oldNode1Id})[1]
@@ -658,6 +711,7 @@ function data()
                     if not(success) then
                         logger.warn('buildSnappyRoads failed, proposal =') logger.warningDebugPrint(proposal)
                         logger.warn('buildSnappyRoads failed, result =') logger.warningDebugPrint(result)
+                        _utils.setStateWorking(false)
                     else
                         xpcall(
                             function ()
@@ -678,6 +732,7 @@ function data()
             -- print('constructionId =', constructionId)
             if type(constructionId) ~= 'number' or constructionId < 0 then
                 logger.warn('bulldozeConstruction got an invalid conId')
+                _utils.setStateWorking(false)
                 return
             end
     
@@ -685,6 +740,7 @@ function data()
             if not(oldConstruction) or not(oldConstruction.params) then
                 logger.warn('bulldozeConstruction got no con or a broken con')
                 logger.warn('oldConstruction =') logger.warningDebugPrint(oldConstruction)
+                _utils.setStateWorking(false)
                 return
             end
     
@@ -702,6 +758,7 @@ function data()
                         logger.warn('bulldozeConstruction callback: failed to build')
                         logger.warn('bulldozeConstruction proposal =') logger.warningDebugPrint(proposal)
                         logger.warn('bulldozeConstruction result =') logger.warningDebugPrint(result)
+                        _utils.setStateWorking(false)
                     else
                         logger.print('bulldozeConstruction callback succeeded')
                     end
@@ -715,11 +772,13 @@ function data()
 
             if not(edgeUtils.isValidAndExistingId(oldConId)) then
                 logger.err('makeConstructionSnappy got an invalid conId =', oldConId or 'NIL')
+                _utils.setStateWorking(false)
                 return
             end
             local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
             if not(oldCon) then
                 logger.err('makeConstructionSnappy got an invalid con =')
+                _utils.setStateWorking(false)
                 return
             end
 
@@ -753,6 +812,7 @@ function data()
             local isProposalOK = _utils.getIsProposalOK(proposal, context)
             if not(isProposalOK) then
                 logger.warn('makeConstructionSnappy made a dangerous proposal')
+                _utils.setStateWorking(false)
                 return
             end
             api.cmd.sendCommand(
@@ -761,7 +821,12 @@ function data()
                 api.cmd.make.buildProposal(proposal, context, false), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
                 function(result, success)
                     logger.print('makeConstructionSnappy callback, success =', success) -- logger.debugPrint(result)
-                    if success then
+                    if not(success) then
+                        logger.warn('makeConstructionSnappy callback failed')
+                        logger.warn('makeConstructionSnappy proposal =') logger.warningDebugPrint(proposal)
+                        logger.warn('makeConstructionSnappy result =') logger.warningDebugPrint(result)
+                        _utils.setStateWorking(false)
+                    else
                         local newConId = result.resultEntities[1]
                         logger.print('makeConstructionSnappy succeeded, stationConId = ', newConId)
                         xpcall(
@@ -778,10 +843,6 @@ function data()
                             end,
                             logger.xpErrorHandler
                         )
-                    else
-                        logger.warn('makeConstructionSnappy callback failed')
-                        logger.warn('makeConstructionSnappy proposal =') logger.warningDebugPrint(proposal)
-                        logger.warn('makeConstructionSnappy result =') logger.warningDebugPrint(result)
                     end
                 end
             )
@@ -791,11 +852,13 @@ function data()
             -- removes edges even if they have a street type, which has changed or disappeared
             if not(oldEdgeIds) then
                 logger.warn('removeEdges got no oldEdgeIds')
+                _utils.setStateWorking(false)
                 return
             end
             for _, oldEdgeId in pairs(oldEdgeIds) do
                 if not(edgeUtils.isValidAndExistingId(oldEdgeId)) then
                     logger.warn('removeEdges got an invalid oldEdgeId')
+                    _utils.setStateWorking(false)
                     return
                 end
             end
@@ -846,6 +909,7 @@ function data()
                     if not(success) then
                         logger.warn('removeEdges failed, proposal = ') logger.warningDebugPrint(proposal)
                         logger.warn('removeEdges failed, result = ') logger.warningDebugPrint(result)
+                        _utils.setStateWorking(false)
                     else
                         logger.print('removeEdges succeeded, result =') --logger.debugPrint(result)
                         if not(successEventName) then return end
@@ -870,21 +934,34 @@ function data()
         -- and raises the given event
         replaceEdgeWithSame = function(oldEdgeId, objectIdToBeRemoved, successEventName, successEventArgs)
             logger.print('replaceEdgeWithSame starting')
-            if not(edgeUtils.isValidAndExistingId(oldEdgeId)) then return end
+            logger.print('objectIdToBeRemoved =', objectIdToBeRemoved or 'NIL')
+            logger.print('successEventName =', successEventName or 'NIL')
+            logger.print('successEventArgs =') logger.debugPrint(successEventArgs)
+            if not(edgeUtils.isValidAndExistingId(oldEdgeId)) then
+                logger.warn('replaceEdgeWithSame received an invalid oldEdgeId')
+                _utils.setStateWorking(false)
+                return
+            end
 
             local oldBaseEdge = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE)
             local oldEdgeStreet = api.engine.getComponent(oldEdgeId, api.type.ComponentType.BASE_EDGE_STREET)
             -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
-            if oldBaseEdge == nil or oldEdgeStreet == nil then return end
+            if oldBaseEdge == nil or oldEdgeStreet == nil then
+                logger.warn('replaceEdgeWithSame cannot find oldBaseEdge or oldBaseEdgeStreet')
+                _utils.setStateWorking(false)
+                return
+            end
 
             local newEdge = api.type.SegmentAndEntity.new()
             newEdge.entity = -1
             newEdge.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
             newEdge.comp = oldBaseEdge
-            if type(oldBaseEdge.objects) == 'table' then
+            logger.print('oldBaseEdge =') logger.debugPrint(oldBaseEdge)
+            if oldBaseEdge.objects ~= nil then -- userdata
                 local edgeObjects = {}
                 for _, edgeObj in pairs(oldBaseEdge.objects) do
                     if edgeObj[1] ~= objectIdToBeRemoved then
+                        logger.print('replaceEdgeWithSame preserving object') logger.debugPrint(edgeObj)
                         table.insert(edgeObjects, { edgeObj[1], edgeObj[2] })
                     end
                 end
@@ -958,6 +1035,7 @@ function data()
                     if not(success) then
                         logger.warn('replaceEdgeWithSame failed, proposal = ') logger.warningDebugPrint(proposal)
                         logger.warn('replaceEdgeWithSame failed, result = ') logger.warningDebugPrint(result)
+                        _utils.setStateWorking(false)
                     else
                         logger.print('replaceEdgeWithSame succeeded, result =') --logger.debugPrint(result)
                         if not(successEventName) then return end
@@ -983,16 +1061,38 @@ function data()
         end,
         splitEdge = function(wholeEdgeId, nodeBetween, successEventName, successEventArgs)
             logger.print('splitEdge starting')
-            if not(edgeUtils.isValidAndExistingId(wholeEdgeId)) or type(nodeBetween) ~= 'table' then return end
+            if not(edgeUtils.isValidAndExistingId(wholeEdgeId)) then
+                logger.warn('splitEdge received an invalid wholeEdgeId')
+                _utils.setStateWorking(false)
+                return
+            end
+            if type(nodeBetween) ~= 'table' then
+                logger.warn('splitEdge received an invalid nodeBetween')
+                _utils.setStateWorking(false)
+                return
+            end
     
             local oldBaseEdge = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.BASE_EDGE)
             local oldBaseEdgeStreet = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.BASE_EDGE_STREET)
             -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
-            if oldBaseEdge == nil or oldBaseEdgeStreet == nil then return end
+            if oldBaseEdge == nil or oldBaseEdgeStreet == nil then
+                logger.warn('splitEdge cannot find oldBaseEdge or oldBaseEdgeStreet')
+                _utils.setStateWorking(false)
+                return
+            end
     
+            if not(edgeUtils.isValidAndExistingId(oldBaseEdge.node0)) or not(edgeUtils.isValidAndExistingId(oldBaseEdge.node1)) then
+                logger.warn('splitEdge found invalid baseEdge nodes')
+                _utils.setStateWorking(false)
+                return
+            end
             local node0 = api.engine.getComponent(oldBaseEdge.node0, api.type.ComponentType.BASE_NODE)
             local node1 = api.engine.getComponent(oldBaseEdge.node1, api.type.ComponentType.BASE_NODE)
-            if node0 == nil or node1 == nil then return end
+            if node0 == nil or node1 == nil then
+                logger.warn('splitEdge cannot find baseEdge nodes')
+                _utils.setStateWorking(false)
+                return
+            end
     
             if not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)) and not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node1.position)) then
                 logger.warn('splitEdge cannot find the nodes')
@@ -1057,7 +1157,11 @@ function data()
                 for _, edgeObj in pairs(oldBaseEdge.objects) do
                     local edgeObjPosition = edgeUtils.getObjectPosition(edgeObj[1])
                     -- logger.print('edge object position =') logger.debugPrint(edgeObjPosition)
-                    if type(edgeObjPosition) ~= 'table' then return end -- change nothing and leave
+                    if type(edgeObjPosition) ~= 'table' then
+                        logger.warn('splitEdge found type(edgeObjPosition) ~= table')
+                        _utils.setStateWorking(false)
+                        return
+                    end -- change nothing and leave
                     local assignment = _utils.getWhichEdgeGetsEdgeObjectAfterSplit(
                         edgeObjPosition,
                         {node0.position.x, node0.position.y, node0.position.z},
@@ -1080,6 +1184,8 @@ function data()
                     else
                         -- print('don\'t change anything and leave')
                         -- print('LOLLO error, assignment.assignToSide =', assignment.assignToSide)
+                        logger.warn('splitEdge cannot find the side to assign to the edge object')
+                        _utils.setStateWorking(false)
                         return -- change nothing and leave
                     end
                 end
@@ -1106,6 +1212,7 @@ function data()
                     if not(success) then
                         logger.warn('splitEdge failed, proposal = ') logger.warningDebugPrint(proposal)
                         logger.warn('splitEdge failed, result = ') logger.warningDebugPrint(result)
+                        _utils.setStateWorking(false)
                     else
                         logger.print('splitEdge succeeded, result =') -- logger.debugPrint(result)
                         if not(successEventName) then return end
@@ -1157,7 +1264,8 @@ function data()
                     and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance)
                     then
                         if _guiConstants._ploppablePassengersModelId
-                        and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiConstants._ploppablePassengersModelId then
+                        and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiConstants._ploppablePassengersModelId
+                        then
                             -- logger.print('args =') logger.debugPrint(args)
                             local edgeObjectId = args.proposal.proposal.edgeObjectsToAdd[1].resultEntity
                             logger.print('edgeObjectId =') logger.debugPrint(edgeObjectId)
@@ -1172,10 +1280,15 @@ function data()
                             then
                                 return false
                             end
+                            if state and state.isWorking then
+                                -- LOLLO NOTE this could interfere and delaying is not trivial, so I use a model that clearly says "bulldoze me"
+                                -- _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
+                                return false
+                            end
                             local edgeLength = edgeUtils.getEdgeLength(edgeId)
                             if edgeLength < constants.minInitialEdgeLength then
                                 guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
-                                _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
+                                _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
                                 return false
                             end
                             local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
@@ -1192,11 +1305,12 @@ function data()
                             logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                             logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
                             logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
-                            _actions.replaceEdgeWithSame(
-                                edgeId,
-                                edgeObjectId,
-                                _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName,
+                            _utils.setStateWorking(
+                                true,
+                                _eventProperties.waypointPlaced.eventName,
                                 {
+                                    edgeId = edgeId,
+                                    edgeObjectId = edgeObjectId,
                                     edgeObjectTransf = edgeObjectTransf_yz0,
                                     streetType = baseEdgeStreet.streetType,
                                 }
@@ -1208,7 +1322,7 @@ function data()
             )
         end,
         guiInit = function()
-            _guiConstants._ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/small_mid.mdl')
+            _guiConstants._ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
         end,
         handleEvent = function(src, id, name, args)
             if (id ~= _eventId) then return end
@@ -1219,15 +1333,27 @@ function data()
                 function()
                     -- LOLLO if everything else works, add a function to rebuild the road after deleting.
                     -- The params with the node ids are in place.
-                    if name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
+                    if name == _eventProperties.waypointPlaced.eventName then
+                        _actions.replaceEdgeWithSame(
+                            args.edgeId,
+                            args.edgeObjectId,
+                            _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName,
+                            {
+                                edgeObjectTransf = args.edgeObjectTransf,
+                                streetType = args.streetType,
+                            }
+                        )
+                    elseif name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
                         if not(edgeUtils.isValidAndExistingId(args.edgeId)) or edgeUtils.isEdgeFrozen(args.edgeId) then
                             logger.warn('edge invalid or frozen')
+                            state.isWorking = false
                             return
                         end
 
                         local length = edgeUtils.getEdgeLength(args.edgeId)
                         if length < constants.minInitialEdgeLength then
                             logger.warn('edge too short')
+                            state.isWorking = false
                             return
                         end
 
@@ -1276,6 +1402,7 @@ function data()
                         logger.print('args.outerNode0EdgeIds =') logger.debugPrint(args.outerNode0EdgeIds)
                         if #args.outerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second split')
+                            state.isWorking = false
                             return
                         end
                         local edgeIdToBeSplit, nodeBetween = _utils.getSplit1Data(
@@ -1284,10 +1411,12 @@ function data()
                         )
                         if not(edgeIdToBeSplit) then
                             logger.warn('cannot decide on an edge id for the second outer split')
+                            state.isWorking = false
                             return
                         end
                         if not(nodeBetween) then
                             logger.warn('cannot find out nodeBetween for the second outer split')
+                            state.isWorking = false
                             return
                         end
 
@@ -1297,6 +1426,7 @@ function data()
                         local edgeIdsBetweenNodes = _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.outerNode1Id)
                         if #edgeIdsBetweenNodes ~= 1 then
                             logger.warn('no edges or too many edges found between outerNode0Id and outerNode1Id')
+                            state.isWorking = false
                             return
                         end
 
@@ -1320,6 +1450,7 @@ function data()
                         logger.print('args.innerNode0EdgeIds =') logger.debugPrint(args.innerNode0EdgeIds)
                         if #args.innerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second inner split')
+                            state.isWorking = false
                             return
                         end
                         local edgeIdToBeSplit, nodeBetween = _utils.getSplit1Data(
@@ -1328,10 +1459,12 @@ function data()
                         )
                         if not(edgeIdToBeSplit) then
                             logger.warn('cannot decide on an edge id for the second inner split')
+                            state.isWorking = false
                             return
                         end
                         if not(nodeBetween) then
                             logger.warn('cannot find out nodeBetween for the second inner split')
+                            state.isWorking = false
                             return
                         end
 
@@ -1351,6 +1484,7 @@ function data()
                             else
                                 logger.warn('no edges or too many edges found between split nodes; edgeIdsBetweenNodesNested =')
                                 logger.warningDebugPrint(edgeIdsBetweenNodesNested)
+                                state.isWorking = false
                                 return
                             end
                         end
@@ -1365,6 +1499,7 @@ function data()
                         if outerBaseNode0 == nil or innerBaseNode0 == nil or innerBaseNode1 == nil or outerBaseNode1 == nil
                         or edge0Base == nil or edge1Base == nil or edge2Base == nil then
                             logger.warn('some edges or nodes cannot be read')
+                            state.isWorking = false
                             return
                         end
                         args.dataForCon = {
@@ -1401,7 +1536,10 @@ function data()
                             isEdgeNodesOK = false
                             logger.warn('### edge2 nodes are screwed up, edge2Base =') logger.warningDebugPrint(edge2Base)
                         end
-                        if not(isEdgeNodesOK) then return end
+                        if not(isEdgeNodesOK) then
+                            state.isWorking = false
+                            return
+                        end
 
                         if edge0Base.node0 ~= args.outerNode0Id then
                             logger.print('reversing edge0')
@@ -1422,17 +1560,41 @@ function data()
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
-                        _actions.buildSnappyRoads(args.outerNode0Id, args.outerNode1Id, args.conId, args._conFileName, args.conParams)
+                        _actions.buildSnappyRoads(args.outerNode0Id, args.outerNode1Id, args.conId)
                     elseif name == _eventProperties.snappyConBuilt.eventName then
                         -- _utils.upgradeCon(args.conId, args.conParams)
+                    elseif name == _eventProperties.setStateWorking.eventName then
+                        state.isWorking = args.isWorking
+                    elseif name == _eventProperties.snappyRoadsBuilt.eventName then
+                        state.isWorking = false
                     end
                 end,
-                logger.xpErrorHandler
+                function(error)
+                    state.isWorking = false
+                    logger.xpErrorHandler(error)
+                end
             )
         end,
         -- update = function()
         -- end,
         -- guiUpdate = function()
         -- end,
+        save = function()
+            -- only fires when the worker thread changes the state
+            if not state then state = {} end
+            if not state.isWorking then state.isWorking = false end
+            return state
+        end,
+        load = function(loadedState)
+            -- fires once in the worker thread, at game load, and many times in the UI thread
+            if loadedState then
+                state = {}
+                state.isWorking = loadedState.isWorking or false
+            else
+                state = {
+                    isWorking = false,
+                }
+            end
+        end,
     }
 end

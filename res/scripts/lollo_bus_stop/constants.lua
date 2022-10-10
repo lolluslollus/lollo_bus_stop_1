@@ -12,7 +12,6 @@ return {
     eventProperties = {
         edgesRemoved = { conName = nil, eventName = 'edgesRemoved' },
         conBuilt = { conName = nil, eventName = 'conBuilt' },
-        hideWarnings = { conName = nil, eventName = 'hideWarnings' },
         ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
         firstOuterSplitDone = { conName = nil, eventName = 'firstOuterSplitDone'},
         secondOuterSplitDone = { conName = nil, eventName = 'secondOuterSplitDone' },
@@ -20,7 +19,8 @@ return {
         secondInnerSplitDone = { conName = nil, eventName = 'secondInnerSplitDone' },
         snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
         snappyRoadsBuilt = { conName = nil, eventName = 'snappyRoadsBuilt'},
-        waypointBulldozeRequested = { conName = nil, eventName = 'waypointBulldozeRequested' }
+        waypointPlaced = { conName = nil, eventName = 'waypointPlaced' },
+        setStateWorking = { conName = nil, eventName = 'setStateWorking' },
     },
 
     idTransf = {

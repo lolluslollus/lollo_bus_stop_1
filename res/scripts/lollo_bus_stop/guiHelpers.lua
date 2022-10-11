@@ -3,6 +3,9 @@ local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local logger = require('lollo_bus_stop.logger')
 -- local stringUtils = require('lollo_bus_stop.stringUtils')
 
+local _extraHeight4Title = 100
+local _extraHeight4Param = 40
+local _conConfigLayoutId = 'lollo_bus_stop_con_config_layout'
 local _conConfigWindowId = 'lollo_bus_stop_con_config_window'
 local _warningWindowWithGotoId = 'lollo_bus_stop_warning_window_with_goto'
 -- local _warningWindowWithStateId = 'lollo_bus_stop_warning_window_with_state'
@@ -26,15 +29,17 @@ local guiHelpers = {
     end
 }
 
-guiHelpers.showConstructionConfig = function(paramPropsTable, onParamValueChanged)
+guiHelpers.getConstructionConfigLayout = function(paramPropsTable, onParamValueChanged, isAddTitle)
     local layout = api.gui.layout.BoxLayout.new('VERTICAL')
-    local window = api.gui.util.getById(_conConfigWindowId)
-    if window == nil then
-        window = api.gui.comp.Window.new(_texts.conConfigWindowTitle, layout)
-        window:setId(_conConfigWindowId)
-    else
-        window:setContent(layout)
-        window:setVisible(true, false)
+    layout:setId(_conConfigLayoutId)
+
+    if isAddTitle then
+        local br = api.gui.comp.TextView.new('')
+        br:setGravity(0.5, 0)
+        layout:addItem(br)
+        local title = api.gui.comp.TextView.new(_texts.conConfigWindowTitle)
+        title:setGravity(0.5, 0)
+        layout:addItem(title)
     end
 
     local function addParam(paramPropsRecord)
@@ -47,7 +52,8 @@ guiHelpers.showConstructionConfig = function(paramPropsTable, onParamValueChange
         layout:addItem(paramNameTextBox)
         local _defaultValueIndexBase0 = (paramPropsRecord.defaultValue or 0)
         if paramPropsRecord.uiType == 'ICON_BUTTON' then
-            local buttonRowLayout = api.gui.comp.ToggleButtonGroup.new(api.gui.util.Alignment.HORIZONTAL, 0, false)
+            local buttonRowLayout = api.gui.comp.ToggleButtonGroup.new(api.gui.util.Alignment.HORIZONTAL, 0, true)
+            buttonRowLayout:setGravity(0.5, 0) -- center horizontally
             buttonRowLayout:setOneButtonMustAlwaysBeSelected(true)
             buttonRowLayout:setEmitSignal(false)
             buttonRowLayout:onCurrentIndexChanged(
@@ -65,6 +71,7 @@ guiHelpers.showConstructionConfig = function(paramPropsTable, onParamValueChange
             layout:addItem(buttonRowLayout)
         elseif paramPropsRecord.uiType == 'COMBOBOX' then
             local comboBox = api.gui.comp.ComboBox.new()
+            comboBox:setGravity(0.5, 0) -- center horizontally
             for _, value in pairs(paramPropsRecord.values) do
                 comboBox:addItem(value)
             end
@@ -79,7 +86,8 @@ guiHelpers.showConstructionConfig = function(paramPropsTable, onParamValueChange
             )
             layout:addItem(comboBox)
         else -- BUTTON or anything else
-            local buttonRowLayout = api.gui.comp.ToggleButtonGroup.new(api.gui.util.Alignment.HORIZONTAL, 0, false)
+            local buttonRowLayout = api.gui.comp.ToggleButtonGroup.new(api.gui.util.Alignment.HORIZONTAL, 0, true)
+            buttonRowLayout:setGravity(0.5, 0) -- center horizontally
             buttonRowLayout:setOneButtonMustAlwaysBeSelected(true)
             buttonRowLayout:setEmitSignal(false)
             buttonRowLayout:onCurrentIndexChanged(
@@ -101,10 +109,63 @@ guiHelpers.showConstructionConfig = function(paramPropsTable, onParamValueChange
         addParam(paramPropsRecord)
     end
 
+    return layout
+end
+
+guiHelpers.showConstructionConfig = function(paramPropsTable, onParamValueChanged)
+    local layout = guiHelpers.getConstructionConfigLayout(paramPropsTable, onParamValueChanged)
+    local window = api.gui.util.getById(_conConfigWindowId)
+    if window == nil then
+        window = api.gui.comp.Window.new(_texts.conConfigWindowTitle, layout)
+        window:setId(_conConfigWindowId)
+    else
+        window:setContent(layout)
+        window:setVisible(true, false)
+    end
+
     -- window:setHighlighted(true)
     local position = api.gui.util.getMouseScreenPos()
     window:setPosition(position.x + _windowXShift, position.y + _windowYShift)
     window:addHideOnCloseHandler()
+end
+
+guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChanged, conParams)
+    local conMenuId = 'temp.view.entity_' .. stationGroupId
+    print('conMenuId = \'' .. tostring(conMenuId) .. '\'')
+    local window = api.gui.util.getById(conMenuId) -- temp.view.entity_26372
+    local windowLayout = window:getContent()
+    -- local contentView = windowLayout:getItem(windowLayout:getNumItems() - 1)
+    -- local layout = contentView:getLayout() -- :getItem(0)
+    -- contentView:getLayout():getItem(0):setVisible(false, false)
+    -- print('oldLayoutId =', oldLayout:getId() or 'NIL')
+    
+    -- layout:addItem(newLayout, api.gui.util.Alignment.HORIZONTAL, api.gui.util.Alignment.VERTICAL)
+    -- layout:addItem(newLayout, 1, 1)
+
+    -- windowLayout:getItem(1):setEnabled(false) -- disables too much
+    windowLayout:getItem(1):setVisible(false, false) -- hide the "configure' button" without emitting a signal
+
+    for i = 0, windowLayout:getNumItems() - 1, 1 do
+        local item = windowLayout:getItem(i)
+        if item ~= nil and item:getId() == _conConfigLayoutId then
+            return
+        end
+    end
+
+    local newLayout = guiHelpers.getConstructionConfigLayout(conParams, handleParamValueChanged, true)
+    windowLayout:addItem(newLayout)
+    windowLayout:setGravity(0, 0) -- center top left
+
+    local rect = window:getContentRect() -- this is mostly 0, 0 at this point
+    local minSize = window:calcMinimumSize()
+    logger.print('rect =') logger.debugPrint(rect)
+    logger.print('minSize =') logger.debugPrint(minSize)
+    logger.print('#conParams = ', #conParams)
+
+    local extraHeight = _extraHeight4Title + #conParams * _extraHeight4Param
+    local size = api.gui.util.Size.new(math.max(rect.w, minSize.w), math.max(rect.h, minSize.h) + extraHeight)
+    window:setSize(size)
+    window:setResizable(true)
 end
 
 guiHelpers.showWarningWindowWithGoto = function(text, wrongObjectId, similarObjectsIds)

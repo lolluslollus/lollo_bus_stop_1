@@ -16,7 +16,7 @@ local transfUtilsUG = require('transf')
 -- stand in the way. This is why I use my own params gui, so I can force-snap the roads after configuring
 
 -- LOLLO NOTE you can only update the state from the worker thread
-local state = {}
+local state = { isWorking = false }
 
 local _eventId = constants.eventId
 local _eventProperties = constants.eventProperties
@@ -25,6 +25,39 @@ local _guiConstants = {
     _ploppablePassengersModelId = false,
     _conParamsMetadata = {},
 }
+
+-- works as a semaphore for all functions that check state.isWorking before doing something
+-- it sets the state in the worker thread and then fires a given event with the given args
+local _setStateWorking = function(isWorking, successEventName, successEventArgs)
+    logger.print('_setStateWorking starting, isWorking =', tostring(isWorking or false))
+
+    xpcall(
+        function ()
+            api.cmd.sendCommand(
+                api.cmd.make.sendScriptEvent(
+                    string.sub(debug.getinfo(1, 'S').source, 1),
+                    _eventId,
+                    _eventProperties.setStateWorking.eventName,
+                    { isWorking = isWorking }
+                ),
+                function(result, success)
+                    if not(successEventName) then return end
+
+                    api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                        string.sub(debug.getinfo(1, 'S').source, 1),
+                        _eventId,
+                        successEventName,
+                        successEventArgs
+                    ))
+                end
+            )
+        end,
+        logger.xpErrorHandler
+    )
+end
+local _setStateReady = function()
+    _setStateWorking(false)
+end
 
 local _utils = {
     getConOfStationGroup = function(stationGroupId)
@@ -92,9 +125,9 @@ local _utils = {
         logger.print('endNodeIdsUnsorted =') logger.debugPrint(endNodeIdsUnsorted)
         return endNodeIdsUnsorted
     end,
-    -- this is not so good, UG TODO must make a proper upfront estimator
+    -- this is not so good, it can crash even with xpcall and it does not always foresee all accidents UG TODO must make a proper upfront estimator
     getIsProposalOK = function(proposal, context)
-        logger.print('getIsProposalOK starting')
+        logger.print('getIsProposalOK starting with state =') logger.debugPrint(state)
         if not(proposal) then logger.err('getIsProposalOK got no proposal') return false end
         if not(context) then logger.err('getIsProposalOK got no context') return false end
 
@@ -354,62 +387,19 @@ local _utils = {
         -- logger.print('LOLLO assignment =') logger.debugPrint(result)
         return result
     end,
-    setStateWorking = function(isWorking, successEventName, successEventArgs)
-        logger.print('setStateWorking starting, isWorking =', tostring(isWorking or false))
+    -- guiWaitLockingThread = function(isExitFunc)
+    --     if isExitFunc() then return end
 
-        xpcall(
-            function ()
-                api.cmd.sendCommand(
-                    api.cmd.make.sendScriptEvent(
-                        string.sub(debug.getinfo(1, 'S').source, 1),
-                        _eventId,
-                        _eventProperties.setStateWorking.eventName,
-                        { isWorking = isWorking }
-                    ),
-                    function(result, success)
-                        if not(successEventName) then return end
-
-                        api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
-                            string.sub(debug.getinfo(1, 'S').source, 1),
-                            _eventId,
-                            successEventName,
-                            successEventArgs
-                        ))
-                    end
-                )
-            end,
-            logger.xpErrorHandler
-        )
-    end,
-    upgradeCon = function(conId, conParams)
-        logger.print('upgradeCon starting, conId =', (conId or 'NIL'))
-        local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
-        if con == nil then
-            logger.warn('upgradeCon cannot find con')
-            return
-        end
-
-        xpcall(
-            function()
-                collectgarbage() -- LOLLO TODO this is a stab in the dark to try and avoid crashes in the following
-                -- UG TODO there is no such thing in the new api,
-                -- nor an upgrade event, both would be useful
-                local paramsNoSeed = arrayUtils.cloneDeepOmittingFields(conParams, {'seed'})
-                logger.print('paramsNoSeed =') logger.debugPrint(paramsNoSeed)
-                logger.print('about to upgrade con, stationConId =', conId, 'con.fileName =', con.fileName)
-                local upgradedConId = game.interface.upgradeConstruction(
-                    conId,
-                    con.fileName,
-                    paramsNoSeed
-                )
-                logger.print('upgradeCon succeeded, conId =', (upgradedConId or 'NIL'))
-            end,
-            function(error)
-                logger.warn('upgradeCon failed')
-                logger.warn(error)
-            end
-        )
-    end,
+    --     local _intervalMsec = 100
+    --     local exitMsec = math.ceil(os.clock() * 1000) + _intervalMsec
+    --     while true do
+    --         if math.ceil(os.clock() * 1000) > exitMsec then
+    --             logger.print('checking if we can stop waiting')
+    --             if isExitFunc() then return end
+    --             exitMsec = exitMsec + _intervalMsec
+    --         end
+    --     end
+    -- end,
 }
 local _actions = {
     buildConstruction = function(outerNode0Id, outerNode1Id, streetType, bridgeType, dataForCon)
@@ -417,7 +407,7 @@ local _actions = {
         -- logger.print('dataForCon =') logger.debugPrint(dataForCon)
         if not(edgeUtils.isValidAndExistingId(outerNode0Id)) or not(edgeUtils.isValidAndExistingId(outerNode1Id)) then
             logger.warn('buildConstruction received an invalid node id')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -425,7 +415,7 @@ local _actions = {
         local baseNode1 = api.engine.getComponent(outerNode1Id, api.type.ComponentType.BASE_NODE)
         if baseNode0 == nil or baseNode1 == nil then
             logger.warn('cannot find outerNode0Id or outerNode1Id')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -443,7 +433,7 @@ local _actions = {
             streetUtils.getStreetDataFilters().STOCK,
         })
 
-        logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
+        -- logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
         local bridgeTypeFileName = type(bridgeType) == 'number' and bridgeType > -1 and api.res.bridgeTypeRep.getName(bridgeType) or nil
         logger.print('bridgeTypeFileName =', bridgeTypeFileName or 'NIL')
         local bridgeTypeIndexBase0 = 0 -- no bridge
@@ -459,13 +449,13 @@ local _actions = {
         local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
         if type(streetTypeFileName) ~= 'string' then
             logger.warn('cannot find street type', streetType or 'NIL')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         local streetTypeIndexBase0 = arrayUtils.findIndex(allStreetData, 'fileName', streetTypeFileName) - 1 -- base 0
         if streetTypeIndexBase0 < 0 then
             logger.warn('cannot find street type index', streetType or 'NIL')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         local _sidewalkHeight = (allStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
@@ -515,7 +505,7 @@ local _actions = {
             -- lolloBusStop_snapNodes = 0,
             lolloBusStop_streetType = streetTypeIndexBase0,
             lolloBusStop_tramTrack = 0,
-            seed = math.abs(math.ceil(conTransf[13] * 1000)),
+            seed = math.abs(math.ceil(conTransf[13] * 100)),
         }
         -- these work -- LOLLO TODO we don't update anymore, so you can write the values directly: do it
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[1], 'lolloBusStop_')
@@ -578,11 +568,10 @@ local _actions = {
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
-        local isProposalOK = _utils.getIsProposalOK(proposal, context)
-        if not(isProposalOK) then
+        if not(_utils.getIsProposalOK(proposal, context)) then
             logger.warn('buildConstruction made a dangerous proposal')
             -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         api.cmd.sendCommand(
@@ -596,7 +585,7 @@ local _actions = {
                     logger.warn('buildConstruction callback failed')
                     logger.warn('buildConstruction proposal =') logger.warningDebugPrint(proposal)
                     logger.warn('buildConstruction result =') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                     -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
                 else
                     local conId = result.resultEntities[1]
@@ -614,7 +603,10 @@ local _actions = {
                                 }
                             ))
                         end,
-                        logger.xpErrorHandler
+                        function(error)
+                            logger.xpErrorHandler(error)
+                            _setStateReady()
+                        end
                     )
                 end
             end
@@ -627,7 +619,7 @@ local _actions = {
         logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
         if type(conParams) ~= 'table' then
             logger.warn('buildSnappyRoads received no table for conParams')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         local outerNode0Pos = conParams['lolloBusStop_outerNode0Pos_absolute']
@@ -636,18 +628,18 @@ local _actions = {
         logger.print('lolloBusStop_outerNode1Pos_absolute =') logger.debugPrint(outerNode1Pos)
         if type(outerNode0Pos) ~= 'table' or type(outerNode1Pos) ~= 'table' then
             logger.warn('buildSnappyRoads did not receive outerNode0Pos or outerNode1Pos')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         if not(edgeUtils.isValidAndExistingId(conId)) then
             logger.warn('buildSnappyRoads received an invalid conId')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
         if con == nil then
             logger.warn('buildSnappyRoads cannot find con')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -720,7 +712,7 @@ local _actions = {
         local newNode0Id, newNode1Id, oldNode0Id, oldNode1Id = getEndAndNeighbourNodeIds()
         if newNode0Id == nil or newNode1Id == nil or oldNode0Id == nil or oldNode1Id == nil then
             logger.warn('buildSnappyRoads cannot find its node ids')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -728,6 +720,11 @@ local _actions = {
         local oldEdge1Id = edgeUtils.getConnectedEdgeIds({oldNode1Id})[1]
         logger.print('oldEdge0Id =', oldEdge0Id)
         logger.print('oldEdge1Id =', oldEdge1Id)
+        if edgeUtils.isEdgeFrozen(oldEdge0Id) or edgeUtils.isEdgeFrozen(oldEdge1Id) then
+            logger.warn('buildSnappyRoads cannot modify a frozen edge')
+            _setStateReady()
+            return
+        end
         local oldBaseEdge0 = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.BASE_EDGE)
         local oldBaseEdge1 = api.engine.getComponent(oldEdge1Id, api.type.ComponentType.BASE_EDGE)
         local oldEdge0Street = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.BASE_EDGE_STREET)
@@ -795,9 +792,9 @@ local _actions = {
                 if not(success) then
                     logger.warn('buildSnappyRoads failed, proposal =') logger.warningDebugPrint(proposal)
                     logger.warn('buildSnappyRoads failed, result =') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                 else
-                    if not(successEventName) then return end
+                    if not(successEventName) then _setStateReady() return end
 
                     xpcall(
                         function ()
@@ -808,7 +805,10 @@ local _actions = {
                                 successEventArgs
                             ))
                         end,
-                        logger.xpErrorHandler
+                        function(error)
+                            logger.xpErrorHandler(error)
+                            _setStateReady()
+                        end
                     )
                 end
             end
@@ -818,7 +818,7 @@ local _actions = {
         -- print('constructionId =', constructionId)
         if type(constructionId) ~= 'number' or constructionId < 0 then
             logger.warn('bulldozeConstruction got an invalid conId')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -826,7 +826,7 @@ local _actions = {
         if not(oldConstruction) or not(oldConstruction.params) then
             logger.warn('bulldozeConstruction got no con or a broken con')
             logger.warn('oldConstruction =') logger.warningDebugPrint(oldConstruction)
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -844,7 +844,7 @@ local _actions = {
                     logger.warn('bulldozeConstruction callback: failed to build')
                     logger.warn('bulldozeConstruction proposal =') logger.warningDebugPrint(proposal)
                     logger.warn('bulldozeConstruction result =') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                 else
                     logger.print('bulldozeConstruction callback succeeded')
                 end
@@ -858,13 +858,13 @@ local _actions = {
 
         if not(edgeUtils.isValidAndExistingId(oldConId)) then
             logger.err('makeConstructionSnappy got an invalid conId =', oldConId or 'NIL')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
         if not(oldCon) then
             logger.err('makeConstructionSnappy got an invalid con =')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -887,7 +887,7 @@ local _actions = {
         local proposal = api.type.SimpleProposal.new()
         proposal.constructionsToAdd[1] = newCon
         proposal.constructionsToRemove = { oldConId }
-        -- proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
+        proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
 
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false
@@ -895,10 +895,9 @@ local _actions = {
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
-        local isProposalOK = _utils.getIsProposalOK(proposal, context)
-        if not(isProposalOK) then
+        if not(_utils.getIsProposalOK(proposal, context)) then
             logger.warn('makeConstructionSnappy made a dangerous proposal')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         api.cmd.sendCommand(
@@ -911,7 +910,7 @@ local _actions = {
                     logger.warn('makeConstructionSnappy callback failed')
                     logger.warn('makeConstructionSnappy proposal =') logger.warningDebugPrint(proposal)
                     logger.warn('makeConstructionSnappy result =') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                 else
                     local newConId = result.resultEntities[1]
                     logger.print('makeConstructionSnappy succeeded, stationConId = ', newConId)
@@ -927,24 +926,32 @@ local _actions = {
                                 }
                             ))
                         end,
-                        logger.xpErrorHandler
+                        function(error)
+                            logger.xpErrorHandler(error)
+                            _setStateReady()
+                        end
                     )
                 end
             end
         )
     end,
     removeEdges = function(oldEdgeIds, successEventName, successEventArgs)
-        logger.print('removeEdges starting, oldEdgeIds =') logger.print(oldEdgeIds)
+        logger.print('removeEdges starting, oldEdgeIds =') logger.debugPrint(oldEdgeIds)
         -- removes edges even if they have a street type, which has changed or disappeared
         if not(oldEdgeIds) then
             logger.warn('removeEdges got no oldEdgeIds')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         for _, oldEdgeId in pairs(oldEdgeIds) do
             if not(edgeUtils.isValidAndExistingId(oldEdgeId)) then
                 logger.warn('removeEdges got an invalid oldEdgeId')
-                _utils.setStateWorking(false)
+                _setStateReady()
+                return
+            end
+            if edgeUtils.isEdgeFrozen(oldEdgeId) then
+                logger.warn('removeEdges got a frozen oldEdgeId')
+                _setStateReady()
                 return
             end
         end
@@ -995,10 +1002,10 @@ local _actions = {
                 if not(success) then
                     logger.warn('removeEdges failed, proposal = ') logger.warningDebugPrint(proposal)
                     logger.warn('removeEdges failed, result = ') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                 else
                     logger.print('removeEdges succeeded, result =') --logger.debugPrint(result)
-                    if not(successEventName) then return end
+                    if not(successEventName) then _setStateReady() return end
 
                     xpcall(
                         function ()
@@ -1009,7 +1016,10 @@ local _actions = {
                                 successEventArgs
                             ))
                         end,
-                        logger.xpErrorHandler
+                        function(error)
+                            logger.xpErrorHandler(error)
+                            _setStateReady()
+                        end
                     )
                 end
             end
@@ -1025,7 +1035,12 @@ local _actions = {
         logger.print('successEventArgs =') logger.debugPrint(successEventArgs)
         if not(edgeUtils.isValidAndExistingId(oldEdgeId)) then
             logger.warn('replaceEdgeWithSame received an invalid oldEdgeId')
-            _utils.setStateWorking(false)
+            _setStateReady()
+            return
+        end
+        if edgeUtils.isEdgeFrozen(oldEdgeId) then
+            logger.warn('replaceEdgeWithSame received a frozen oldEdgeId')
+            _setStateReady()
             return
         end
 
@@ -1034,7 +1049,7 @@ local _actions = {
         -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
         if oldBaseEdge == nil or oldEdgeStreet == nil then
             logger.warn('replaceEdgeWithSame cannot find oldBaseEdge or oldBaseEdgeStreet')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -1121,10 +1136,10 @@ local _actions = {
                 if not(success) then
                     logger.warn('replaceEdgeWithSame failed, proposal = ') logger.warningDebugPrint(proposal)
                     logger.warn('replaceEdgeWithSame failed, result = ') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                 else
                     logger.print('replaceEdgeWithSame succeeded, result =') --logger.debugPrint(result)
-                    if not(successEventName) then return end
+                    if not(successEventName) then _setStateReady() return end
 
                     xpcall(
                         function ()
@@ -1139,7 +1154,10 @@ local _actions = {
                                 ))
                             end
                         end,
-                        logger.xpErrorHandler
+                        function(error)
+                            logger.xpErrorHandler(error)
+                            _setStateReady()
+                        end
                     )
                 end
             end
@@ -1149,12 +1167,17 @@ local _actions = {
         logger.print('splitEdge starting')
         if not(edgeUtils.isValidAndExistingId(wholeEdgeId)) then
             logger.warn('splitEdge received an invalid wholeEdgeId')
-            _utils.setStateWorking(false)
+            _setStateReady()
+            return
+        end
+        if edgeUtils.isEdgeFrozen(wholeEdgeId) then
+            logger.warn('splitEdge received a frozen wholeEdgeId')
+            _setStateReady()
             return
         end
         if type(nodeBetween) ~= 'table' then
             logger.warn('splitEdge received an invalid nodeBetween')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -1163,20 +1186,20 @@ local _actions = {
         -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
         if oldBaseEdge == nil or oldBaseEdgeStreet == nil then
             logger.warn('splitEdge cannot find oldBaseEdge or oldBaseEdgeStreet')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
         if not(edgeUtils.isValidAndExistingId(oldBaseEdge.node0)) or not(edgeUtils.isValidAndExistingId(oldBaseEdge.node1)) then
             logger.warn('splitEdge found invalid baseEdge nodes')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
         local node0 = api.engine.getComponent(oldBaseEdge.node0, api.type.ComponentType.BASE_NODE)
         local node1 = api.engine.getComponent(oldBaseEdge.node1, api.type.ComponentType.BASE_NODE)
         if node0 == nil or node1 == nil then
             logger.warn('splitEdge cannot find baseEdge nodes')
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
 
@@ -1245,7 +1268,7 @@ local _actions = {
                 -- logger.print('edge object position =') logger.debugPrint(edgeObjPosition)
                 if type(edgeObjPosition) ~= 'table' then
                     logger.warn('splitEdge found type(edgeObjPosition) ~= table')
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                     return
                 end -- change nothing and leave
                 local assignment = _utils.getWhichEdgeGetsEdgeObjectAfterSplit(
@@ -1271,7 +1294,7 @@ local _actions = {
                     -- print('don\'t change anything and leave')
                     -- print('LOLLO error, assignment.assignToSide =', assignment.assignToSide)
                     logger.warn('splitEdge cannot find the side to assign to the edge object')
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                     return -- change nothing and leave
                 end
             end
@@ -1298,10 +1321,10 @@ local _actions = {
                 if not(success) then
                     logger.warn('splitEdge failed, proposal = ') logger.warningDebugPrint(proposal)
                     logger.warn('splitEdge failed, result = ') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                 else
                     logger.print('splitEdge succeeded, result =') -- logger.debugPrint(result)
-                    if not(successEventName) then return end
+                    if not(successEventName) then _setStateReady() return end
 
                     xpcall(
                         function ()
@@ -1328,14 +1351,60 @@ local _actions = {
                                 ))
                             end
                         end,
-                        logger.xpErrorHandler
+                        function(error)
+                            logger.xpErrorHandler(error)
+                            _setStateReady()
+                        end
                     )
                 end
             end
         )
     end,
-    updateConstruction = function(oldConId, oldCon, paramKey, newParamValueIndexBase0)
+    upgradeConUNUSED = function(conId, conParams)
+        logger.print('upgradeCon starting, conId =', (conId or 'NIL'))
+        local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
+        if con == nil then
+            logger.warn('upgradeCon cannot find con')
+            _setStateReady()
+            return
+        end
+
+        xpcall(
+            function()
+                collectgarbage() -- LOLLO TODO this is a stab in the dark to try and avoid crashes in the following
+                -- UG TODO there is no such thing in the new api,
+                -- nor an upgrade event, both would be useful
+                local paramsNoSeed = arrayUtils.cloneDeepOmittingFields(conParams, {'seed'})
+                logger.print('paramsNoSeed =') logger.debugPrint(paramsNoSeed)
+                logger.print('about to upgrade con, stationConId =', conId, 'con.fileName =', con.fileName)
+                local upgradedConId = game.interface.upgradeConstruction(
+                    conId,
+                    con.fileName,
+                    paramsNoSeed
+                )
+                logger.print('upgradeCon succeeded, conId =', (upgradedConId or 'NIL'))
+            end,
+            function(error)
+                logger.warn('upgradeCon failed')
+                logger.warn(error)
+                _setStateReady()
+            end
+        )
+    end,
+    updateConstruction = function(oldConId, paramKey, newParamValueIndexBase0)
         logger.print('updateConstruction starting, conId =', oldConId or 'NIL')
+
+        if not(edgeUtils.isValidAndExistingId(oldConId)) then
+            logger.warn('updateConstruction received an invalid conId')
+            _setStateReady()
+            return
+        end
+        local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
+        if oldCon == nil then
+            logger.warn('updateConstruction cannot get the con')
+            _setStateReady()
+            return
+        end
 
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
         newCon.fileName = oldCon.fileName
@@ -1354,7 +1423,7 @@ local _actions = {
         local proposal = api.type.SimpleProposal.new()
         proposal.constructionsToAdd[1] = newCon
         proposal.constructionsToRemove = { oldConId }
-        -- proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
+        proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
 
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false
@@ -1362,14 +1431,14 @@ local _actions = {
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
-        local isProposalOK = _utils.getIsProposalOK(proposal, context)
-        if not(isProposalOK) then
+        -- LOLLO TODO sometimes, it fails in the following; UG does not handle the failure graacefully and the game crashes with "an error just occurred" and no useful info.
+        if not(_utils.getIsProposalOK(proposal, context)) then
             logger.warn('updateConstruction made a dangerous proposal')
             -- LOLLO TODO give feedback
-            _utils.setStateWorking(false)
+            _setStateReady()
             return
         end
-        logger.print('SEVEN')
+
         api.cmd.sendCommand(
             api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
             function(result, success)
@@ -1379,7 +1448,7 @@ local _actions = {
                     logger.warn('updateConstruction callback failed')
                     logger.warn('updateConstruction proposal =') logger.warningDebugPrint(proposal)
                     logger.warn('updateConstruction result =') logger.warningDebugPrint(result)
-                    _utils.setStateWorking(false)
+                    _setStateReady()
                     -- LOLLO TODO give feedback
                 else
                     local newConId = result.resultEntities[1]
@@ -1397,7 +1466,10 @@ local _actions = {
                                 }
                             ))
                         end,
-                        logger.xpErrorHandler
+                        function(error)
+                            logger.xpErrorHandler(error)
+                            _setStateReady()
+                        end
                     )
                 end
             end
@@ -1405,18 +1477,32 @@ local _actions = {
     end,
 }
 local _handlers = {
-    handleParamValueChanged = function(stationGroupId, paramsMetadata, paramKey, newParamValueIndexBase0)
-        logger.print('handleParamValueChanged firing')
+    guiHandleParamValueChanged = function(stationGroupId, paramsMetadata, paramKey, newParamValueIndexBase0)
+        logger.print('guiHandleParamValueChanged firing')
         logger.print('stationGroupId =') logger.debugPrint(stationGroupId)
         logger.print('paramsMetadata =') logger.debugPrint(paramsMetadata)
         logger.print('paramKey =') logger.debugPrint(paramKey)
         logger.print('newParamValueIndexBase0 =') logger.debugPrint(newParamValueIndexBase0)
-        local conId, con = _utils.getConOfStationGroup(stationGroupId)
-        if not(conId) or not(con) then
-            logger.warn('handleParamValueChanged got no con or no valid con')
+        local conId = _utils.getConOfStationGroup(stationGroupId)
+        if not(edgeUtils.isValidAndExistingId(conId)) then
+            logger.warn('guiHandleParamValueChanged got no con or no valid con')
             return
         end
-        _actions.updateConstruction(conId, con, paramKey, newParamValueIndexBase0)
+        -- _utils.guiWaitLockingThread(function() return (state ~= nil and not(state.isWorking)) end)
+        if state == nil or state.isWorking then
+            logger.print('busy, ignoring param value change')
+            -- LOLLO TODO see if you can wait, it's nicer than not responding
+            return
+        end
+        _setStateWorking(
+            true,
+            _eventProperties.conParamsUpdated.eventName,
+            {
+                conId = conId,
+                paramKey = paramKey,
+                newParamValueIndexBase0 = newParamValueIndexBase0,
+            }
+        )
     end,
 }
 
@@ -1425,7 +1511,10 @@ function data()
         guiHandleEvent = function(id, name, args)
             -- logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') -- logger.debugPrint(args)
             -- LOLLO NOTE param can have different types, even boolean, depending on the event id and name
-            if (name == 'select' and id == 'mainView') then -- select happens after idAdded
+            if (name == 'select' and id == 'mainView') then
+                -- select happens after idAdded, which looks like:
+                -- id =	temp.view.entity_28693	name =	idAdded
+                -- id =	temp.view.entity_26372	name =	idAdded
                 xpcall(
                     function()
                         logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') logger.debugPrint(args)
@@ -1438,13 +1527,11 @@ function data()
                             return
                         end
 
-                        guiHelpers.addConConfigToWindow(args, _handlers.handleParamValueChanged, _guiConstants._conParamsMetadata, con.params)
+                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiConstants._conParamsMetadata, con.params)
                     end,
                     logger.xpErrorHandler
                 )
             elseif (name == 'builder.apply' and id == 'streetTerminalBuilder') then
--- id =	temp.view.entity_28693	name =	idAdded
--- id =	temp.view.entity_26372	name =	idAdded
                 -- waypoint or streetside stations have been built
                 xpcall(
                     function()
@@ -1471,11 +1558,14 @@ function data()
                                 then
                                     return false
                                 end
-                                if state and state.isWorking then
+                                -- _utils.guiWaitLockingThread(function() logger.print('state =') logger.debugPrint(state) return (state ~= nil and not(state.isWorking)) end)
+                                if state == nil or state.isWorking then
+                                    logger.print('busy, leaving')
                                     -- LOLLO NOTE this could interfere and delaying is not trivial, so I use a model that clearly says "bulldoze me"
                                     -- _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
                                     return false
                                 end
+
                                 local edgeLength = edgeUtils.getEdgeLength(edgeId)
                                 if edgeLength < constants.minInitialEdgeLength then
                                     guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
@@ -1496,7 +1586,7 @@ function data()
                                 logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                                 logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
                                 logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
-                                _utils.setStateWorking(
+                                _setStateWorking(
                                     true,
                                     _eventProperties.waypointPlaced.eventName,
                                     {
@@ -1543,14 +1633,14 @@ function data()
                     elseif name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
                         if not(edgeUtils.isValidAndExistingId(args.edgeId)) or edgeUtils.isEdgeFrozen(args.edgeId) then
                             logger.warn('edge invalid or frozen')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
 
                         local length = edgeUtils.getEdgeLength(args.edgeId)
                         if length < constants.minInitialEdgeLength then
                             logger.warn('edge too short')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
 
@@ -1600,7 +1690,7 @@ function data()
                         logger.print('args.outerNode0EdgeIds =') logger.debugPrint(args.outerNode0EdgeIds)
                         if #args.outerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second split')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
                         local edgeIdToBeSplit, nodeBetween = _utils.getSplit1Data(
@@ -1609,12 +1699,12 @@ function data()
                         )
                         if not(edgeIdToBeSplit) then
                             logger.warn('cannot decide on an edge id for the second outer split')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
                         if not(nodeBetween) then
                             logger.warn('cannot find out nodeBetween for the second outer split')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
 
@@ -1624,7 +1714,7 @@ function data()
                         local edgeIdsBetweenNodes = _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.outerNode1Id)
                         if #edgeIdsBetweenNodes ~= 1 then
                             logger.warn('no edges or too many edges found between outerNode0Id and outerNode1Id')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
 
@@ -1648,7 +1738,7 @@ function data()
                         logger.print('args.innerNode0EdgeIds =') logger.debugPrint(args.innerNode0EdgeIds)
                         if #args.innerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second inner split')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
                         local edgeIdToBeSplit, nodeBetween = _utils.getSplit1Data(
@@ -1657,12 +1747,12 @@ function data()
                         )
                         if not(edgeIdToBeSplit) then
                             logger.warn('cannot decide on an edge id for the second inner split')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
                         if not(nodeBetween) then
                             logger.warn('cannot find out nodeBetween for the second inner split')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
 
@@ -1682,7 +1772,7 @@ function data()
                             else
                                 logger.warn('no edges or too many edges found between split nodes; edgeIdsBetweenNodesNested =')
                                 logger.warningDebugPrint(edgeIdsBetweenNodesNested)
-                                state.isWorking = false
+                                _setStateReady()
                                 return
                             end
                         end
@@ -1697,7 +1787,7 @@ function data()
                         if outerBaseNode0 == nil or innerBaseNode0 == nil or innerBaseNode1 == nil or outerBaseNode1 == nil
                         or edge0Base == nil or edge1Base == nil or edge2Base == nil then
                             logger.warn('some edges or nodes cannot be read')
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
                         args.dataForCon = {
@@ -1735,7 +1825,7 @@ function data()
                             logger.warn('### edge2 nodes are screwed up, edge2Base =') logger.warningDebugPrint(edge2Base)
                         end
                         if not(isEdgeNodesOK) then
-                            state.isWorking = false
+                            _setStateReady()
                             return
                         end
 
@@ -1757,18 +1847,18 @@ function data()
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.bridgeType, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
-                        -- _utils.upgradeCon(args.conId, args.conParams)
-                        _actions.buildSnappyRoads(args.conParams, args.conId, _eventProperties.snappyRoadsBuilt.eventName, {})
+                        -- _actions.upgradeCon(args.conId, args.conParams)
+                        _actions.buildSnappyRoads(args.conParams, args.conId, _eventProperties.setStateWorking.eventName, {isWorking = false})
                     elseif name == _eventProperties.snappyConBuilt.eventName then
-                        -- _utils.upgradeCon(args.conId, args.conParams)
+                        -- _actions.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.setStateWorking.eventName then
                         state.isWorking = args.isWorking
-                    elseif name == _eventProperties.snappyRoadsBuilt.eventName then
-                        state.isWorking = false
+                    elseif name == _eventProperties.conParamsUpdated.eventName then
+                        _actions.updateConstruction(args.conId, args.paramKey, args.newParamValueIndexBase0)
                     end
                 end,
                 function(error)
-                    state.isWorking = false
+                    _setStateReady()
                     logger.xpErrorHandler(error)
                 end
             )

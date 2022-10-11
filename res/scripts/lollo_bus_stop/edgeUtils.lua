@@ -527,7 +527,25 @@ helper.isEdgeFrozen = function(edgeId)
     if not(conData) or not(conData.frozenEdges) then return false end
 
     for _, value in pairs(conData.frozenEdges) do
-        if value == edgeId then return true end
+        if value == edgeId then return true, conId, conData end
+    end
+
+    return false
+end
+
+helper.isNodeFrozenUNTESTED = function(nodeId)
+    if not(helper.isValidAndExistingId(nodeId)) then return false end
+
+    local connectedEdgeIds = helper.getConnectedEdgeIds({nodeId})
+    for _, edgeId in pairs(connectedEdgeIds) do
+        local isEdgeFrozen, conId, conData = helper.isEdgeFrozen(edgeId)
+        if isEdgeFrozen and conData ~= nil and conData.frozenNodes ~= nil then
+            for _, frozenNodeId in pairs(conData.frozenNodes) do
+                if frozenNodeId == nodeId then
+                    return true, conId, conData
+                end
+            end
+        end
     end
 
     return false

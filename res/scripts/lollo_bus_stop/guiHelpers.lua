@@ -29,7 +29,7 @@ local guiHelpers = {
     end
 }
 
-guiHelpers.getConstructionConfigLayout = function(paramPropsTable, onParamValueChanged, isAddTitle)
+guiHelpers.getConstructionConfigLayout = function(stationGroupId, paramsMetadata, onParamValueChanged, isAddTitle)
     local layout = api.gui.layout.BoxLayout.new('VERTICAL')
     layout:setId(_conConfigLayoutId)
 
@@ -42,26 +42,26 @@ guiHelpers.getConstructionConfigLayout = function(paramPropsTable, onParamValueC
         layout:addItem(title)
     end
 
-    local function addParam(paramPropsRecord)
-        if not(paramPropsRecord) then return end
+    local function addParam(paramMetadata)
+        if not(paramMetadata) then return end
 
-        local paramNameTextBox = api.gui.comp.TextView.new(paramPropsRecord.name)
-        if type(paramPropsRecord.tooltip) == 'string' and paramPropsRecord.tooltip:len() > 0 then
-            paramNameTextBox:setTooltip(paramPropsRecord.tooltip)
+        local paramNameTextBox = api.gui.comp.TextView.new(paramMetadata.name)
+        if type(paramMetadata.tooltip) == 'string' and paramMetadata.tooltip:len() > 0 then
+            paramNameTextBox:setTooltip(paramMetadata.tooltip)
         end
         layout:addItem(paramNameTextBox)
-        local _defaultValueIndexBase0 = (paramPropsRecord.defaultValue or 0)
-        if paramPropsRecord.uiType == 'ICON_BUTTON' then
+        local _defaultValueIndexBase0 = (paramMetadata.defaultValue or 0)
+        if paramMetadata.uiType == 'ICON_BUTTON' then
             local buttonRowLayout = api.gui.comp.ToggleButtonGroup.new(api.gui.util.Alignment.HORIZONTAL, 0, true)
             buttonRowLayout:setGravity(0.5, 0) -- center horizontally
             buttonRowLayout:setOneButtonMustAlwaysBeSelected(true)
             buttonRowLayout:setEmitSignal(false)
             buttonRowLayout:onCurrentIndexChanged(
                 function(newIndexBase0)
-                    onParamValueChanged(paramPropsTable, paramPropsRecord.key, newIndexBase0)
+                    onParamValueChanged(stationGroupId, paramsMetadata, paramMetadata.key, newIndexBase0)
                 end
             )
-            for indexBase1, value in pairs(paramPropsRecord.values) do
+            for indexBase1, value in pairs(paramMetadata.values) do
                 local button = api.gui.comp.ToggleButton.new(api.gui.comp.ImageView.new(value))
                 buttonRowLayout:add(button)
                 if indexBase1 -1 == _defaultValueIndexBase0 then
@@ -69,10 +69,10 @@ guiHelpers.getConstructionConfigLayout = function(paramPropsTable, onParamValueC
                 end
             end
             layout:addItem(buttonRowLayout)
-        elseif paramPropsRecord.uiType == 'COMBOBOX' then
+        elseif paramMetadata.uiType == 'COMBOBOX' then
             local comboBox = api.gui.comp.ComboBox.new()
             comboBox:setGravity(0.5, 0) -- center horizontally
-            for _, value in pairs(paramPropsRecord.values) do
+            for _, value in pairs(paramMetadata.values) do
                 comboBox:addItem(value)
             end
             if comboBox:getNumItems() > _defaultValueIndexBase0 then
@@ -81,7 +81,7 @@ guiHelpers.getConstructionConfigLayout = function(paramPropsTable, onParamValueC
             comboBox:onIndexChanged(
                 function(indexBase0)
                     logger.print('comboBox:onIndexChanged firing, one =') logger.debugPrint(indexBase0)
-                    onParamValueChanged(paramPropsTable, paramPropsRecord.key, indexBase0)
+                    onParamValueChanged(stationGroupId, paramsMetadata, paramMetadata.key, indexBase0)
                 end
             )
             layout:addItem(comboBox)
@@ -92,10 +92,10 @@ guiHelpers.getConstructionConfigLayout = function(paramPropsTable, onParamValueC
             buttonRowLayout:setEmitSignal(false)
             buttonRowLayout:onCurrentIndexChanged(
                 function(newIndexBase0)
-                    onParamValueChanged(paramPropsTable, paramPropsRecord.key, newIndexBase0)
+                    onParamValueChanged(stationGroupId, paramsMetadata, paramMetadata.key, newIndexBase0)
                 end
             )
-            for indexBase1, value in pairs(paramPropsRecord.values) do
+            for indexBase1, value in pairs(paramMetadata.values) do
                 local button = api.gui.comp.ToggleButton.new(api.gui.comp.TextView.new(value))
                 buttonRowLayout:add(button)
                 if indexBase1 -1 == _defaultValueIndexBase0 then
@@ -105,15 +105,15 @@ guiHelpers.getConstructionConfigLayout = function(paramPropsTable, onParamValueC
             layout:addItem(buttonRowLayout)
         end
     end
-    for _, paramPropsRecord in pairs(paramPropsTable) do
-        addParam(paramPropsRecord)
+    for _, paramMetadata in pairs(paramsMetadata) do
+        addParam(paramMetadata)
     end
 
     return layout
 end
 
-guiHelpers.showConstructionConfig = function(paramPropsTable, onParamValueChanged)
-    local layout = guiHelpers.getConstructionConfigLayout(paramPropsTable, onParamValueChanged)
+guiHelpers.showConstructionConfig = function(paramsMetadata, onParamValueChanged)
+    local layout = guiHelpers.getConstructionConfigLayout(paramsMetadata, onParamValueChanged)
     local window = api.gui.util.getById(_conConfigWindowId)
     if window == nil then
         window = api.gui.comp.Window.new(_texts.conConfigWindowTitle, layout)
@@ -152,7 +152,7 @@ guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChang
         end
     end
 
-    local newLayout = guiHelpers.getConstructionConfigLayout(conParams, handleParamValueChanged, true)
+    local newLayout = guiHelpers.getConstructionConfigLayout(stationGroupId, conParams, handleParamValueChanged, true)
     windowLayout:addItem(newLayout)
     windowLayout:setGravity(0, 0) -- center top left
 

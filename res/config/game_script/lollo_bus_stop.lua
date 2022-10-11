@@ -72,6 +72,26 @@ local _utils = {
 
         return edgeIdsBetweenNodes
     end,
+    getStationEndNodeIds = function(con)
+        local frozenNodeIds = con.frozenNodes
+        local frozenEdgeIds = con.frozenEdges
+        local endNodeIdsUnsorted = {}
+        for _, edgeId in pairs(frozenEdgeIds) do
+            local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+            if baseEdge == nil then
+                logger.warn('baseEdge is NIL, edgeId = ' .. (edgeId or 'NIL'))
+                return { }
+            end
+            if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node0)) then
+                arrayUtils.addUnique(endNodeIdsUnsorted, baseEdge.node0)
+            end
+            if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node1)) then
+                arrayUtils.addUnique(endNodeIdsUnsorted, baseEdge.node1)
+            end
+        end
+        logger.print('endNodeIdsUnsorted =') logger.debugPrint(endNodeIdsUnsorted)
+        return endNodeIdsUnsorted
+    end,
     -- this is not so good, UG TODO must make a proper upfront estimator
     getIsProposalOK = function(proposal, context)
         logger.print('getIsProposalOK starting')
@@ -470,8 +490,11 @@ local _actions = {
             lolloBusStop_direction = 0,
             lolloBusStop_driveOnLeft = 0,
             lolloBusStop_model = 5, -- it's easier to see transf problems
-            lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
-            lolloBusStop_outerNode1Id = outerNode1Id, -- idem
+            -- these make no sense coz they will be replaced with operations outside the station
+            -- lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
+            -- lolloBusStop_outerNode1Id = outerNode1Id, -- idem
+            lolloBusStop_outerNode0Pos_absolute = (dataForCon.outerNode0Pos), -- arrayUtils.cloneOmittingFields(dataForCon.outerNode0Pos),
+            lolloBusStop_outerNode1Pos_absolute = (dataForCon.outerNode1Pos), --arrayUtils.cloneOmittingFields(dataForCon.outerNode1Pos),
             lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_snapNodes = 3,
@@ -480,7 +503,7 @@ local _actions = {
             lolloBusStop_tramTrack = 0,
             seed = math.abs(math.ceil(conTransf[13] * 1000)),
         }
-        -- these work
+        -- these work -- LOLLO TODO we don't update anymore, so you can write the values directly: do it
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[1], 'lolloBusStop_')
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Y', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[2], 'lolloBusStop_')
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Z', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[3], 'lolloBusStop_')
@@ -574,8 +597,6 @@ local _actions = {
                                     conId = conId,
                                     conParams = conParamsBak,
                                     conTransf = conTransf,
-                                    outerNode0Id = outerNode0Id,
-                                    outerNode1Id = outerNode1Id,
                                 }
                             ))
                         end,
@@ -588,11 +609,19 @@ local _actions = {
     -- LOLLO NOTE the new parametric construction does not play well with curves, unless I rebuild adjacent roads snappy.
     -- I tried Proposal instead of SimpleProposal but it is not meant to be.
     -- The trouble seems to be with collisions between external edges and inner edges.
-    buildSnappyRoads = function(oldNode0Id, oldNode1Id, conId, successEventName, successEventArgs)
+    buildSnappyRoads = function(conParams, conId, successEventName, successEventArgs)
         logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
-        logger.print('oldNode0Id =', oldNode0Id) logger.print('oldNode1Id =', oldNode1Id)
-        if not(edgeUtils.isValidAndExistingId(oldNode0Id)) or not(edgeUtils.isValidAndExistingId(oldNode1Id)) then
-            logger.warn('buildSnappyRoads received an invalid node id')
+        if type(conParams) ~= 'table' then
+            logger.warn('buildSnappyRoads received no table for conParams')
+            _utils.setStateWorking(false)
+            return
+        end
+        local outerNode0Pos = conParams['lolloBusStop_outerNode0Pos_absolute']
+        local outerNode1Pos = conParams['lolloBusStop_outerNode1Pos_absolute']
+        logger.print('lolloBusStop_outerNode0Pos_absolute =') logger.debugPrint(outerNode0Pos)
+        logger.print('lolloBusStop_outerNode1Pos_absolute =') logger.debugPrint(outerNode1Pos)
+        if type(outerNode0Pos) ~= 'table' or type(outerNode1Pos) ~= 'table' then
+            logger.warn('buildSnappyRoads did not receive outerNode0Pos or outerNode1Pos')
             _utils.setStateWorking(false)
             return
         end
@@ -608,43 +637,55 @@ local _actions = {
             return
         end
 
-        local getNewNodeIds = function()
-            local frozenNodeIds = con.frozenNodes
-            local frozenEdgeIds = con.frozenEdges
-            local endNodeIdsUnsorted = {}
-            for _, edgeId in pairs(frozenEdgeIds) do
-                local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-                if baseEdge == nil then
-                    logger.warn('baseEdge is NIL, edgeId = ' .. (edgeId or 'NIL'))
-                    return nil, nil
-                end
-                if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node0)) then
-                    arrayUtils.addUnique(endNodeIdsUnsorted, baseEdge.node0)
-                end
-                if not(arrayUtils.arrayHasValue(frozenNodeIds, baseEdge.node1)) then
-                    arrayUtils.addUnique(endNodeIdsUnsorted, baseEdge.node1)
-                end
-            end
-            logger.print('endNodeIdsUnsorted =') logger.debugPrint(endNodeIdsUnsorted)
+        local getEndAndNeighbourNodeIds = function()
+            local endNodeIdsUnsorted = _utils.getStationEndNodeIds(con)
             if (#endNodeIdsUnsorted ~= 2) then
                 logger.warn('endNodeIdsUnsorted has ~= 2 items') logger.warningDebugPrint(endNodeIdsUnsorted)
+                return nil, nil
             end
 
             local baseEndNode0 = api.engine.getComponent(endNodeIdsUnsorted[1], api.type.ComponentType.BASE_NODE)
             local baseEndNode1 = api.engine.getComponent(endNodeIdsUnsorted[2], api.type.ComponentType.BASE_NODE)
-            local baseOldNode0 = api.engine.getComponent(oldNode0Id, api.type.ComponentType.BASE_NODE)
-            local baseOldNode1 = api.engine.getComponent(oldNode1Id, api.type.ComponentType.BASE_NODE)
-            if baseOldNode0 == nil or baseOldNode1 == nil then
+            local _tolerance = 0.1
+            local nearbyNodes0 = edgeUtils.getNearbyObjects(
+                transfUtils.position2Transf(outerNode0Pos),
+                _tolerance,
+                api.type.ComponentType.BASE_NODE,
+                outerNode0Pos[3] - _tolerance,
+                outerNode0Pos[3] + _tolerance
+            )
+            local neighbourNode0Id, baseNeighbourNode0
+            for nodeId, nodeProps in pairs(nearbyNodes0) do
+                if nodeId ~= endNodeIdsUnsorted[1] and nodeId ~= endNodeIdsUnsorted[2] and edgeUtils.isValidAndExistingId(nodeId) then
+                    neighbourNode0Id, baseNeighbourNode0 = nodeId, nodeProps
+                end
+            end
+            local nearbyNodes1 = edgeUtils.getNearbyObjects(
+                transfUtils.position2Transf(outerNode1Pos),
+                _tolerance,
+                api.type.ComponentType.BASE_NODE,
+                outerNode1Pos[3] - _tolerance,
+                outerNode1Pos[3] + _tolerance
+            )
+            local neighbourNode1Id, baseNeighbourNode1
+            for nodeId, nodeProps in pairs(nearbyNodes1) do
+                if nodeId ~= endNodeIdsUnsorted[1] and nodeId ~= endNodeIdsUnsorted[2] and edgeUtils.isValidAndExistingId(nodeId) then
+                    neighbourNode1Id, baseNeighbourNode1 = nodeId, nodeProps
+                end
+            end
+
+            if neighbourNode0Id == nil or baseNeighbourNode0 == nil or neighbourNode1Id == nil or baseNeighbourNode1 == nil then
                 logger.warn('cannot find node0Id or node1Id')
                 return nil, nil
             end
             local endNode0Id = endNodeIdsUnsorted[1]
             local endNode1Id = endNodeIdsUnsorted[2]
             logger.print('newNode0Id before swapping =', endNode0Id, 'newNode1Id =', endNode1Id)
-            local distance00 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode0.position)
-            local distance01 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode1.position)
-            local distance10 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode0.position)
-            local distance11 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode1.position)
+            -- take the nearest, a bit redundant since I used getNearby, maniman
+            local distance00 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode0.position)
+            local distance01 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode1.position)
+            local distance10 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode0.position)
+            local distance11 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode1.position)
             logger.print('distances =') logger.debugPrint({distance00, distance01, distance10, distance11})
             if distance00 > distance01 then
                 if distance11 < distance10 then
@@ -652,18 +693,18 @@ local _actions = {
                 end
                 endNode0Id, endNode1Id = endNode1Id, endNode0Id
                 baseEndNode0, baseEndNode1 = baseEndNode1, baseEndNode0
-                logger.print('swapping end nodes, newNode0Id after swapping =', endNode0Id, 'newNode1Id =', endNode1Id)
-                local distance00 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode0.position)
-                local distance01 = transfUtils.getPositionsDistance(baseOldNode0.position, baseEndNode1.position)
-                local distance10 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode0.position)
-                local distance11 = transfUtils.getPositionsDistance(baseOldNode1.position, baseEndNode1.position)
+                logger.warn('swapping end nodes, newNode0Id after swapping =', endNode0Id, 'newNode1Id =', endNode1Id)
+                local distance00 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode0.position)
+                local distance01 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode1.position)
+                local distance10 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode0.position)
+                local distance11 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode1.position)
                 logger.print('distances after swapping =') logger.debugPrint({distance00, distance01, distance10, distance11})
             end
 
-            return endNode0Id, endNode1Id
+            return endNode0Id, endNode1Id, neighbourNode0Id, neighbourNode1Id
         end
-        local newNode0Id, newNode1Id = getNewNodeIds()
-        if newNode0Id == nil or newNode1Id == nil then
+        local newNode0Id, newNode1Id, oldNode0Id, oldNode1Id = getEndAndNeighbourNodeIds()
+        if newNode0Id == nil or newNode1Id == nil or oldNode0Id == nil or oldNode1Id == nil then
             logger.warn('buildSnappyRoads cannot find its node ids')
             _utils.setStateWorking(false)
             return
@@ -1279,13 +1320,90 @@ local _actions = {
             end
         )
     end,
+    -- updateConstruction = function(outerNode0Id, outerNode1Id, streetType, dataForCon)
+    updateConstruction = function(oldConId, oldCon, paramKey, newParamValueIndexBase0)
+        logger.print('updateConstruction starting, conId =', oldConId or 'NIL')
+
+        local newCon = api.type.SimpleProposal.ConstructionEntity.new()
+        newCon.fileName = oldCon.fileName
+        local newParams = arrayUtils.cloneDeepOmittingFields(oldCon.params, nil, true)
+        newParams[paramKey] = newParamValueIndexBase0
+        newParams.seed = newParams.seed + 1
+        -- clone your own variable, it's safer than cloning newCon.params, which is userdata
+        local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
+        newCon.params = newParams
+        logger.print('oldCon.params =') logger.debugPrint(oldCon.params)
+        logger.print('newCon.params =') logger.debugPrint(newCon.params)
+        newCon.playerEntity = api.engine.util.getPlayer()
+        newCon.transf = oldCon.transf
+        local conTransf_lua = transfUtilsUG.new(newCon.transf:cols(0), newCon.transf:cols(1), newCon.transf:cols(2), newCon.transf:cols(3))
+
+        local proposal = api.type.SimpleProposal.new()
+        proposal.constructionsToAdd[1] = newCon
+        proposal.constructionsToRemove = { oldConId }
+        -- proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
+
+        local context = api.type.Context:new()
+        -- context.checkTerrainAlignment = true -- default is false
+        -- context.cleanupStreetGraph = true -- default is false
+        -- context.gatherBuildings = true -- default is false
+        -- context.gatherFields = true -- default is true
+        context.player = api.engine.util.getPlayer()
+        local isProposalOK = _utils.getIsProposalOK(proposal, context)
+        if not(isProposalOK) then
+            logger.warn('updateConstruction made a dangerous proposal')
+            -- LOLLO TODO give feedback
+            _utils.setStateWorking(false)
+            return
+        end
+        logger.print('SEVEN')
+        api.cmd.sendCommand(
+            api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
+            function(result, success)
+                logger.print('updateConstruction callback, success =', success)
+                -- logger.debugPrint(result)
+                if not(success) then
+                    logger.warn('updateConstruction callback failed')
+                    logger.warn('updateConstruction proposal =') logger.warningDebugPrint(proposal)
+                    logger.warn('updateConstruction result =') logger.warningDebugPrint(result)
+                    _utils.setStateWorking(false)
+                    -- LOLLO TODO give feedback
+                else
+                    local newConId = result.resultEntities[1]
+                    logger.print('updateConstruction succeeded, stationConId = ', newConId)
+                    xpcall(
+                        function ()
+                            api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                                string.sub(debug.getinfo(1, 'S').source, 1),
+                                _eventId,
+                                _eventProperties.conBuilt.eventName,
+                                {
+                                    conId = newConId,
+                                    conParams = conParamsBak,
+                                    conTransf = conTransf_lua,
+                                }
+                            ))
+                        end,
+                        logger.xpErrorHandler
+                    )
+                end
+            end
+        )
+    end,
 }
 local _handlers = {
-    handleParamValueChanged = function(paramPropsTable, paramKey, paramValue)
+    handleParamValueChanged = function(stationGroupId, paramsMetadata, paramKey, newParamValueIndexBase0)
         logger.print('handleParamValueChanged firing')
-        logger.print('paramPropsTable =') logger.debugPrint(paramPropsTable)
+        logger.print('stationGroupId =') logger.debugPrint(stationGroupId)
+        logger.print('paramsMetadata =') logger.debugPrint(paramsMetadata)
         logger.print('paramKey =') logger.debugPrint(paramKey)
-        logger.print('paramValue =') logger.debugPrint(paramValue)
+        logger.print('newParamValueIndexBase0 =') logger.debugPrint(newParamValueIndexBase0)
+        local conId, con = _utils.getConOfStationGroup(stationGroupId)
+        if not(conId) or not(con) then
+            logger.warn('handleParamValueChanged got no con or no valid con')
+            return
+        end
+        _actions.updateConstruction(conId, con, paramKey, newParamValueIndexBase0)
     end,
 }
 
@@ -1624,7 +1742,7 @@ function data()
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)
-                        _actions.buildSnappyRoads(args.outerNode0Id, args.outerNode1Id, args.conId, _eventProperties.snappyRoadsBuilt.eventName, {})
+                        _actions.buildSnappyRoads(args.conParams, args.conId, _eventProperties.snappyRoadsBuilt.eventName, {})
                     elseif name == _eventProperties.snappyConBuilt.eventName then
                         -- _utils.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.setStateWorking.eventName then

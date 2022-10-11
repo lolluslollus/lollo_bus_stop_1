@@ -23,7 +23,7 @@ local _eventProperties = constants.eventProperties
 
 local _guiConstants = {
     _ploppablePassengersModelId = false,
-    _conParams = {},
+    _conParamsMetadata = {},
 }
 
 local _utils = {
@@ -1420,12 +1420,12 @@ function data()
                         if not(conId) or not(con) then return end
 
                         logger.print('selected one of my stations, it has conId =', conId, 'and con.fileName =', con.fileName)
-                        if not(_guiConstants._conParams) then
+                        if not(_guiConstants._conParamsMetadata) then
                             logger.print('_guiConstants.conParams is not available')
                             return
                         end
 
-                        guiHelpers.addConConfigToWindow(args, _handlers.handleParamValueChanged, _guiConstants._conParams)
+                        guiHelpers.addConConfigToWindow(args, _handlers.handleParamValueChanged, _guiConstants._conParamsMetadata, con.params)
                     end,
                     logger.xpErrorHandler
                 )
@@ -1502,7 +1502,7 @@ function data()
         end,
         guiInit = function()
             _guiConstants._ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
-            _guiConstants._conParams = moduleHelpers.getParams()
+            _guiConstants._conParamsMetadata = moduleHelpers.getParams()
         end,
         -- guiUpdate = function()
         -- end,

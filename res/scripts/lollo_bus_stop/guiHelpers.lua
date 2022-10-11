@@ -1,12 +1,12 @@
 -- local _constants = require('lollo_bus_stop.constants')
 local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local logger = require('lollo_bus_stop.logger')
--- local stringUtils = require('lollo_bus_stop.stringUtils')
+local stringUtils = require('lollo_bus_stop.stringUtils')
 
 local _extraHeight4Title = 100
 local _extraHeight4Param = 40
-local _conConfigLayoutId = 'lollo_bus_stop_con_config_layout'
-local _conConfigWindowId = 'lollo_bus_stop_con_config_window'
+local _conConfigLayoutIdPrefix = 'lollo_bus_stop_con_config_layout_'
+-- local _conConfigWindowId = 'lollo_bus_stop_con_config_window'
 local _warningWindowWithGotoId = 'lollo_bus_stop_warning_window_with_goto'
 -- local _warningWindowWithStateId = 'lollo_bus_stop_warning_window_with_state'
 
@@ -29,9 +29,9 @@ local guiHelpers = {
     end
 }
 
-guiHelpers.getConstructionConfigLayout = function(stationGroupId, paramsMetadata, onParamValueChanged, isAddTitle)
+local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, paramValues, onParamValueChanged, isAddTitle)
     local layout = api.gui.layout.BoxLayout.new('VERTICAL')
-    layout:setId(_conConfigLayoutId)
+    layout:setId(_conConfigLayoutIdPrefix .. stationGroupId)
 
     if isAddTitle then
         local br = api.gui.comp.TextView.new('')
@@ -42,15 +42,17 @@ guiHelpers.getConstructionConfigLayout = function(stationGroupId, paramsMetadata
         layout:addItem(title)
     end
 
-    local function addParam(paramMetadata)
-        if not(paramMetadata) then return end
+    local function addParam(paramMetadata, paramValue)
+        logger.print('addParam starting')
+        if not(paramMetadata) or not(paramValue) then return end
 
         local paramNameTextBox = api.gui.comp.TextView.new(paramMetadata.name)
         if type(paramMetadata.tooltip) == 'string' and paramMetadata.tooltip:len() > 0 then
             paramNameTextBox:setTooltip(paramMetadata.tooltip)
         end
         layout:addItem(paramNameTextBox)
-        local _defaultValueIndexBase0 = (paramMetadata.defaultValue or 0)
+        local _valueIndexBase0 = paramValue or (paramMetadata.defaultValue or 0)
+        logger.print('_valueIndexBase0 =', _valueIndexBase0)
         if paramMetadata.uiType == 'ICON_BUTTON' then
             local buttonRowLayout = api.gui.comp.ToggleButtonGroup.new(api.gui.util.Alignment.HORIZONTAL, 0, true)
             buttonRowLayout:setGravity(0.5, 0) -- center horizontally
@@ -64,7 +66,7 @@ guiHelpers.getConstructionConfigLayout = function(stationGroupId, paramsMetadata
             for indexBase1, value in pairs(paramMetadata.values) do
                 local button = api.gui.comp.ToggleButton.new(api.gui.comp.ImageView.new(value))
                 buttonRowLayout:add(button)
-                if indexBase1 -1 == _defaultValueIndexBase0 then
+                if indexBase1 -1 == _valueIndexBase0 then
                     button:setSelected(true, false)
                 end
             end
@@ -75,8 +77,8 @@ guiHelpers.getConstructionConfigLayout = function(stationGroupId, paramsMetadata
             for _, value in pairs(paramMetadata.values) do
                 comboBox:addItem(value)
             end
-            if comboBox:getNumItems() > _defaultValueIndexBase0 then
-                comboBox:setSelected(_defaultValueIndexBase0, false)
+            if comboBox:getNumItems() > _valueIndexBase0 then
+                comboBox:setSelected(_valueIndexBase0, false)
             end
             comboBox:onIndexChanged(
                 function(indexBase0)
@@ -98,47 +100,54 @@ guiHelpers.getConstructionConfigLayout = function(stationGroupId, paramsMetadata
             for indexBase1, value in pairs(paramMetadata.values) do
                 local button = api.gui.comp.ToggleButton.new(api.gui.comp.TextView.new(value))
                 buttonRowLayout:add(button)
-                if indexBase1 -1 == _defaultValueIndexBase0 then
+                if indexBase1 -1 == _valueIndexBase0 then
                     button:setSelected(true, false)
                 end
             end
             layout:addItem(buttonRowLayout)
         end
     end
+    -- logger.print('paramsMetadata =') logger.debugPrint(paramsMetadata)
+    -- logger.print('paramValues =') logger.debugPrint(paramValues)
     for _, paramMetadata in pairs(paramsMetadata) do
-        addParam(paramMetadata)
+        for key, value in pairs(paramValues) do
+            if key == paramMetadata.key then
+                addParam(paramMetadata, value)
+                break
+            end
+        end
     end
 
     return layout
 end
 
-guiHelpers.showConstructionConfig = function(paramsMetadata, onParamValueChanged)
-    local layout = guiHelpers.getConstructionConfigLayout(paramsMetadata, onParamValueChanged)
-    local window = api.gui.util.getById(_conConfigWindowId)
-    if window == nil then
-        window = api.gui.comp.Window.new(_texts.conConfigWindowTitle, layout)
-        window:setId(_conConfigWindowId)
-    else
-        window:setContent(layout)
-        window:setVisible(true, false)
-    end
+-- guiHelpers.showConstructionConfig = function(paramsMetadata, onParamValueChanged)
+--     local layout = _getConstructionConfigLayout(paramsMetadata, onParamValueChanged)
+--     local window = api.gui.util.getById(_conConfigWindowId)
+--     if window == nil then
+--         window = api.gui.comp.Window.new(_texts.conConfigWindowTitle, layout)
+--         window:setId(_conConfigWindowId)
+--     else
+--         window:setContent(layout)
+--         window:setVisible(true, false)
+--     end
 
-    -- window:setHighlighted(true)
-    local position = api.gui.util.getMouseScreenPos()
-    window:setPosition(position.x + _windowXShift, position.y + _windowYShift)
-    window:addHideOnCloseHandler()
-end
+--     -- window:setHighlighted(true)
+--     local position = api.gui.util.getMouseScreenPos()
+--     window:setPosition(position.x + _windowXShift, position.y + _windowYShift)
+--     window:addHideOnCloseHandler()
+-- end
 
-guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChanged, conParams)
-    local conMenuId = 'temp.view.entity_' .. stationGroupId
-    print('conMenuId = \'' .. tostring(conMenuId) .. '\'')
-    local window = api.gui.util.getById(conMenuId) -- temp.view.entity_26372
+guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChanged, conParamsMetadata, conParams)
+    local conWindowId = 'temp.view.entity_' .. stationGroupId
+    print('conWindowId = \'' .. tostring(conWindowId) .. '\'')
+    local window = api.gui.util.getById(conWindowId) -- eg temp.view.entity_26372
     local windowLayout = window:getContent()
     -- local contentView = windowLayout:getItem(windowLayout:getNumItems() - 1)
     -- local layout = contentView:getLayout() -- :getItem(0)
     -- contentView:getLayout():getItem(0):setVisible(false, false)
     -- print('oldLayoutId =', oldLayout:getId() or 'NIL')
-    
+
     -- layout:addItem(newLayout, api.gui.util.Alignment.HORIZONTAL, api.gui.util.Alignment.VERTICAL)
     -- layout:addItem(newLayout, 1, 1)
 
@@ -147,12 +156,19 @@ guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChang
 
     for i = 0, windowLayout:getNumItems() - 1, 1 do
         local item = windowLayout:getItem(i)
-        if item ~= nil and item:getId() == _conConfigLayoutId then
-            return
+        if item ~= nil and type(item.getId) == 'function' and stringUtils.stringStartsWith(item:getId() or '', _conConfigLayoutIdPrefix) then
+            logger.print('one of my menus is already in the window, about to remove it')
+            windowLayout:removeItem(item)
+            logger.print('about to reset its id')
+            if type(item.setId) == 'function' then item:setId('') end
+            logger.print('about to call destroy')
+            -- api.gui.util.destroyLater(item) -- this errors out
+            item:destroy()
+            logger.print('called destroy')
         end
     end
 
-    local newLayout = guiHelpers.getConstructionConfigLayout(stationGroupId, conParams, handleParamValueChanged, true)
+    local newLayout = _getConstructionConfigLayout(stationGroupId, conParamsMetadata, conParams, handleParamValueChanged, true)
     windowLayout:addItem(newLayout)
     windowLayout:setGravity(0, 0) -- center top left
 
@@ -160,9 +176,9 @@ guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChang
     local minSize = window:calcMinimumSize()
     logger.print('rect =') logger.debugPrint(rect)
     logger.print('minSize =') logger.debugPrint(minSize)
-    logger.print('#conParams = ', #conParams)
+    logger.print('#conParams = ', #conParamsMetadata)
 
-    local extraHeight = _extraHeight4Title + #conParams * _extraHeight4Param
+    local extraHeight = _extraHeight4Title + #conParamsMetadata * _extraHeight4Param
     local size = api.gui.util.Size.new(math.max(rect.w, minSize.w), math.max(rect.h, minSize.h) + extraHeight)
     window:setSize(size)
     window:setResizable(true)

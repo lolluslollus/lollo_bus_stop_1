@@ -58,8 +58,6 @@ function data()
         -- which is the only way we can define dynamic parameters.
         -- Here, the dynamic parameters are the street types.
         postRunFn = function(settings, modParams)
-            local allStreetData = streetUtils.getGlobalStreetData()
-
             -- UG TODO this causes random crashes without proper messages.
 --[[
             local busStopModels = {}
@@ -112,28 +110,13 @@ function data()
                 }
             end
 ]]
-            local getGeldedBusStopModels = function()
-                local results = {}
-                local add = function(fileName)
-                    local id = api.res.modelRep.find(fileName)
-                    local model = api.res.modelRep.get(id)
-                    results[#results+1] = {
-                        fileName = fileName,
-                        icon = model.metadata.description.icon,
-                        id = id,
-                        name = model.metadata.description.name
-                    }
-                end
-                add('lollo_bus_stop/geldedBusStops/pole_old.mdl')
-                add('lollo_bus_stop/geldedBusStops/pole_mid.mdl')
-                add('lollo_bus_stop/geldedBusStops/pole_new.mdl')
-                add('lollo_bus_stop/geldedBusStops/small_old.mdl')
-                add('lollo_bus_stop/geldedBusStops/small_mid.mdl')
-                add('lollo_bus_stop/geldedBusStops/small_new.mdl')
-                return results
-            end
-            local geldedBusStopModels = getGeldedBusStopModels()
-            logger.print('geldedBusStopModels =') logger.debugPrint(geldedBusStopModels)
+
+            local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+            local allStreetData = streetUtils.getGlobalStreetData({
+                streetUtils.getStreetDataFilters().PATHS,
+                streetUtils.getStreetDataFilters().STOCK,
+            })
+            local geldedBusStopModels = moduleHelpers.getGeldedBusStopModels()
 
             local function addCon(sourceFileName, targetFileName, scriptFileName, yearFrom, yearTo)
                 local staticCon = api.res.constructionRep.get(
@@ -154,21 +137,23 @@ function data()
                 newCon.order = staticCon.order
                 newCon.skipCollision = staticCon.skipCollision
                 newCon.autoRemovable = staticCon.autoRemovable
-                for _, par in pairs(moduleHelpers.getParams()) do
-                    local newConParam = api.type.ScriptParam.new()
-                    newConParam.key = par.key
-                    newConParam.name = par.name
-                    newConParam.tooltip = par.tooltip or ''
-                    newConParam.values = par.values
-                    newConParam.defaultIndex = par.defaultIndex or 0
-                    newConParam.uiType = _getUiTypeNumber(par.uiType)
-                    if par.yearFrom ~= nil then newConParam.yearFrom = par.yearFrom end
-                    if par.yearTo ~= nil then newConParam.yearTo = par.yearTo end
-                    newCon.params[#newCon.params + 1] = newConParam -- the api wants it this way, all the table at once dumps
-                end
+                -- no params, so it will never change my own params with its stupid automatic behaviour
+                -- for _, par in pairs(moduleHelpers.getParams()) do
+                --     local newConParam = api.type.ScriptParam.new()
+                --     newConParam.key = par.key
+                --     newConParam.name = par.name
+                --     newConParam.tooltip = par.tooltip or ''
+                --     newConParam.values = par.values
+                --     newConParam.defaultIndex = par.defaultIndex or 0
+                --     newConParam.uiType = _getUiTypeNumber(par.uiType)
+                --     if par.yearFrom ~= nil then newConParam.yearFrom = par.yearFrom end
+                --     if par.yearTo ~= nil then newConParam.yearTo = par.yearTo end
+                --     newCon.params[#newCon.params + 1] = newConParam -- the api wants it this way, all the table at once dumps
+                -- end
                 -- UG TODO it would be nice to alter the soundSet here, but there is no suitable type
                 newCon.updateScript.fileName = scriptFileName .. '.updateFn'
                 newCon.updateScript.params = {
+                    globalBridgeData = allBridgeData,
                     globalStreetData = allStreetData,
                     globalBusStopModelData = geldedBusStopModels,
                 }
@@ -177,18 +162,18 @@ function data()
                 newCon.upgradeScript.fileName = scriptFileName .. '.upgradeFn'
                 newCon.createTemplateScript.fileName = scriptFileName .. '.createTemplateFn'
 
-                moduleHelpers.updateParamValues_model(newCon.params, geldedBusStopModels)
-                moduleHelpers.updateParamValues_streetType_(newCon.params, allStreetData)
+                -- moduleHelpers.updateParamValues_model(newCon.params, geldedBusStopModels)
+                -- moduleHelpers.updateParamValues_streetType_(newCon.params, allStreetData)
 
                 api.res.constructionRep.add(newCon.fileName, newCon, true) -- fileName, resource, visible
             end
-            addCon(
-                'station/street/lollo_bus_stop/stop.con',
-                'station/street/lollo_bus_stop/stop_2.con',
-                'construction/station/street/lollo_bus_stop/stop',
-                1925, -- same year as modern streets
-                0 -- never expire
-            )
+            -- addCon(
+            --     'station/street/lollo_bus_stop/stop.con',
+            --     'station/street/lollo_bus_stop/stop_2.con',
+            --     'construction/station/street/lollo_bus_stop/stop',
+            --     1925, -- same year as modern streets
+            --     0 -- never expire
+            -- )
             addCon(
                 'station/street/lollo_bus_stop/stop.con',
                 'station/street/lollo_bus_stop/stop_3.con',

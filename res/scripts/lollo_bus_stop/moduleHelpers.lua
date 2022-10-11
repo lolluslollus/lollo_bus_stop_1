@@ -1,6 +1,7 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local logger = require('lollo_bus_stop.logger')
 local pitchHelpers = require('lollo_bus_stop.pitchHelper')
+local streetUtils = require('lollo_bus_stop.streetUtils')
 local stringUtils = require('lollo_bus_stop.stringUtils')
 
 local helpers = {}
@@ -35,32 +36,58 @@ helpers.getTerrainAlignmentList = function(face)
     }
 end
 
+local getGeldedBusStopModels = function()
+    local results = {}
+    local add = function(fileName)
+        local id = api.res.modelRep.find(fileName)
+        local model = api.res.modelRep.get(id)
+        results[#results+1] = {
+            fileName = fileName,
+            icon = model.metadata.description.icon,
+            id = id,
+            name = model.metadata.description.name
+        }
+    end
+    add('lollo_bus_stop/geldedBusStops/pole_old.mdl')
+    add('lollo_bus_stop/geldedBusStops/pole_mid.mdl')
+    add('lollo_bus_stop/geldedBusStops/pole_new.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_old.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_mid.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_new.mdl')
+    return results
+end
+
 helpers.getParams = function()
-    return {
-        {
-            key = 'lolloBusStop_streetType_',
-            name = _('streetTypeName'),
-            -- will be replaced at postRunFn
-            values = {
-                'dummy1',
-                'dummy2'
-            },
-            -- will be replaced at postRunFn
-            uiType = 'BUTTON',
-            -- will be replaced at postRunFn
-            defaultIndex = 0
-        },
+    local modelData = getGeldedBusStopModels()
+    -- local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+    -- local allStreetData = streetUtils.getGlobalStreetData({
+    --     streetUtils.getStreetDataFilters().PATHS,
+    --     streetUtils.getStreetDataFilters().STOCK,
+    -- })
+    local results = {
+        -- {
+        --     key = 'lolloBusStop_streetType_',
+        --     name = _('streetTypeName'),
+        --     values = arrayUtils.map(
+        --         allStreetData,
+        --         function(str)
+        --             return str.name
+        --         end
+        --     ),
+        --     uiType = 'COMBOBOX',
+        --     defaultIndex = 0
+        -- },
         {
             key = 'lolloBusStop_model',
             name = _('modelName'),
-            -- will be replaced at postRunFn
-            values = {
-                'dummy1',
-                'dummy2'
-            },
-            -- will be replaced at postRunFn
-            uiType = 'BUTTON',
-            -- will be replaced at postRunFn
+            values = arrayUtils.map(
+                modelData,
+                function(model)
+                    -- return model.name
+                    return model.icon
+                end
+            ),
+            uiType = 'ICON_BUTTON',
             defaultIndex = 0
         },
         {
@@ -88,18 +115,18 @@ helpers.getParams = function()
                 _('Yes'),
             },
         },
-        {
-            key = 'lolloBusStop_snapNodes',
-            name = _('snapNodesName'),
-            tooltip = _('snapNodesDesc'),
-            values = {
-                _('No'),
-                _('Left'),
-                _('Right'),
-                _('Both')
-            },
-            defaultIndex = 3
-        },
+        -- {
+        --     key = 'lolloBusStop_snapNodes',
+        --     name = _('snapNodesName'),
+        --     tooltip = _('snapNodesDesc'),
+        --     values = {
+        --         _('No'),
+        --         _('Left'),
+        --         _('Right'),
+        --         _('Both')
+        --     },
+        --     defaultIndex = 3
+        -- },
         {
             key = 'lolloBusStop_tramTrack',
             name = _('tramTrackName'),
@@ -110,14 +137,16 @@ helpers.getParams = function()
                 _('ELECTRIC')
             },
         },
-        {
-            key = 'lolloBusStop_pitch',
-            name = _('pitchName'),
-            values = pitchHelpers.getPitchParamValues(),
-            defaultIndex = pitchHelpers.getDefaultPitchParamValue(),
-            uiType = 'SLIDER'
-        },
+        -- {
+        --     key = 'lolloBusStop_pitch',
+        --     name = _('pitchName'),
+        --     values = pitchHelpers.getPitchParamValues(),
+        --     defaultIndex = pitchHelpers.getDefaultPitchParamValue(),
+        --     uiType = 'SLIDER'
+        -- },
     }
+    logger.print('params =') logger.debugPrint(results)
+    return results
 end
 
 helpers.getDefaultStreetTypeIndexBase0 = function(allStreetData)
@@ -129,6 +158,27 @@ helpers.getDefaultStreetTypeIndexBase0 = function(allStreetData)
     end
 
     return result > 0 and result or 0
+end
+
+helpers.getGeldedBusStopModels = function()
+    local results = {}
+    local add = function(fileName)
+        local id = api.res.modelRep.find(fileName)
+        local model = api.res.modelRep.get(id)
+        results[#results+1] = {
+            fileName = fileName,
+            icon = model.metadata.description.icon,
+            id = id,
+            name = model.metadata.description.name
+        }
+    end
+    add('lollo_bus_stop/geldedBusStops/pole_old.mdl')
+    add('lollo_bus_stop/geldedBusStops/pole_mid.mdl')
+    add('lollo_bus_stop/geldedBusStops/pole_new.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_old.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_mid.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_new.mdl')
+    return results
 end
 
 helpers.getStationPoolCapacities = function(params, result)
@@ -161,7 +211,6 @@ helpers.updateParamValues_streetType_ = function(params, allStreetData)
         end
     end
 end
-
 helpers.updateParamValues_model = function(params, modelData)
     for _, param in pairs(params) do
         if param.key == 'lolloBusStop_model' then

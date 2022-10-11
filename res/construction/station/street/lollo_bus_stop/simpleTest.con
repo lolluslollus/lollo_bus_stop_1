@@ -36,7 +36,8 @@ function data()
 		-- 	water = false
 		-- },
 		skipCollision = true, -- we need this to change the street type when reconfiguring
-        params = moduleHelpers.getParams(),
+        -- params = moduleHelpers.getParams(),
+		params = {},
         updateFn = function(params)
 			logger.print('simple.con supdateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
 			local function _getTramTrackType()

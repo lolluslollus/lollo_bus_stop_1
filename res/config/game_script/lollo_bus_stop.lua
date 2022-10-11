@@ -23,6 +23,7 @@ local _eventProperties = constants.eventProperties
 
 local _guiConstants = {
     _ploppablePassengersModelId = false,
+    conParams = {},
 }
 
 
@@ -417,7 +418,12 @@ function data()
             local newCon = api.type.SimpleProposal.ConstructionEntity.new()
             -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
             newCon.fileName = constants.conFileName
-            local allStreetData = streetUtils.getGlobalStreetData()
+            -- LOLLO TODO add bridge type and maybe tunnel type
+            local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+            local allStreetData = streetUtils.getGlobalStreetData({
+                streetUtils.getStreetDataFilters().PATHS,
+                streetUtils.getStreetDataFilters().STOCK,
+            })
             -- logger.print('allStreetData =') logger.debugPrint(allStreetData)
             local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
             if type(streetTypeFileName) ~= 'string' then
@@ -438,7 +444,8 @@ function data()
 					-- * ((dataForCon.outerNode1Pos[1] > dataForCon.outerNode0Pos[1]) and 1 or -1)
 			)
             local newParams = {
-                -- lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
+                lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
+                -- it will not change if no params are declared with the construction.
                 -- lolloBusStop_testVeryLarge = 100000000.123455, -- this works
                 -- these disappear at the first upgrade
                 -- lolloBusStop_testTable = {123, 456},
@@ -1288,6 +1295,17 @@ function data()
 
                         logger.print('selected station with conId =', conId, 'and con.fileName =', con.fileName)
                         -- LOLLO TODO call here my own config UI for construction con
+                        if not(_guiConstants.conParams) then
+                            logger.print('_guiConstants.conParams is not available')
+                            return
+                        end
+                        local handleParamValueChanged = function(paramPropsTable, paramKey, paramValue)
+                            logger.print('handleParamValueChanged firing')
+                            logger.print('paramPropsTable =') logger.debugPrint(paramPropsTable)
+                            logger.print('paramKey =') logger.debugPrint(paramKey)
+                            logger.print('paramValue =') logger.debugPrint(paramValue)
+                        end
+                        guiHelpers.showConstructionConfig(_guiConstants.conParams, handleParamValueChanged)
                     end,
                     logger.xpErrorHandler
                 )
@@ -1363,6 +1381,7 @@ function data()
         end,
         guiInit = function()
             _guiConstants._ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
+            _guiConstants.conParams = moduleHelpers.getParams()
         end,
         handleEvent = function(src, id, name, args)
             if (id ~= _eventId) then return end

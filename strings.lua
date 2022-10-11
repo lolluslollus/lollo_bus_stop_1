@@ -7,6 +7,7 @@ function data()
 			["bothSidesDesc"] = "Only with certain street types",
 			["busStopDesc"] = "Use the splitter from the street tuning to carve out a short stretch of road, then plop this in the gap",
 			["busStopName"] = "High capacity bus / tram stop",
+			["conConfigWindowTitle"] = "Configuration",
 			["directionName"] = "Direction",
 			["driveOnLeftName"] = "Drive on Left",
 			["modelName"] = "Model",

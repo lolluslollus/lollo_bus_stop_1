@@ -27,7 +27,8 @@ function data()
 		-- },
 		skipCollision = true, -- we need this to change the street type when reconfiguring
         -- params = { }, -- keep it empty or it will crash coz it won't find the params, which I pass when building the construction
-        params = moduleHelpers.getParams(),
+        -- params = moduleHelpers.getParams(),
+		params = {},
 		updateFn = function(params, two) -- this is overwritten by the .script file
 			return {}
 		end,

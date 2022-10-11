@@ -9,11 +9,11 @@ local streetUtils = require('lollo_bus_stop.streetUtils')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
 
--- LOLLO TODO once the con has been built, you cannot configure it or it will unsnap and stay unsnapped: fix it
+-- LOLLO NOTE once the con has been built, you cannot configure it or it will unsnap and stay unsnapped.
 -- Narrow angle
 -- and
 -- Construction not possible
--- stand in the way
+-- stand in the way. This is why I use my own params gui, so I can force-snap the roads after configuring
 
 -- LOLLO NOTE you can only update the state from the worker thread
 local state = {}
@@ -412,8 +412,8 @@ local _utils = {
     end,
 }
 local _actions = {
-    buildConstruction = function(outerNode0Id, outerNode1Id, streetType, dataForCon)
-        logger.print('buildConstruction starting, streetType =') logger.debugPrint(streetType)
+    buildConstruction = function(outerNode0Id, outerNode1Id, streetType, bridgeType, dataForCon)
+        logger.print('buildConstruction starting, streetType =', streetType, 'bridgeType =', bridgeType)
         -- logger.print('dataForCon =') logger.debugPrint(dataForCon)
         if not(edgeUtils.isValidAndExistingId(outerNode0Id)) or not(edgeUtils.isValidAndExistingId(outerNode1Id)) then
             logger.warn('buildConstruction received an invalid node id')
@@ -436,12 +436,25 @@ local _actions = {
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
         -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
         newCon.fileName = constants.conFileName
-        -- LOLLO TODO add bridge type and maybe tunnel type
+        -- LOLLO TODO maybe add tunnel type
         local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
         local allStreetData = streetUtils.getGlobalStreetData({
-            streetUtils.getStreetDataFilters().PATHS,
+            -- streetUtils.getStreetDataFilters().PATHS,
             streetUtils.getStreetDataFilters().STOCK,
         })
+
+        logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
+        local bridgeTypeFileName = type(bridgeType) == 'number' and bridgeType > -1 and api.res.bridgeTypeRep.getName(bridgeType) or nil
+        logger.print('bridgeTypeFileName =', bridgeTypeFileName or 'NIL')
+        local bridgeTypeIndexBase0 = 0 -- no bridge
+        if type(bridgeTypeFileName) == 'string' then
+            local index = arrayUtils.findIndex(allBridgeData, 'fileName', bridgeTypeFileName) -- the first item is no bridge
+            logger.print('index =', index)
+            if index > 0 then
+                bridgeTypeIndexBase0 = index - 1 -- base 0
+            end
+        end
+
         -- logger.print('allStreetData =') logger.debugPrint(allStreetData)
         local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
         if type(streetTypeFileName) ~= 'string' then
@@ -487,6 +500,7 @@ local _actions = {
             -- },
 
             lolloBusStop_bothSides = 0,
+            lolloBusStop_bridgeType = bridgeTypeIndexBase0,
             lolloBusStop_direction = 0,
             lolloBusStop_driveOnLeft = 0,
             lolloBusStop_model = 5, -- it's easier to see transf problems
@@ -499,7 +513,7 @@ local _actions = {
             lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_snapNodes = 3,
             -- lolloBusStop_snapNodes = 0,
-            lolloBusStop_streetType_ = streetTypeIndexBase0,
+            lolloBusStop_streetType = streetTypeIndexBase0,
             lolloBusStop_tramTrack = 0,
             seed = math.abs(math.ceil(conTransf[13] * 1000)),
         }
@@ -873,7 +887,7 @@ local _actions = {
         local proposal = api.type.SimpleProposal.new()
         proposal.constructionsToAdd[1] = newCon
         proposal.constructionsToRemove = { oldConId }
-        proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
+        -- proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
 
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false
@@ -1320,7 +1334,6 @@ local _actions = {
             end
         )
     end,
-    -- updateConstruction = function(outerNode0Id, outerNode1Id, streetType, dataForCon)
     updateConstruction = function(oldConId, oldCon, paramKey, newParamValueIndexBase0)
         logger.print('updateConstruction starting, conId =', oldConId or 'NIL')
 
@@ -1491,6 +1504,7 @@ function data()
                                         edgeObjectId = edgeObjectId,
                                         edgeObjectTransf = edgeObjectTransf_yz0,
                                         streetType = baseEdgeStreet.streetType,
+                                        bridgeType = baseEdge.typeIndex
                                     }
                                 )
                             end
@@ -1523,6 +1537,7 @@ function data()
                             {
                                 edgeObjectTransf = args.edgeObjectTransf,
                                 streetType = args.streetType,
+                                bridgeType = args.bridgeType,
                             }
                         )
                     elseif name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
@@ -1572,6 +1587,7 @@ function data()
                             _eventProperties.firstOuterSplitDone.eventName,
                             {
                                 streetType = args.streetType,
+                                bridgeType = args.bridgeType,
                                 innerTransf0 = innerTransf0,
                                 innerTransf1 = innerTransf1,
                                 outerTransf0 = outerTransf0,
@@ -1738,7 +1754,7 @@ function data()
 
                         _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
-                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.dataForCon)
+                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.bridgeType, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _utils.upgradeCon(args.conId, args.conParams)

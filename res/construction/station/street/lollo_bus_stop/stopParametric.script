@@ -11,24 +11,39 @@ function data()
 			logger.print('stopParametric.updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
 			-- no api, no game, and I cannot pass the api as a param
 
+			local function _getEdgeType(bridgeData)
+				if type(params.lolloBusStop_bridgeType) == 'number' and params.lolloBusStop_bridgeType > 0 and bridgeData and bridgeData.fileName then
+					return 'BRIDGE'
+				end
+				return nil
+			end
+
+			local function _getEdgeTypeName(bridgeData)
+				if type(params.lolloBusStop_bridgeType) == 'number' and params.lolloBusStop_bridgeType > 0 and bridgeData and bridgeData.fileName then
+					return bridgeData.fileName
+				end -- eg "cement.lua",
+				return nil
+			end
+
 			local function _getInverseTan(tan)
 				return {-tan[1], -tan[2], -tan[3]}
 			end
 			local function getSnapNodes()
-				if params.lolloBusStop_direction == 0 then
-					if params.lolloBusStop_snapNodes == 0 then return {}
-					elseif params.lolloBusStop_snapNodes == 1 then return { 0, }
-					elseif params.lolloBusStop_snapNodes == 2 then return { 5, }
-					elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
-					end
-				else
-					if params.lolloBusStop_snapNodes == 0 then return {}
-					elseif params.lolloBusStop_snapNodes == 1 then return { 5, }
-					elseif params.lolloBusStop_snapNodes == 2 then return { 0, }
-					elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
-					end
-				end
-				return {}
+				return {0, 5}
+				-- if params.lolloBusStop_direction == 0 then
+				-- 	if params.lolloBusStop_snapNodes == 0 then return {}
+				-- 	elseif params.lolloBusStop_snapNodes == 1 then return { 0, }
+				-- 	elseif params.lolloBusStop_snapNodes == 2 then return { 5, }
+				-- 	elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
+				-- 	end
+				-- else
+				-- 	if params.lolloBusStop_snapNodes == 0 then return {}
+				-- 	elseif params.lolloBusStop_snapNodes == 1 then return { 5, }
+				-- 	elseif params.lolloBusStop_snapNodes == 2 then return { 0, }
+				-- 	elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
+				-- 	end
+				-- end
+				-- return {}
 			end
 			local function _getTramTrackType()
 				return params.lolloBusStop_tramTrack == 0 and 'NO' or params.lolloBusStop_tramTrack == 1 and 'YES' or 'ELECTRIC'
@@ -38,12 +53,13 @@ function data()
 					params.lolloBusStop_snapNodes = 3
 				end
 				if params.lolloBusStop_direction ~= 0 and params.lolloBusStop_direction ~= 1 then params.lolloBusStop_direction = 1 end
-				if not(params.lolloBusStop_streetType_) or not(two.globalStreetData[params.lolloBusStop_streetType_ + 1]) then
-					params.lolloBusStop_streetType_ = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
-					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType_ to') debugPrint(params.lolloBusStop_streetType_)
-				else
-					-- logger.print('stopParametric.updateFn.script params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
-					-- logger.print('stopParametric.updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
+				if not(params.lolloBusStop_streetType) or not(two.globalStreetData) or not(two.globalStreetData[params.lolloBusStop_streetType + 1]) then
+					params.lolloBusStop_streetType = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
+					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
+				end
+				if not(params.lolloBusStop_bridgeType) or not(two.globalBridgeData) or not(two.globalBridgeData[params.lolloBusStop_bridgeType + 1]) then
+					params.lolloBusStop_bridgeType = 0 -- no bridge
+					logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeType to') debugPrint(params.lolloBusStop_bridgeType)
 				end
 				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
@@ -112,7 +128,9 @@ function data()
 			_readDynamiParams()
 			logger.print('stopParametric.updateFn _dyn =') logger.debugPrint(_dyn)
 
-			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
+			local _selectedBridgeData = two.globalBridgeData[params.lolloBusStop_bridgeType + 1] or two.globalBridgeData[1]
+			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType + 1] or two.globalStreetData[1]
+			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
 			-- logger.print('stopParametric.updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
@@ -120,7 +138,6 @@ function data()
 			local _streetFileName = _selectedStreetData.fileName
             local _tramTrackType = _getTramTrackType()
 			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 and not(_selectedStreetData.isOneWay)
-			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
 			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
@@ -176,6 +193,8 @@ function data()
 								_dyn.outerPos0,  _getInverseTan(_dyn.tan00)
 							},  -- node 5
                         },
+						edgeType = _getEdgeType(_selectedBridgeData),
+						edgeTypeName = _getEdgeTypeName(_selectedBridgeData),
 						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},

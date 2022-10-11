@@ -59,24 +59,37 @@ end
 
 helpers.getParams = function()
     local modelData = getGeldedBusStopModels()
-    -- local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
-    -- local allStreetData = streetUtils.getGlobalStreetData({
-    --     streetUtils.getStreetDataFilters().PATHS,
-    --     streetUtils.getStreetDataFilters().STOCK,
-    -- })
+    local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+    logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
+    local allStreetData = streetUtils.getGlobalStreetData({
+        -- streetUtils.getStreetDataFilters().PATHS,
+        streetUtils.getStreetDataFilters().STOCK,
+    })
     local results = {
-        -- {
-        --     key = 'lolloBusStop_streetType_',
-        --     name = _('streetTypeName'),
-        --     values = arrayUtils.map(
-        --         allStreetData,
-        --         function(str)
-        --             return str.name
-        --         end
-        --     ),
-        --     uiType = 'COMBOBOX',
-        --     defaultIndex = 0
-        -- },
+        {
+            key = 'lolloBusStop_streetType',
+            name = _('streetTypeName'),
+            values = arrayUtils.map(
+                allStreetData,
+                function(str)
+                    return str.name
+                end
+            ),
+            uiType = 'COMBOBOX',
+            defaultIndex = 0
+        },
+        {
+            key = 'lolloBusStop_bridgeType',
+            name = _('bridgeTypeName'),
+            values = arrayUtils.map(
+                allBridgeData,
+                function(str)
+                    return str.name
+                end
+            ),
+            uiType = 'COMBOBOX',
+            defaultIndex = 0
+        },
         {
             key = 'lolloBusStop_model',
             name = _('modelName'),
@@ -197,7 +210,7 @@ end
 
 helpers.updateParamValues_streetType_ = function(params, allStreetData)
     for _, param in pairs(params) do
-        if param.key == 'lolloBusStop_streetType_' then
+        if param.key == 'lolloBusStop_streetType' then
             param.values = arrayUtils.map(
                 allStreetData,
                 function(str)
@@ -206,7 +219,7 @@ helpers.updateParamValues_streetType_ = function(params, allStreetData)
             )
             param.defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allStreetData)
             param.uiType = 2 -- 'COMBOBOX'
-            -- print('lolloBusStop_streetType_ param =')
+            -- print('lolloBusStop_streetType param =')
             -- debugPrint(param)
         end
     end
@@ -225,7 +238,7 @@ helpers.updateParamValues_model = function(params, modelData)
             -- param.defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allModelData)
             -- param.uiType = 2 -- 'COMBOBOX'
             param.uiType = 3 -- 'ICON_BUTTON'
-            -- print('lolloBusStop_streetType_ param =')
+            -- print('lolloBusStop_streetType param =')
             -- debugPrint(param)
         end
     end

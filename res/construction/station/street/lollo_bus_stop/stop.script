@@ -34,11 +34,11 @@ function data()
 					params.lolloBusStop_snapNodes = 3
 				end
 				if params.lolloBusStop_direction ~= 0 and params.lolloBusStop_direction ~= 1 then params.lolloBusStop_direction = 1 end
-				if not(params.lolloBusStop_streetType_) or not(two.globalStreetData[params.lolloBusStop_streetType_ + 1]) then
-					params.lolloBusStop_streetType_ = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
-					logger.print('updateFn.script set params.lolloBusStop_streetType_ to') debugPrint(params.lolloBusStop_streetType_)
+				if not(params.lolloBusStop_streetType) or not(two.globalStreetData[params.lolloBusStop_streetType + 1]) then
+					params.lolloBusStop_streetType = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
+					logger.print('updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
 				else
-					-- logger.print('updateFn.script params.lolloBusStop_streetType_ =', params.lolloBusStop_streetType_)
+					-- logger.print('updateFn.script params.lolloBusStop_streetType =', params.lolloBusStop_streetType)
 					-- logger.print('updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
 				end
 				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
@@ -54,7 +54,7 @@ function data()
 			local _pitchAngle = pitchHelpers.getPitchAngle(params)
 			logger.print('updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
 			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
-			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType_ + 1] or two.globalStreetData[1]
+			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType + 1] or two.globalStreetData[1]
 			-- logger.print('updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5

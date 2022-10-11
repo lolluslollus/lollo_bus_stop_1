@@ -5,6 +5,7 @@ function data()
 			["ModName"] = "Bus / tram stops with extra capacity ",
 			["bothSidesName"] = "Both Sides",
 			["bothSidesDesc"] = "Only with certain street types",
+			["bridgeTypeName"] = "Bridge Type",
 			["busStopDesc"] = "Use the splitter from the street tuning to carve out a short stretch of road, then plop this in the gap",
 			["busStopName"] = "High capacity bus / tram stop",
 			["conConfigWindowTitle"] = "Configuration",

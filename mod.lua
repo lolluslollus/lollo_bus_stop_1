@@ -113,7 +113,7 @@ function data()
 
             local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
             local allStreetData = streetUtils.getGlobalStreetData({
-                streetUtils.getStreetDataFilters().PATHS,
+                -- streetUtils.getStreetDataFilters().PATHS,
                 streetUtils.getStreetDataFilters().STOCK,
             })
             local geldedBusStopModels = moduleHelpers.getGeldedBusStopModels()

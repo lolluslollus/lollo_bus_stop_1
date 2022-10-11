@@ -1572,6 +1572,8 @@ function data()
                                     _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
                                     return false
                                 end
+                                -- LOLLO TODO try forbidding building too close to another station (only this type? Or also the stock type?)
+                                -- and see if the uncatchable error goes away.
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
                                 -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
                                 local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)

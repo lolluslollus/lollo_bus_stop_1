@@ -426,7 +426,7 @@ local _actions = {
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
         -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
         newCon.fileName = constants.conFileName
-        -- LOLLO TODO maybe add tunnel type
+        -- LOLLO TODO add tunnel type
         local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
         local allStreetData = streetUtils.getGlobalStreetData({
             -- streetUtils.getStreetDataFilters().PATHS,

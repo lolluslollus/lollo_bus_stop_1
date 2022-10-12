@@ -215,7 +215,7 @@ function data()
 
 			local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)
 			logger.print('stopParametric.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
-			_pitchTransf = constants.idTransf
+			-- _pitchTransf = constants.idTransf
 			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
 			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
 			result.models[#result.models+1] = {

@@ -11,17 +11,21 @@ function data()
 			logger.print('stopParametric.updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
 			-- no api, no game, and I cannot pass the api as a param
 
-			local function _getEdgeType(bridgeData)
-				if type(params.lolloBusStop_bridgeType) == 'number' and params.lolloBusStop_bridgeType > 0 and bridgeData and bridgeData.fileName then
+			local function _getEdgeType()
+				if params.lolloBusStop_groundBridgeTunnel012 == 1 then
 					return 'BRIDGE'
+				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then
+					return 'TUNNEL'
 				end
 				return nil
 			end
 
-			local function _getEdgeTypeName(bridgeData)
-				if type(params.lolloBusStop_bridgeType) == 'number' and params.lolloBusStop_bridgeType > 0 and bridgeData and bridgeData.fileName then
-					return bridgeData.fileName
-				end -- eg "cement.lua",
+			local function _getEdgeTypeName()
+				if params.lolloBusStop_groundBridgeTunnel012 == 1 then
+					return (two.globalBridgeData[params.lolloBusStop_bridgeOrTunnelType + 1]).fileName
+				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then
+					return (two.globalTunnelData[params.lolloBusStop_bridgeOrTunnelType + 1]).fileName
+				end
 				return nil
 			end
 
@@ -57,9 +61,21 @@ function data()
 					params.lolloBusStop_streetType = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
 					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
 				end
-				if not(params.lolloBusStop_bridgeType) or not(two.globalBridgeData) or not(two.globalBridgeData[params.lolloBusStop_bridgeType + 1]) then
-					params.lolloBusStop_bridgeType = 0 -- no bridge
-					logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeType to') debugPrint(params.lolloBusStop_bridgeType)
+				if params.lolloBusStop_groundBridgeTunnel012 == 1 then -- bridge
+					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalBridgeData) or not(two.globalBridgeData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
+						params.lolloBusStop_bridgeOrTunnelType = 0 -- no bridge
+						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
+						logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
+					end
+				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then -- tunnel
+					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalTunnelData) or not(two.globalTunnelData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
+						params.lolloBusStop_bridgeOrTunnelType = 0 -- no tunnel
+						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
+						logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
+					end
+				else
+					params.lolloBusStop_bridgeOrTunnelType = 0 -- no tunnel
+					params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
 				end
 				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
@@ -130,7 +146,6 @@ function data()
 			logger.print('stopParametric.updateFn _dyn =') logger.debugPrint(_dyn)
 ]]
 
-			local _selectedBridgeData = two.globalBridgeData[params.lolloBusStop_bridgeType + 1] or two.globalBridgeData[1]
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType + 1] or two.globalStreetData[1]
 			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
 			-- logger.print('stopParametric.updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
@@ -195,8 +210,8 @@ function data()
 								params.lolloBusStop_outerNode0Pos,  _getInverseTan(params.lolloBusStop_edge0Tan0)
 							},  -- node 5
                         },
-						edgeType = _getEdgeType(_selectedBridgeData),
-						edgeTypeName = _getEdgeTypeName(_selectedBridgeData),
+						edgeType = _getEdgeType(),
+						edgeTypeName = _getEdgeTypeName(),
 						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},

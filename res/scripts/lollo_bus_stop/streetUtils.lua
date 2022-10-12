@@ -10,6 +10,10 @@ local _bridgeDataBuffer = {
     data = {},
     carrierId = nil, -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
 }
+local _tunnelDataBuffer = {
+    data = {},
+    carrierId = nil, -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
+}
 local _texts = {
     noBridge = _('NoBridge'),
 }
@@ -290,6 +294,41 @@ local function _getBridgeTypes(carrierId)
     return results
 end
 
+local function _getTunnelTypes(carrierId)
+    local allTunnelTypes = api.res.tunnelTypeRep.getAll()
+    local results = {}
+    for tunnelTypeId, fileName in pairs(allTunnelTypes) do
+        if fileName then
+            local tunnelType = api.res.tunnelTypeRep.get(tunnelTypeId)
+            if tunnelType
+            and tunnelType.carriers
+            -- this is simpler than the streets: we only want a list of visible tunnels, that's all
+            and tunnelType.yearFrom < 65535
+            and tunnelType.yearTo == 0
+            and api.res.tunnelTypeRep.isVisible(tunnelTypeId)
+            then
+                local isRightCarrier = false
+                for _, tunnelCarrierId in pairs(tunnelType.carriers) do
+                    if tunnelCarrierId == carrierId then
+                        isRightCarrier = true
+                        break
+                    end
+                end
+                if isRightCarrier then
+                    results[#results+1] = {
+                        fileName = fileName,
+                        icon = tunnelType.icon,
+                        name = tunnelType.name,
+                        yearFrom = tunnelType.yearFrom,
+                        yearTo = tunnelType.yearTo,
+                    }
+                end
+            end
+        end
+    end
+    return results
+end
+
 local function _getStreetDataFiltered_Paths(streetDataTable)
     if type(streetDataTable) ~= 'table' then return {} end
 
@@ -442,6 +481,16 @@ local function _initLolloBridgeDataWithApi(carrierId)
         _bridgeDataBuffer.data = _getBridgeTypes(carrierId)
 
         -- print('LOLLO bridge data initialised with api, it has', #(_bridgeDataBuffer.data or {}), 'records and type = ', type(_bridgeDataBuffer.data))
+    end
+end
+
+local function _initLolloTunnelDataWithApi(carrierId)
+    if _tunnelDataBuffer.carrierId ~= carrierId -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
+    or type(_tunnelDataBuffer.data) ~= 'table'
+    or #_tunnelDataBuffer.data < 1 then
+        _tunnelDataBuffer.data = _getTunnelTypes(carrierId)
+
+        -- print('LOLLO tunnel data initialised with api, it has', #(_tunnelDataBuffer.data or {}), 'records and type = ', type(_tunnelDataBuffer.data))
     end
 end
 
@@ -625,6 +674,19 @@ end
 helper.getGlobalBridgeDataPlusNoBridge = function(carrierId)
     local results = helper.getGlobalBridgeData(carrierId)
     table.insert(results, 1, {name = _texts.noBridge, icon = 'ui/bridges/no_bridge.tga'})
+    return results
+end
+
+helper.getGlobalTunnelData = function(carrierId)
+    if not(carrierId) then carrierId = api.type.enum.Carrier.ROAD end
+    _initLolloTunnelDataWithApi(carrierId)
+
+    return arrayUtils.sort(_bridgeDataBuffer.data, 'name')
+end
+
+helper.getGlobalTunnelDataPlusNoTunnel = function(carrierId)
+    local results = helper.getGlobalTunnelData(carrierId)
+    table.insert(results, 1, {name = _texts.noBridge, icon = 'ui/tunnels/no_tunnel.tga'})
     return results
 end
 

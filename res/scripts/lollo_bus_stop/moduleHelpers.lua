@@ -60,6 +60,7 @@ end
 helpers.getParamsMetadata = function()
     local modelData = getGeldedBusStopModels()
     local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+    -- no tunnel param, we don't need it for now
     logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
     local allStreetData = streetUtils.getGlobalStreetData({
         -- streetUtils.getStreetDataFilters().PATHS,
@@ -79,7 +80,7 @@ helpers.getParamsMetadata = function()
             defaultIndex = 0
         },
         {
-            key = 'lolloBusStop_bridgeType',
+            key = 'lolloBusStop_bridgeOrTunnelType',
             name = _('bridgeTypeName'),
             values = arrayUtils.map(
                 allBridgeData,

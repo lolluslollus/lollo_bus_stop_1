@@ -116,6 +116,7 @@ function data()
                 -- streetUtils.getStreetDataFilters().PATHS,
                 streetUtils.getStreetDataFilters().STOCK,
             })
+            local allTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
             local geldedBusStopModels = moduleHelpers.getGeldedBusStopModels()
 
             local function addCon(sourceFileName, targetFileName, scriptFileName, yearFrom, yearTo)
@@ -155,6 +156,7 @@ function data()
                 newCon.updateScript.params = {
                     globalBridgeData = allBridgeData,
                     globalStreetData = allStreetData,
+                    globalTunnelData = allTunnelData,
                     globalBusStopModelData = geldedBusStopModels,
                 }
                 -- these are useless but the game wants them

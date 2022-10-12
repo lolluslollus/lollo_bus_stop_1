@@ -499,8 +499,6 @@ local _actions = {
             -- lolloBusStop_outerNode1Id = outerNode1Id, -- idem
             lolloBusStop_outerNode0Pos_absolute = (dataForCon.outerNode0Pos), -- arrayUtils.cloneOmittingFields(dataForCon.outerNode0Pos),
             lolloBusStop_outerNode1Pos_absolute = (dataForCon.outerNode1Pos), --arrayUtils.cloneOmittingFields(dataForCon.outerNode1Pos),
-            lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
-            -- lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_snapNodes = 3,
             -- lolloBusStop_snapNodes = 0,
             lolloBusStop_streetType = streetTypeIndexBase0,
@@ -517,6 +515,8 @@ local _actions = {
             lolloBusStop_outerNode0Pos = _utils.getPosTransformed(dataForCon.outerNode0Pos, _inverseConTransf),
             lolloBusStop_outerNode1Pos = _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf),
             lolloBusStop_sidewalkHeight = _sidewalkHeight,
+            -- lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
+            -- lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_pitchAngle = _pitchAngle,
         }
         -- these work but we don't need them anymore, since we moved to parameterless con

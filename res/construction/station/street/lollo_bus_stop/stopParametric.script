@@ -215,7 +215,7 @@ function data()
 
 			local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)
 			logger.print('stopParametric.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
-			-- _pitchTransf = constants.idTransf
+			_pitchTransf = constants.idTransf
 			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
 			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
 			result.models[#result.models+1] = {
@@ -266,15 +266,15 @@ function data()
 				}
 			end
 -- LOLLO TEST CODE BEGIN
-			result.models[#result.models+1] = {
-				id = 'lollo_bus_stop/icon/blue.mdl',
-				transf = {
-					1, 0, 0, 0,
-					0, 1, 0, 0,
-					0, 0, 1, 0,
-					params.lolloBusStop_outerNode0Pos[1], params.lolloBusStop_outerNode0Pos[2], params.lolloBusStop_outerNode0Pos[3], 1
-				}
-			}
+			-- result.models[#result.models+1] = {
+			-- 	id = 'lollo_bus_stop/icon/blue.mdl',
+			-- 	transf = {
+			-- 		1, 0, 0, 0,
+			-- 		0, 1, 0, 0,
+			-- 		0, 0, 1, 0,
+			-- 		params.lolloBusStop_outerNode0Pos[1], params.lolloBusStop_outerNode0Pos[2], params.lolloBusStop_outerNode0Pos[3], 1
+			-- 	}
+			-- }
 -- LOLLO TEST CODE END
 
 			-- LOLLO TEST CODE BEGIN

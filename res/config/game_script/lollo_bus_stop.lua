@@ -913,7 +913,8 @@ local _actions = {
         local proposal = api.type.SimpleProposal.new()
         proposal.constructionsToAdd[1] = newCon
         proposal.constructionsToRemove = { oldConId }
-        proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
+        -- proposal.old2new = { oldConId, 1 } -- this is wrong and makes trouble like
+        -- C:\GitLab-Runner\builds\1BJoMpBZ\0\ug\urban_games\train_fever\src\Game\UrbanSim\StockListUpdateHelper.cpp:166: __cdecl StockListUpdateHelper::~StockListUpdateHelper(void) noexcept(false): Assertion `0 <= pr.second && pr.second < (int)m_data->addedEntities->size()' failed.
 
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false
@@ -1421,7 +1422,8 @@ local _actions = {
         local proposal = api.type.SimpleProposal.new()
         proposal.constructionsToAdd[1] = newCon
         proposal.constructionsToRemove = { oldConId }
-        proposal.old2new = { oldConId, 1 } -- LOLLO TODO check this
+        -- proposal.old2new = { oldConId, 1 } -- this is wrong and makes trouble like
+        -- C:\GitLab-Runner\builds\1BJoMpBZ\0\ug\urban_games\train_fever\src\Game\UrbanSim\StockListUpdateHelper.cpp:166: __cdecl StockListUpdateHelper::~StockListUpdateHelper(void) noexcept(false): Assertion `0 <= pr.second && pr.second < (int)m_data->addedEntities->size()' failed.
 
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false

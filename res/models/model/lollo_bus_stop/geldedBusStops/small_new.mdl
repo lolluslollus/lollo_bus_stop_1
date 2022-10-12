@@ -57,17 +57,17 @@ function data()
 				},
 				static = false,
 				visibleFrom = 0,
-				visibleTo = 850,
+				visibleTo = 900,
 			},
 		},
 		metadata = {
-			availability = {
-				yearFrom = 1980,
-				yearTo = 0,
-			},
-			cost = {
-				price = 1200,
-			},
+			-- availability = {
+			-- 	yearFrom = 1980,
+			-- 	yearTo = 0,
+			-- },
+			-- cost = {
+			-- 	price = 1200,
+			-- },
 			description = {
 				description = _("Small bus/tram stop for passengers, to be placed on the sidewalk."),
 				name = _("Bus/tram stop, era C"),

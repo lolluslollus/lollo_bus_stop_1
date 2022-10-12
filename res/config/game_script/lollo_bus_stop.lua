@@ -16,6 +16,8 @@ local transfUtilsUG = require('transf')
 -- stand in the way. This is why I use my own params gui, so I can force-snap the roads after configuring
 
 -- LOLLO NOTE you can only update the state from the worker thread
+-- We don't actually use this, as it can make trouble with uncatchable errors,
+-- such as the obnoxious "an error has occurred" that can happen on evaluating or plopping a construction.
 local state = { isWorking = false }
 
 local _eventId = constants.eventId
@@ -28,6 +30,7 @@ local _guiConstants = {
 
 -- works as a semaphore for all functions that check state.isWorking before doing something
 -- it sets the state in the worker thread and then fires a given event with the given args
+-- It is redundant, see note above.
 local _setStateWorking = function(isWorking, successEventName, successEventArgs)
     logger.print('_setStateWorking starting, isWorking =', tostring(isWorking or false))
 
@@ -55,6 +58,8 @@ local _setStateWorking = function(isWorking, successEventName, successEventArgs)
         logger.xpErrorHandler
     )
 end
+-- Frees the semaphore.
+-- It is redundant, see notes above
 local _setStateReady = function()
     _setStateWorking(false)
 end

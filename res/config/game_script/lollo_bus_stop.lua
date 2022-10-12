@@ -105,6 +105,11 @@ local _utils = {
 
         return edgeIdsBetweenNodes
     end,
+    getPlayerOwned = function()
+        local result = api.type.PlayerOwned.new()
+        result.player = api.engine.util.getPlayer()
+        return result
+    end,
     getStationEndNodeIds = function(con)
         local frozenNodeIds = con.frozenNodes
         local frozenEdgeIds = con.frozenEdges
@@ -155,8 +160,11 @@ local _utils = {
                         end
                         for _, warning in pairs(proposalData.errorState.warnings or {}) do
                             logger.print('looping over warnings, warning found =', warning)
-                            isWarnings = true
-                            break
+                            if warning ~= 'Main connection will be interrupted' then
+                                isWarnings = true
+                                logger.print('found warning', warning or 'NIL')
+                                break
+                            end
                         end
                     end
                 end
@@ -169,7 +177,7 @@ local _utils = {
         )
         logger.print('getIsProposalOK isErrorsOtherThanCollision =', isErrorsOtherThanCollision)
         logger.print('getIsProposalOK isWarnings =', isWarnings)
-        return not(isErrorsOtherThanCollision) and not(isWarnings)
+        return not(isErrorsOtherThanCollision) -- and not(isWarnings)
     end,
     getNewlyBuiltEdgeId = function(result)
         -- result.proposal.proposal.addedSegments[1].entity is not always available, UG TODO this api should always return an edgeId
@@ -257,6 +265,10 @@ local _utils = {
             )
             if #nodeIds ~= 1 then
                 logger.warn('cannot find newly built node')
+                return nil
+            end
+            if not(edgeUtils.isValidAndExistingId(nodeIds[1])) then
+                logger.warn('newly built node is invalid')
                 return nil
             end
             logger.print('nodeId found, it is ' .. tostring(nodeIds[1]))
@@ -419,8 +431,8 @@ local _actions = {
             return
         end
 
-        local conTransf = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2) --, logger)
-        local _inverseConTransf = transfUtils.getInverseTransf(conTransf)
+        local conTransf_lua = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2) --, logger)
+        local _inverseConTransf = transfUtils.getInverseTransf(conTransf_lua)
         logger.print('_inverseConTransf =') logger.debugPrint(_inverseConTransf)
 
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
@@ -503,7 +515,7 @@ local _actions = {
             -- lolloBusStop_snapNodes = 0,
             lolloBusStop_streetType = streetTypeIndexBase0,
             lolloBusStop_tramTrack = 0,
-            seed = math.abs(math.ceil(conTransf[13] * 100)),
+            seed = math.abs(math.ceil(conTransf_lua[13] * 100)),
             lolloBusStop_edge0Tan0 = _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf),
             lolloBusStop_edge0Tan1 = _utils.getTanTransformed(dataForCon.edge0Tan1, _inverseConTransf),
             lolloBusStop_edge1Tan0 = _utils.getTanTransformed(dataForCon.edge1Tan0, _inverseConTransf),
@@ -568,10 +580,10 @@ local _actions = {
         -- logger.print('just made conParamsBak, it is') logger.debugPrint(conParamsBak)
         newCon.playerEntity = api.engine.util.getPlayer()
         newCon.transf = api.type.Mat4f.new(
-            api.type.Vec4f.new(conTransf[1], conTransf[2], conTransf[3], conTransf[4]),
-            api.type.Vec4f.new(conTransf[5], conTransf[6], conTransf[7], conTransf[8]),
-            api.type.Vec4f.new(conTransf[9], conTransf[10], conTransf[11], conTransf[12]),
-            api.type.Vec4f.new(conTransf[13], conTransf[14], conTransf[15], conTransf[16])
+            api.type.Vec4f.new(conTransf_lua[1], conTransf_lua[2], conTransf_lua[3], conTransf_lua[4]),
+            api.type.Vec4f.new(conTransf_lua[5], conTransf_lua[6], conTransf_lua[7], conTransf_lua[8]),
+            api.type.Vec4f.new(conTransf_lua[9], conTransf_lua[10], conTransf_lua[11], conTransf_lua[12]),
+            api.type.Vec4f.new(conTransf_lua[13], conTransf_lua[14], conTransf_lua[15], conTransf_lua[16])
         )
         local proposal = api.type.SimpleProposal.new()
         proposal.constructionsToAdd[1] = newCon
@@ -613,7 +625,7 @@ local _actions = {
                                 {
                                     conId = conId,
                                     conParams = conParamsBak,
-                                    conTransf = conTransf,
+                                    conTransf = conTransf_lua,
                                 }
                             ))
                         end,
@@ -629,7 +641,7 @@ local _actions = {
     -- LOLLO NOTE the new parametric construction does not play well with curves, unless I rebuild adjacent roads snappy.
     -- I tried Proposal instead of SimpleProposal but it is not meant to be.
     -- The trouble seems to be with collisions between external edges and inner edges.
-    buildSnappyRoads = function(conParams, conId, successEventName, successEventArgs)
+    buildSnappyRoads = function(conParams, conId)
         logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
         if type(conParams) ~= 'table' then
             logger.warn('buildSnappyRoads received no table for conParams')
@@ -762,7 +774,8 @@ local _actions = {
             end
             newEdge0.comp.objects = edgeObjects -- LOLLO NOTE cannot insert directly into edge0.comp.objects. Different tables are handled differently...
         end
-        newEdge0.playerOwned = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.PLAYER_OWNED)
+        -- newEdge0.playerOwned = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.PLAYER_OWNED)
+        newEdge0.playerOwned = _utils.getPlayerOwned()
         newEdge0.streetEdge = oldEdge0Street
 
         local newEdge1 = api.type.SegmentAndEntity.new()
@@ -783,7 +796,8 @@ local _actions = {
             end
             newEdge1.comp.objects = edgeObjects -- LOLLO NOTE cannot insert directly into edge0.comp.objects. Different tables are handled differently...
         end
-        newEdge1.playerOwned = api.engine.getComponent(oldEdge1Id, api.type.ComponentType.PLAYER_OWNED)
+        -- newEdge1.playerOwned = api.engine.getComponent(oldEdge1Id, api.type.ComponentType.PLAYER_OWNED)
+        newEdge1.playerOwned = _utils.getPlayerOwned()
         newEdge1.streetEdge = oldEdge1Street
 
         local proposal = api.type.SimpleProposal.new()
@@ -808,15 +822,13 @@ local _actions = {
                     logger.warn('buildSnappyRoads failed, result =') logger.warningDebugPrint(result)
                     _setStateReady()
                 else
-                    if not(successEventName) then _setStateReady() return end
-
                     xpcall(
                         function ()
                             api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                 string.sub(debug.getinfo(1, 'S').source, 1),
                                 _eventId,
-                                successEventName,
-                                successEventArgs
+                                _eventProperties.snappyRoadsBuilt.eventName,
+                                {}
                             ))
                         end,
                         function(error)
@@ -1082,7 +1094,8 @@ local _actions = {
             end
             newEdge.comp.objects = edgeObjects -- LOLLO NOTE cannot insert directly into edge0.comp.objects. Different tables are handled differently...
         end
-        newEdge.playerOwned = api.engine.getComponent(oldEdgeId, api.type.ComponentType.PLAYER_OWNED)
+        -- newEdge.playerOwned = api.engine.getComponent(oldEdgeId, api.type.ComponentType.PLAYER_OWNED)
+        newEdge.playerOwned = _utils.getPlayerOwned()
         newEdge.streetEdge = oldEdgeStreet
 
         local proposal = api.type.SimpleProposal.new()
@@ -1102,50 +1115,15 @@ local _actions = {
             end
         end
         -- logger.print('proposal =') logger.debugPrint(proposal)
-        --[[ local sampleNewEdge =
-        {
-        entity = -1,
-        comp = {
-            node0 = 13010,
-            node1 = 18753,
-            tangent0 = {
-            x = -32.318000793457,
-            y = 81.757850646973,
-            z = 3.0953373908997,
-            },
-            tangent1 = {
-            x = -34.457527160645,
-            y = 80.931526184082,
-            z = -1.0708819627762,
-            },
-            type = 0,
-            typeIndex = -1,
-            objects = { },
-        },
-        type = 0,
-        params = {
-            streetType = 23,
-            hasBus = false,
-            tramTrackType = 0,
-            precedenceNode0 = 2,
-            precedenceNode1 = 2,
-        },
-        playerOwned = nil,
-        streetEdge = {
-            streetType = 23,
-            hasBus = false,
-            tramTrackType = 0,
-            precedenceNode0 = 2,
-            precedenceNode1 = 2,
-        },
-        trackEdge = {
-            trackType = -1,
-            catenary = false,
-        },
-        } ]]
 
+        local context = api.type.Context:new()
+        -- context.checkTerrainAlignment = true -- default is false, true gives smoother Z
+        -- context.cleanupStreetGraph = true -- default is false
+        -- context.gatherBuildings = true  -- default is false
+        -- context.gatherFields = true -- default is true
+        context.player = api.engine.util.getPlayer() -- default is -1
         api.cmd.sendCommand(
-            api.cmd.make.buildProposal(proposal, nil, true),
+            api.cmd.make.buildProposal(proposal, context, true),
             function(result, success)
                 if not(success) then
                     logger.warn('replaceEdgeWithSame failed, proposal = ') logger.warningDebugPrint(proposal)
@@ -1249,7 +1227,8 @@ local _actions = {
         )
         newEdge0.comp.type = oldBaseEdge.type -- respect bridge or tunnel
         newEdge0.comp.typeIndex = oldBaseEdge.typeIndex -- respect bridge or tunnel type
-        newEdge0.playerOwned = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.PLAYER_OWNED)
+        -- newEdge0.playerOwned = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.PLAYER_OWNED)
+        newEdge0.playerOwned = _utils.getPlayerOwned()
         newEdge0.streetEdge = oldBaseEdgeStreet
 
         local newEdge1 = api.type.SegmentAndEntity.new()
@@ -1269,7 +1248,8 @@ local _actions = {
         )
         newEdge1.comp.type = oldBaseEdge.type
         newEdge1.comp.typeIndex = oldBaseEdge.typeIndex
-        newEdge1.playerOwned = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.PLAYER_OWNED)
+        -- newEdge1.playerOwned = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.PLAYER_OWNED)
+        newEdge1.playerOwned = _utils.getPlayerOwned()
         newEdge1.streetEdge = oldBaseEdgeStreet
 
         if type(oldBaseEdge.objects) == 'table' then
@@ -1343,27 +1323,31 @@ local _actions = {
                     xpcall(
                         function ()
                             local newlyBuiltNodeId = _utils.getNewlyBuiltNodeId(result)
-                            if edgeUtils.isValidAndExistingId(newlyBuiltNodeId) then
-                                if not(successEventArgs.outerNode0Id) then
-                                    successEventArgs.outerNode0Id = newlyBuiltNodeId
-                                    successEventArgs.outerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                                elseif not(successEventArgs.outerNode1Id) then
-                                    successEventArgs.outerNode1Id = newlyBuiltNodeId
-                                    successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                                elseif not(successEventArgs.innerNode0Id) then
-                                    successEventArgs.innerNode0Id = newlyBuiltNodeId
-                                    successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                                elseif not(successEventArgs.innerNode1Id) then
-                                    successEventArgs.innerNode1Id = newlyBuiltNodeId
-                                    successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                                end
-                                api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
-                                    string.sub(debug.getinfo(1, 'S').source, 1),
-                                    _eventId,
-                                    successEventName,
-                                    successEventArgs
-                                ))
+                            if not(edgeUtils.isValidAndExistingId(newlyBuiltNodeId)) then
+                                logger.warn('splitEdge failed to find newlyBuiltNodeId')
+                                _setStateReady()
+                                return
                             end
+
+                            if not(successEventArgs.outerNode0Id) then
+                                successEventArgs.outerNode0Id = newlyBuiltNodeId
+                                successEventArgs.outerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            elseif not(successEventArgs.outerNode1Id) then
+                                successEventArgs.outerNode1Id = newlyBuiltNodeId
+                                successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            elseif not(successEventArgs.innerNode0Id) then
+                                successEventArgs.innerNode0Id = newlyBuiltNodeId
+                                successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            elseif not(successEventArgs.innerNode1Id) then
+                                successEventArgs.innerNode1Id = newlyBuiltNodeId
+                                successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            end
+                            api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
+                                string.sub(debug.getinfo(1, 'S').source, 1),
+                                _eventId,
+                                successEventName,
+                                successEventArgs
+                            ))
                         end,
                         function(error)
                             logger.xpErrorHandler(error)
@@ -1503,11 +1487,11 @@ local _handlers = {
             return
         end
         -- _utils.guiWaitLockingThread(function() return (state ~= nil and not(state.isWorking)) end)
-        if state == nil or state.isWorking then
-            logger.print('busy, ignoring param value change')
-            -- LOLLO TODO see if you can wait, it's nicer than not responding
-            return
-        end
+        -- if state == nil or state.isWorking then
+        --     logger.print('busy, ignoring param value change')
+        --     -- LOLLO TODO see if you can wait, it's nicer than not responding
+        --     return
+        -- end
         _setStateWorking(
             true,
             _eventProperties.conParamsUpdated.eventName,
@@ -1573,12 +1557,12 @@ function data()
                                     return false
                                 end
                                 -- _utils.guiWaitLockingThread(function() logger.print('state =') logger.debugPrint(state) return (state ~= nil and not(state.isWorking)) end)
-                                if state == nil or state.isWorking then
-                                    logger.print('busy, leaving')
-                                    -- LOLLO NOTE this could interfere and delaying is not trivial, so I use a model that clearly says "bulldoze me"
-                                    -- _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
-                                    return false
-                                end
+                                -- if state == nil or state.isWorking then
+                                --     logger.print('busy, leaving')
+                                --     -- LOLLO NOTE this could interfere and delaying is not trivial, so I use a model that clearly says "bulldoze me"
+                                --     -- _actions.replaceEdgeWithSame(edgeId, edgeObjectId)
+                                --     return false
+                                -- end
 
                                 local edgeLength = edgeUtils.getEdgeLength(edgeId)
                                 if edgeLength < constants.minInitialEdgeLength then
@@ -1630,6 +1614,7 @@ function data()
             if (id ~= _eventId) then return end
             logger.print('handleEvent starting, src =', src, ', id =', id, ', name =', name, ', args =') logger.debugPrint(args)
             if type(args) ~= 'table' then return end
+            logger.print('state =') logger.debugPrint(state)
 
             xpcall(
                 function()
@@ -1864,9 +1849,11 @@ function data()
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _actions.upgradeCon(args.conId, args.conParams)
-                        _actions.buildSnappyRoads(args.conParams, args.conId, _eventProperties.setStateWorking.eventName, {isWorking = false})
+                        _actions.buildSnappyRoads(args.conParams, args.conId)
                     elseif name == _eventProperties.snappyConBuilt.eventName then
                         -- _actions.upgradeCon(args.conId, args.conParams)
+                    elseif name == _eventProperties.snappyRoadsBuilt.eventName then
+                        _setStateReady()
                     elseif name == _eventProperties.setStateWorking.eventName then
                         state.isWorking = args.isWorking
                     elseif name == _eventProperties.conParamsUpdated.eventName then

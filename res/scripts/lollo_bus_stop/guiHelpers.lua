@@ -174,9 +174,9 @@ guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChang
 
     local rect = window:getContentRect() -- this is mostly 0, 0 at this point
     local minSize = window:calcMinimumSize()
-    logger.print('rect =') logger.debugPrint(rect)
+    -- logger.print('rect =') logger.debugPrint(rect)
     logger.print('minSize =') logger.debugPrint(minSize)
-    logger.print('#conParams = ', #conParamsMetadata)
+    -- logger.print('#conParams = ', #conParamsMetadata)
 
     local extraHeight = _extraHeight4Title + #conParamsMetadata * _extraHeight4Param
     local size = api.gui.util.Size.new(math.max(rect.w, minSize.w), math.max(rect.h, minSize.h) + extraHeight)

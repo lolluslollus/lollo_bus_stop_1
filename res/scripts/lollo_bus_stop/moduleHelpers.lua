@@ -57,7 +57,7 @@ local getGeldedBusStopModels = function()
     return results
 end
 
-helpers.getParams = function()
+helpers.getParamsMetadata = function()
     local modelData = getGeldedBusStopModels()
     local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
     logger.print('allBridgeData =') logger.debugPrint(allBridgeData)

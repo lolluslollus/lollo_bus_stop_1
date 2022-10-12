@@ -138,7 +138,7 @@ function data()
                 newCon.skipCollision = staticCon.skipCollision
                 newCon.autoRemovable = staticCon.autoRemovable
                 -- no params, so it will never change my own params with its stupid automatic behaviour
-                -- for _, par in pairs(moduleHelpers.getParams()) do
+                -- for _, par in pairs(moduleHelpers.getParamsMetadata()) do
                 --     local newConParam = api.type.ScriptParam.new()
                 --     newConParam.key = par.key
                 --     newConParam.name = par.name

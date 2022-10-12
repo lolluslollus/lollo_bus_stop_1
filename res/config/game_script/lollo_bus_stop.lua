@@ -465,7 +465,7 @@ local _actions = {
                 -- * ((dataForCon.outerNode1Pos[1] > dataForCon.outerNode0Pos[1]) and 1 or -1)
         )
         local newParams = {
-            lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
+            -- lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
             -- it will not change if no params are declared with the construction.
             -- lolloBusStop_testVeryLarge = 100000000.123455, -- this works
             -- these disappear at the first upgrade
@@ -500,14 +500,27 @@ local _actions = {
             lolloBusStop_outerNode0Pos_absolute = (dataForCon.outerNode0Pos), -- arrayUtils.cloneOmittingFields(dataForCon.outerNode0Pos),
             lolloBusStop_outerNode1Pos_absolute = (dataForCon.outerNode1Pos), --arrayUtils.cloneOmittingFields(dataForCon.outerNode1Pos),
             lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
-            lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
+            -- lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_snapNodes = 3,
             -- lolloBusStop_snapNodes = 0,
             lolloBusStop_streetType = streetTypeIndexBase0,
             lolloBusStop_tramTrack = 0,
             seed = math.abs(math.ceil(conTransf[13] * 100)),
+            lolloBusStop_edge0Tan0 = _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf),
+            lolloBusStop_edge0Tan1 = _utils.getTanTransformed(dataForCon.edge0Tan1, _inverseConTransf),
+            lolloBusStop_edge1Tan0 = _utils.getTanTransformed(dataForCon.edge1Tan0, _inverseConTransf),
+            lolloBusStop_edge1Tan1 = _utils.getTanTransformed(dataForCon.edge1Tan1, _inverseConTransf),
+            lolloBusStop_edge2Tan0 = _utils.getTanTransformed(dataForCon.edge2Tan0, _inverseConTransf),
+            lolloBusStop_edge2Tan1 = _utils.getTanTransformed(dataForCon.edge2Tan1, _inverseConTransf),
+            lolloBusStop_innerNode0Pos = _utils.getPosTransformed(dataForCon.innerNode0Pos, _inverseConTransf),
+            lolloBusStop_innerNode1Pos = _utils.getPosTransformed(dataForCon.innerNode1Pos, _inverseConTransf),
+            lolloBusStop_outerNode0Pos = _utils.getPosTransformed(dataForCon.outerNode0Pos, _inverseConTransf),
+            lolloBusStop_outerNode1Pos = _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf),
+            lolloBusStop_sidewalkHeight = _sidewalkHeight,
+            lolloBusStop_pitchAngle = _pitchAngle,
         }
-        -- these work -- LOLLO TODO we don't update anymore, so you can write the values directly: do it
+        -- these work but we don't need them anymore, since we moved to parameterless con
+        --[[
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[1], 'lolloBusStop_')
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Y', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[2], 'lolloBusStop_')
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Z', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[3], 'lolloBusStop_')
@@ -547,6 +560,7 @@ local _actions = {
 
         moduleHelpers.setIntParamsFromFloat(newParams, 'sidewalkHeight', _sidewalkHeight, 'lolloBusStop_')
         moduleHelpers.setIntParamsFromFloat(newParams, 'pitchAngle', _pitchAngle, 'lolloBusStop_')
+        ]]
         -- logger.print('newParams =') logger.debugPrint(newParams)
         -- clone your own variable, it's safer than cloning newCon.params, which is userdata
         local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
@@ -1608,7 +1622,7 @@ function data()
         end,
         guiInit = function()
             _guiConstants._ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
-            _guiConstants._conParamsMetadata = moduleHelpers.getParams()
+            _guiConstants._conParamsMetadata = moduleHelpers.getParamsMetadata()
         end,
         -- guiUpdate = function()
         -- end,

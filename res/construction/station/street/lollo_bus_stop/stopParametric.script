@@ -70,6 +70,7 @@ function data()
 				end
 			end
 			_initParams()
+--[[ 
 			local _dyn = {}
 			local function _readDynamiParams()
 				_dyn.tan00 = {
@@ -124,9 +125,10 @@ function data()
 				}
 				_dyn.pitchAngle = moduleHelpers.getFloatFromIntParams(params, 'pitchAngle', 'lolloBusStop_')
 				_dyn.sidewalkHeight = moduleHelpers.getFloatFromIntParams(params, 'sidewalkHeight', 'lolloBusStop_')
-			end
+			end 
 			_readDynamiParams()
 			logger.print('stopParametric.updateFn _dyn =') logger.debugPrint(_dyn)
+]]
 
 			local _selectedBridgeData = two.globalBridgeData[params.lolloBusStop_bridgeType + 1] or two.globalBridgeData[1]
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType + 1] or two.globalStreetData[1]
@@ -156,41 +158,41 @@ function data()
                         edges = params.lolloBusStop_direction == 0
 						and {
                             {
-								_dyn.outerPos0,  _dyn.tan00
+								params.lolloBusStop_outerNode0Pos,  params.lolloBusStop_edge0Tan0
 							},  -- node 0
                             {
-								_dyn.innerPos0, _dyn.tan01
+								params.lolloBusStop_innerNode0Pos, params.lolloBusStop_edge0Tan1
 							},  -- node 1
                             {
-								_dyn.innerPos0, _dyn.tan10
+								params.lolloBusStop_innerNode0Pos, params.lolloBusStop_edge1Tan0
 							},  -- node 2
                             {
-								_dyn.innerPos1, _dyn.tan11
+								params.lolloBusStop_innerNode1Pos, params.lolloBusStop_edge1Tan1
 							},  -- node 3
                             {
-								_dyn.innerPos1, _dyn.tan20
+								params.lolloBusStop_innerNode1Pos, params.lolloBusStop_edge2Tan0
 							},  -- node 4
                             {
-								_dyn.outerPos1, _dyn.tan21
+								params.lolloBusStop_outerNode1Pos, params.lolloBusStop_edge2Tan1
 							},  -- node 5
                         } or {
                             {
-								_dyn.outerPos1, _getInverseTan(_dyn.tan21)
+								params.lolloBusStop_outerNode1Pos, _getInverseTan(params.lolloBusStop_edge2Tan1)
 							},  -- node 0
                             {
-								_dyn.innerPos1, _getInverseTan(_dyn.tan20)
+								params.lolloBusStop_innerNode1Pos, _getInverseTan(params.lolloBusStop_edge2Tan0)
 							},  -- node 1
                             {
-								_dyn.innerPos1, _getInverseTan(_dyn.tan11)
+								params.lolloBusStop_innerNode1Pos, _getInverseTan(params.lolloBusStop_edge1Tan1)
 							},  -- node 2
                             {
-								_dyn.innerPos0, _getInverseTan(_dyn.tan10)
+								params.lolloBusStop_innerNode0Pos, _getInverseTan(params.lolloBusStop_edge1Tan0)
 							},  -- node 3
                             {
-								_dyn.innerPos0, _getInverseTan(_dyn.tan01)
+								params.lolloBusStop_innerNode0Pos, _getInverseTan(params.lolloBusStop_edge0Tan1)
 							},  -- node 4
                             {
-								_dyn.outerPos0,  _getInverseTan(_dyn.tan00)
+								params.lolloBusStop_outerNode0Pos,  _getInverseTan(params.lolloBusStop_edge0Tan0)
 							},  -- node 5
                         },
 						edgeType = _getEdgeType(_selectedBridgeData),
@@ -211,11 +213,11 @@ function data()
 				} },
             }
 
-			local _pitchTransf = transfUtilsUG.rotY(_dyn.pitchAngle)
+			local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)
 			logger.print('stopParametric.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
 			-- _pitchTransf = constants.idTransf
-			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, _dyn.sidewalkHeight, 1})
-			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, _dyn.sidewalkHeight, 1})
+			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
+			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
 			result.models[#result.models+1] = {
 				id = _selectedModel.fileName,
 				-- tag = 'stationTag',
@@ -240,11 +242,11 @@ function data()
 -- end
 -- LOLLO TEST CODE END
 			local vehicleEdgeTransfLeft = transfUtilsUG.mul(
-				transfUtils.getTransf2FitObjectBetweenPositions(_dyn.innerPos0, _dyn.innerPos1, 2 * constants.innerEdgeX),
+				transfUtils.getTransf2FitObjectBetweenPositions(params.lolloBusStop_innerNode0Pos, params.lolloBusStop_innerNode1Pos, 2 * constants.innerEdgeX),
 				{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}
 			)
 			local vehicleEdgeTransfRight = transfUtilsUG.mul(
-				transfUtils.getTransf2FitObjectBetweenPositions(_dyn.innerPos1, _dyn.innerPos0, 2 * constants.innerEdgeX),
+				transfUtils.getTransf2FitObjectBetweenPositions(params.lolloBusStop_innerNode1Pos, params.lolloBusStop_innerNode0Pos, 2 * constants.innerEdgeX),
 				{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}
 			)
 			result.models[#result.models+1] = {
@@ -270,7 +272,7 @@ function data()
 					1, 0, 0, 0,
 					0, 1, 0, 0,
 					0, 0, 1, 0,
-					_dyn.outerPos0[1], _dyn.outerPos0[2], _dyn.outerPos0[3], 1
+					params.lolloBusStop_outerNode0Pos[1], params.lolloBusStop_outerNode0Pos[2], params.lolloBusStop_outerNode0Pos[3], 1
 				}
 			}
 -- LOLLO TEST CODE END

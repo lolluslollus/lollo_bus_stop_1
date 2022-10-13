@@ -1675,11 +1675,13 @@ function data()
                     function()
                         logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') --logger.debugPrint(args)
                         if not(_guiData.conIdAboutToBeBulldozed) then return end
+
                         if args == nil
                         or args.proposal == nil
                         or args.proposal.toRemove == nil
                         or args.proposal.toRemove[1] ~= _guiData.conIdAboutToBeBulldozed
                         then
+                            _guiData.conIdAboutToBeBulldozed = false
                             return
                         end
 

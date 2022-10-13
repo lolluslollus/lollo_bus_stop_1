@@ -612,6 +612,7 @@ local _actions = {
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
+
         if not(_utils.getIsProposalOK(proposal, context)) then
             logger.warn('buildConstruction made a dangerous proposal')
             -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
@@ -825,12 +826,14 @@ local _actions = {
         proposal.streetProposal.edgesToRemove[2] = oldEdge1Id
         proposal.streetProposal.edgesToAdd[1] = newEdge0
         proposal.streetProposal.edgesToAdd[2] = newEdge1
+
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false
         -- context.cleanupStreetGraph = true
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
+
         api.cmd.sendCommand(
             api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
             function(result, success)
@@ -881,8 +884,15 @@ local _actions = {
         -- proposal.constructionsToRemove[1] = constructionId -- fails to add
         -- proposal.constructionsToRemove:add(constructionId) -- fails to add
 
+        local context = api.type.Context:new()
+        -- context.checkTerrainAlignment = true -- default is false
+        -- context.cleanupStreetGraph = true
+        -- context.gatherBuildings = true -- default is false
+        -- context.gatherFields = true -- default is true
+        context.player = api.engine.util.getPlayer()
+
         api.cmd.sendCommand(
-            api.cmd.make.buildProposal(proposal, nil, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
+            api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
             function(result, success)
                 if not(success) then
                     logger.warn('bulldozeConstruction callback: failed to build')
@@ -940,6 +950,7 @@ local _actions = {
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
+
         if not(_utils.getIsProposalOK(proposal, context)) then
             logger.warn('makeConstructionSnappy made a dangerous proposal')
             _setStateReady()
@@ -1041,8 +1052,15 @@ local _actions = {
         end
         -- logger.print('proposal =') logger.debugPrint(proposal)
 
+        local context = api.type.Context:new()
+        -- context.checkTerrainAlignment = true -- default is false
+        -- context.cleanupStreetGraph = true
+        -- context.gatherBuildings = true -- default is false
+        -- context.gatherFields = true -- default is true
+        context.player = api.engine.util.getPlayer()
+
         api.cmd.sendCommand(
-            api.cmd.make.buildProposal(proposal, nil, true),
+            api.cmd.make.buildProposal(proposal, context, true),
             function(result, success)
                 if not(success) then
                     logger.warn('removeEdges failed, proposal = ') logger.warningDebugPrint(proposal)
@@ -1141,6 +1159,7 @@ local _actions = {
         -- context.gatherBuildings = true  -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer() -- default is -1
+
         api.cmd.sendCommand(
             api.cmd.make.buildProposal(proposal, context, true),
             function(result, success)

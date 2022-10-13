@@ -56,7 +56,12 @@ function data()
 				if params.lolloBusStop_snapNodes ~= 0 and params.lolloBusStop_snapNodes ~= 1 and params.lolloBusStop_snapNodes ~= 2 and params.lolloBusStop_snapNodes ~= 3 then
 					params.lolloBusStop_snapNodes = 3
 				end
-				if params.lolloBusStop_direction ~= 0 and params.lolloBusStop_direction ~= 1 then params.lolloBusStop_direction = 1 end
+				-- LOLLO TODO make these four smarter or remove them
+				if not(params.lolloBusStop_bothSides) then params.lolloBusStop_bothSides = 0 end
+				if not(params.lolloBusStop_direction) then params.lolloBusStop_direction = 0 end
+				if not(params.lolloBusStop_driveOnLeft) then params.lolloBusStop_driveOnLeft = 0 end
+				if not(params.lolloBusStop_tramTrack) then params.lolloBusStop_tramTrack = 0 end
+
 				if not(params.lolloBusStop_streetType) or not(two.globalStreetData) or not(two.globalStreetData[params.lolloBusStop_streetType + 1]) then
 					params.lolloBusStop_streetType = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
 					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
@@ -154,10 +159,8 @@ function data()
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
 			local _streetFileName = _selectedStreetData.fileName
             local _tramTrackType = _getTramTrackType()
-			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 -- and not(_selectedStreetData.isOneWay) -- LOLLO TODO try and allow one-lane roads
-			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
-				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
-				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
+			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 -- and not(_selectedStreetData.isOneWay)
+
 			-- logger.print('stopParametric.updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
             local result = {
                 colliders = {},
@@ -231,8 +234,12 @@ function data()
 			local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)
 			logger.print('stopParametric.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
 			-- _pitchTransf = constants.idTransf
-			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
-			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
+			local _modelYOffset = _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
+			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
+			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
+			if params.lolloBusStop_driveOnLeft == 1 then
+				modelTransfLeft, modelTransfRight = modelTransfRight, modelTransfLeft
+			end
 			result.models[#result.models+1] = {
 				id = _selectedModel.fileName,
 				-- tag = 'stationTag',
@@ -342,8 +349,7 @@ function data()
 					result.stations = {
 						{
 							pool = { moreCapacity = _extraCargoCapacity * 2 },
-							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
-							-- LOLLO TODO try making this 0
+							tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
 							terminals = { 0, 1 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
 						}
 					}
@@ -357,7 +363,7 @@ function data()
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						},
 						{
-							tag = 1, -- LOLLO TODO try making this 0
+							tag = 0,
 							terminals = {
 								{ 3, 0 },
 							},
@@ -368,7 +374,7 @@ function data()
 					result.stations = {
 						{
 							pool = { moreCapacity = _extraCargoCapacity },
-							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
+							tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
 							terminals = { 0 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
 						}
 					}

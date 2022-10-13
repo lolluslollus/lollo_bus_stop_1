@@ -111,12 +111,25 @@ function data()
             end
 ]]
 
-            local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
-            local allStreetData = streetUtils.getGlobalStreetData({
+            local globalBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+            --[[
+                LOLLO NOTE UG TODO
+                In postRunFn, api.res.streetTypeRep.getAll() only returns street types,
+                which are available in the present game.
+                In other lua states, eg in game_script, it returns all street types, which have ever been present in the game,
+                including those from inactive mods.
+                This is inconsistent: the api should return the same in every state.
+                This happens with build 35050.
+            ]]
+            local globalStreetData = streetUtils.getGlobalStreetData({
                 -- streetUtils.getStreetDataFilters().PATHS,
                 streetUtils.getStreetDataFilters().STOCK,
             })
-            local allTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
+            -- logger.print('postRunFn: #globalStreetData =', #globalStreetData)
+            -- logger.print('postRunFn: globalStreetData =') logger.debugPrint(globalStreetData)
+            local test = api.res.streetTypeRep.getAll()
+            logger.print('postRunFn: the api found ' .. #test .. ' street types')
+            local globalTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
             local geldedBusStopModels = moduleHelpers.getGeldedBusStopModels()
 
             local function addCon(sourceFileName, targetFileName, scriptFileName, yearFrom, yearTo)
@@ -154,9 +167,9 @@ function data()
                 -- UG TODO it would be nice to alter the soundSet here, but there is no suitable type
                 newCon.updateScript.fileName = scriptFileName .. '.updateFn'
                 newCon.updateScript.params = {
-                    globalBridgeData = allBridgeData,
-                    globalStreetData = allStreetData,
-                    globalTunnelData = allTunnelData,
+                    globalBridgeData = globalBridgeData,
+                    globalStreetData = globalStreetData,
+                    globalTunnelData = globalTunnelData,
                     globalBusStopModelData = geldedBusStopModels,
                 }
                 -- these are useless but the game wants them
@@ -165,7 +178,7 @@ function data()
                 newCon.createTemplateScript.fileName = scriptFileName .. '.createTemplateFn'
 
                 -- moduleHelpers.updateParamValues_model(newCon.params, geldedBusStopModels)
-                -- moduleHelpers.updateParamValues_streetType(newCon.params, allStreetData)
+                -- moduleHelpers.updateParamValues_streetType(newCon.params, globalStreetData)
 
                 api.res.constructionRep.add(newCon.fileName, newCon, true) -- fileName, resource, visible
             end

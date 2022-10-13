@@ -5,12 +5,12 @@ local streetUtils = require('lollo_bus_stop.streetUtils')
 local stringUtils = require('lollo_bus_stop.stringUtils')
 
 
-local getDefaultStreetTypeIndexBase0 = function(allStreetData)
-    if type(allStreetData) ~= 'table' then return 0 end
+local getDefaultStreetTypeIndexBase0 = function(globalStreetData)
+    if type(globalStreetData) ~= 'table' then return 0 end
 
-    local result = arrayUtils.findIndex(allStreetData, 'fileName', 'lollo_medium_1_way_1_lane_street_narrow_sidewalk.lua') - 1
+    local result = arrayUtils.findIndex(globalStreetData, 'fileName', 'lollo_medium_1_way_1_lane_street_narrow_sidewalk.lua') - 1
     if result < 0 then
-        result = arrayUtils.findIndex(allStreetData, 'fileName', 'standard/country_small_one_way_new.lua') - 1
+        result = arrayUtils.findIndex(globalStreetData, 'fileName', 'standard/country_small_one_way_new.lua') - 1
     end
 
     return result > 0 and result or 0
@@ -41,23 +41,25 @@ local funcs = {}
 
 -- Returns a sorted table and an indexed table with the same values.
 -- Inside constructions, you must pass all parameters coz the api is not available
-funcs.getParamsMetadata = function(allBridgeData, allStreetData, modelData)
-    if not(allBridgeData) then allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge() end
-    if not(allStreetData) then
-        allStreetData = streetUtils.getGlobalStreetData({
+funcs.getParamsMetadata = function(globalBridgeData, globalStreetData, modelData)
+    if not(globalBridgeData) then globalBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge() end
+    if not(globalStreetData) then
+        globalStreetData = streetUtils.getGlobalStreetData({
             -- streetUtils.getStreetDataFilters().PATHS,
             streetUtils.getStreetDataFilters().STOCK,
         })
+        logger.print('getParamsMetadata: #globalStreetData =', #globalStreetData)
+        -- logger.print('getParamsMetadata: globalStreetData =') logger.debugPrint(globalStreetData)
     end
     if not(modelData) then modelData = funcs.getGeldedBusStopModels() end
 
     local metadata_sorted = {
         {
-            defaultIndex = getDefaultStreetTypeIndexBase0(allStreetData),
+            defaultIndex = getDefaultStreetTypeIndexBase0(globalStreetData),
             key = 'lolloBusStop_streetType',
             name = _('streetTypeName'),
             values = arrayUtils.map(
-                allStreetData,
+                globalStreetData,
                 function(str)
                     return str.name
                 end
@@ -68,7 +70,7 @@ funcs.getParamsMetadata = function(allBridgeData, allStreetData, modelData)
             key = 'lolloBusStop_bridgeOrTunnelType',
             name = _('bridgeTypeName'),
             values = arrayUtils.map(
-                allBridgeData,
+                globalBridgeData,
                 function(str)
                     return str.name
                 end
@@ -175,16 +177,16 @@ funcs.getStationPoolCapacities = function(params, result)
 end
 
 --[[
-helpers.updateParamValues_streetType = function(params, allStreetData)
+helpers.updateParamValues_streetType = function(params, globalStreetData)
     for _, param in pairs(params) do
         if param.key == 'lolloBusStop_streetType' then
             param.values = arrayUtils.map(
-                allStreetData,
+                globalStreetData,
                 function(str)
                     return str.name
                 end
             )
-            param.defaultIndex = getDefaultStreetTypeIndexBase0(allStreetData)
+            param.defaultIndex = getDefaultStreetTypeIndexBase0(globalStreetData)
             param.uiType = 2 -- 'COMBOBOX'
             -- print('lolloBusStop_streetType param =')
             -- debugPrint(param)

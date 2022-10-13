@@ -441,51 +441,53 @@ local _actions = {
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
         -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
         newCon.fileName = constants.parametricConFileName
-        local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
-        local allTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
-        local allStreetData = streetUtils.getGlobalStreetData({
+        local globalBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+        local globalTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
+        local globalStreetData = streetUtils.getGlobalStreetData({
             -- streetUtils.getStreetDataFilters().PATHS,
             streetUtils.getStreetDataFilters().STOCK,
         })
 
-        -- logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
+        -- logger.print('globalBridgeData =') logger.debugPrint(globalBridgeData)
         local bridgeTypeFileName = groundBridgeTunnel012 == 1 and type(bridgeOrTunnelType) == 'number' and bridgeOrTunnelType > -1 and api.res.bridgeTypeRep.getName(bridgeOrTunnelType) or nil
         logger.print('bridgeTypeFileName =', bridgeTypeFileName or 'NIL')
         local bridgeTypeIndexBase0 = 0 -- no bridge
         if type(bridgeTypeFileName) == 'string' then
-            local index = arrayUtils.findIndex(allBridgeData, 'fileName', bridgeTypeFileName) -- the first item is no bridge
+            local index = arrayUtils.findIndex(globalBridgeData, 'fileName', bridgeTypeFileName) -- the first item is no bridge
             logger.print('index =', index)
             if index > 0 then
                 bridgeTypeIndexBase0 = index - 1 -- base 0
             end
         end
 
-        -- logger.print('allTunnelData =') logger.debugPrint(allTunnelData)
+        -- logger.print('globalTunnelData =') logger.debugPrint(globalTunnelData)
         local tunnelTypeFileName = groundBridgeTunnel012 == 2 and type(bridgeOrTunnelType) == 'number' and bridgeOrTunnelType > -1 and api.res.tunnelTypeRep.getName(bridgeOrTunnelType) or nil
         logger.print('tunnelTypeFileName =', tunnelTypeFileName or 'NIL')
         local tunnelTypeIndexBase0 = 0 -- no tunnel
         if type(tunnelTypeFileName) == 'string' then
-            local index = arrayUtils.findIndex(allTunnelData, 'fileName', tunnelTypeFileName) -- the first item is no tunnel
+            local index = arrayUtils.findIndex(globalTunnelData, 'fileName', tunnelTypeFileName) -- the first item is no tunnel
             logger.print('index =', index)
             if index > 0 then
                 tunnelTypeIndexBase0 = index - 1 -- base 0
             end
         end
 
-        -- logger.print('allStreetData =') logger.debugPrint(allStreetData)
+        logger.print('buildConstruction: #globalStreetData =', #globalStreetData)
+        local test = api.res.streetTypeRep.getAll()
+        logger.print('buildConstruction: the api found ' .. #test .. ' street types')
         local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
         if type(streetTypeFileName) ~= 'string' then
             logger.warn('cannot find street type', streetType or 'NIL')
             _setStateReady()
             return
         end
-        local streetTypeIndexBase0 = arrayUtils.findIndex(allStreetData, 'fileName', streetTypeFileName) - 1 -- base 0
+        local streetTypeIndexBase0 = arrayUtils.findIndex(globalStreetData, 'fileName', streetTypeFileName) - 1 -- base 0
         if streetTypeIndexBase0 < 0 then
             logger.warn('cannot find street type index', streetType or 'NIL')
             _setStateReady()
             return
         end
-        local _sidewalkHeight = (allStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
+        local _sidewalkHeight = (globalStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
         local _pitchAngle = math.atan2(
             dataForCon.outerNode1Pos[3] - dataForCon.outerNode0Pos[3],
             math.sqrt((dataForCon.outerNode1Pos[1] - dataForCon.outerNode0Pos[1])^2 + (dataForCon.outerNode1Pos[2] - dataForCon.outerNode0Pos[2])^2)
@@ -661,7 +663,7 @@ local _actions = {
     -- I tried Proposal instead of SimpleProposal but it is not meant to be.
     -- The trouble seems to be with collisions between external edges and inner edges.
     buildSnappyRoads = function(conParams, conId)
-        logger.print('buildSnappyRoads starting, stationConId =') logger.debugPrint(conId)
+        logger.print('buildSnappyRoads starting, stationConId =', conId or 'NIL')
         if type(conParams) ~= 'table' then
             logger.warn('buildSnappyRoads received no table for conParams')
             _setStateReady()
@@ -775,49 +777,32 @@ local _actions = {
         local oldEdge0Street = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.BASE_EDGE_STREET)
         local oldEdge1Street = api.engine.getComponent(oldEdge1Id, api.type.ComponentType.BASE_EDGE_STREET)
 
-        local newEdge0 = api.type.SegmentAndEntity.new()
-        newEdge0.entity = -1
-        newEdge0.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
-        newEdge0.comp = oldBaseEdge0
-        logger.print('newEdge0.comp before =') logger.debugPrint(newEdge0.comp)
-        if newEdge0.comp.node0 == oldNode0Id then newEdge0.comp.node0 = newNode0Id
-        elseif newEdge0.comp.node0 == oldNode1Id then newEdge0.comp.node0 = newNode1Id
-        elseif newEdge0.comp.node1 == oldNode0Id then newEdge0.comp.node1 = newNode0Id
-        elseif newEdge0.comp.node1 == oldNode1Id then newEdge0.comp.node1 = newNode1Id
-        end
-        logger.print('newEdge0.comp after =') logger.debugPrint(newEdge0.comp)
-        if type(oldBaseEdge0.objects) == 'table' then
-            local edgeObjects = {}
-            for _, edgeObj in pairs(oldBaseEdge0.objects) do
-                table.insert(edgeObjects, { edgeObj[1], edgeObj[2] })
+        local getNewEdge = function(oldBaseEdge, oldEdgeStreet, entity)
+            local newEdge = api.type.SegmentAndEntity.new()
+            newEdge.entity = entity
+            newEdge.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
+            newEdge.comp = oldBaseEdge
+            logger.print('newEdge.comp before =') logger.debugPrint(newEdge.comp)
+            if newEdge.comp.node0 == oldNode0Id then newEdge.comp.node0 = newNode0Id
+            elseif newEdge.comp.node0 == oldNode1Id then newEdge.comp.node0 = newNode1Id
+            elseif newEdge.comp.node1 == oldNode0Id then newEdge.comp.node1 = newNode0Id
+            elseif newEdge.comp.node1 == oldNode1Id then newEdge.comp.node1 = newNode1Id
             end
-            newEdge0.comp.objects = edgeObjects -- LOLLO NOTE cannot insert directly into edge0.comp.objects. Different tables are handled differently...
-        end
-        -- newEdge0.playerOwned = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.PLAYER_OWNED)
-        newEdge0.playerOwned = _utils.getPlayerOwned()
-        newEdge0.streetEdge = oldEdge0Street
-
-        local newEdge1 = api.type.SegmentAndEntity.new()
-        newEdge1.entity = -2
-        newEdge1.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
-        newEdge1.comp = oldBaseEdge1
-        logger.print('newEdge1.comp before =') logger.debugPrint(newEdge1.comp)
-        if newEdge1.comp.node0 == oldNode0Id then newEdge1.comp.node0 = newNode0Id
-        elseif newEdge1.comp.node0 == oldNode1Id then newEdge1.comp.node0 = newNode1Id
-        elseif newEdge1.comp.node1 == oldNode0Id then newEdge1.comp.node1 = newNode0Id
-        elseif newEdge1.comp.node1 == oldNode1Id then newEdge1.comp.node1 = newNode1Id
-        end
-        logger.print('newEdge1.comp after =') logger.debugPrint(newEdge1.comp)
-        if type(oldBaseEdge1.objects) == 'table' then
-            local edgeObjects = {}
-            for _, edgeObj in pairs(oldBaseEdge1.objects) do
-                table.insert(edgeObjects, { edgeObj[1], edgeObj[2] })
+            logger.print('newEdge.comp after =') logger.debugPrint(newEdge.comp)
+            if type(oldBaseEdge.objects) == 'table' then
+                local edgeObjects = {}
+                for _, edgeObj in pairs(oldBaseEdge.objects) do
+                    table.insert(edgeObjects, { edgeObj[1], edgeObj[2] })
+                end
+                newEdge.comp.objects = edgeObjects -- LOLLO NOTE cannot insert directly into edge0.comp.objects. Different tables are handled differently...
             end
-            newEdge1.comp.objects = edgeObjects -- LOLLO NOTE cannot insert directly into edge0.comp.objects. Different tables are handled differently...
+            -- newEdge0.playerOwned = api.engine.getComponent(oldEdge0Id, api.type.ComponentType.PLAYER_OWNED)
+            newEdge.playerOwned = _utils.getPlayerOwned()
+            newEdge.streetEdge = oldEdgeStreet
+            return newEdge
         end
-        -- newEdge1.playerOwned = api.engine.getComponent(oldEdge1Id, api.type.ComponentType.PLAYER_OWNED)
-        newEdge1.playerOwned = _utils.getPlayerOwned()
-        newEdge1.streetEdge = oldEdge1Street
+        local newEdge0 = getNewEdge(oldBaseEdge0, oldEdge0Street, -1)
+        local newEdge1 = getNewEdge(oldBaseEdge1, oldEdge1Street, -2)
 
         local proposal = api.type.SimpleProposal.new()
         proposal.streetProposal.nodesToRemove[1] = oldNode0Id
@@ -829,7 +814,7 @@ local _actions = {
 
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false
-        -- context.cleanupStreetGraph = true
+        context.cleanupStreetGraph = true
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
@@ -1725,6 +1710,8 @@ function data()
                             local compType
                             local compTypeIndex
                             local streetType
+                            local hasBus
+                            local tramTrackType
                             -- keep the outer segments
                             for i = 1, #args.proposal.proposal.removedSegments, 1 do
                                 local segmentProps = args.proposal.proposal.removedSegments[i]
@@ -1747,6 +1734,8 @@ function data()
                                     compType = segmentProps.comp.type -- ground, bridge or tunnel
                                     compTypeIndex = segmentProps.comp.typeIndex -- bridge or tunnel type
                                     streetType = segmentProps.streetEdge.streetType
+                                    hasBus = segmentProps.streetEdge.hasBus
+                                    tramTrackType = segmentProps.streetEdge.tramTrackType
                                 end
                             end
                             if #removedSegments ~= 3 then
@@ -1755,9 +1744,9 @@ function data()
                             end
                             local tan0Adjusted = transfUtils.getVectorMultiplied(tan0, totalLength / transfUtils.getVectorLength(tan0))
                             local tan1Adjusted = transfUtils.getVectorMultiplied(tan1, totalLength / transfUtils.getVectorLength(tan1))
-                            return tan0Adjusted, tan1Adjusted, compType, compTypeIndex, streetType
+                            return tan0Adjusted, tan1Adjusted, compType, compTypeIndex, streetType, hasBus, tramTrackType
                         end
-                        local tan0, tan1, compType, compTypeIndex, streetType = getEdgeProps()
+                        local tan0, tan1, compType, compTypeIndex, streetType, hasBus, tramTrackType = getEdgeProps()
                         if not(tan0) or not(tan1) or not(streetType) then return end
 
                         local makeEdge = function()
@@ -1772,6 +1761,8 @@ function data()
                             newEdge.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
                             newEdge.streetEdge = api.type.BaseEdgeStreet.new()
                             newEdge.streetEdge.streetType = streetType
+                            newEdge.streetEdge.hasBus = hasBus or false
+                            newEdge.streetEdge.tramTrackType = tramTrackType or 0
 
                             local proposal = api.type.SimpleProposal.new()
                             proposal.streetProposal.edgesToAdd[1] = newEdge
@@ -1806,8 +1797,10 @@ function data()
             end
         end,
         guiInit = function()
+            logger.print('guiInit starting')
             _guiData.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
             _guiData.conParamsMetadataSorted = moduleHelpers.getParamsMetadata()
+            logger.print('guiInit ending')
         end,
         -- guiUpdate = function()
         -- end,

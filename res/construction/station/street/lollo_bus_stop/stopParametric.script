@@ -61,8 +61,10 @@ function data()
 				if not(params.lolloBusStop_tramTrack) then params.lolloBusStop_tramTrack = paramsMetadataIndexed['lolloBusStop_tramTrack'].defaultIndex end
 
 				if not(params.lolloBusStop_streetType) or not(two.globalStreetData) or not(two.globalStreetData[params.lolloBusStop_streetType + 1]) then
+					logger.print('params.lolloBusStop_streetType was', params.lolloBusStop_streetType or 'NIL')
 					params.lolloBusStop_streetType = paramsMetadataIndexed['lolloBusStop_streetType'].defaultIndex
 					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
+					logger.print('two.globalStreetData =') logger.debugPrint(two.globalStreetData)
 				end
 				if params.lolloBusStop_groundBridgeTunnel012 == 1 then -- bridge
 					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalBridgeData) or not(two.globalBridgeData[params.lolloBusStop_bridgeOrTunnelType + 1]) then

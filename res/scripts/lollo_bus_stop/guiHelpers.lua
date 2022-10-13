@@ -51,7 +51,7 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, pa
             paramNameTextBox:setTooltip(paramMetadata.tooltip)
         end
         layout:addItem(paramNameTextBox)
-        local _valueIndexBase0 = paramValue or (paramMetadata.defaultValue or 0)
+        local _valueIndexBase0 = paramValue or (paramMetadata.defaultIndex or 0)
         logger.print('_valueIndexBase0 =', _valueIndexBase0)
         if paramMetadata.uiType == 'ICON_BUTTON' then
             local buttonRowLayout = api.gui.comp.ToggleButtonGroup.new(api.gui.util.Alignment.HORIZONTAL, 0, true)

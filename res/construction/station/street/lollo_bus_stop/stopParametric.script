@@ -32,58 +32,56 @@ function data()
 			local function _getInverseTan(tan)
 				return {-tan[1], -tan[2], -tan[3]}
 			end
+			local function getFreeNodes()
+				if params.lolloBusStop_freeNodes == 3 then return { 0, 5, } end
+				return {}
+			end
 			local function getSnapNodes()
-				return {0, 5}
-				-- if params.lolloBusStop_direction == 0 then
-				-- 	if params.lolloBusStop_snapNodes == 0 then return {}
-				-- 	elseif params.lolloBusStop_snapNodes == 1 then return { 0, }
-				-- 	elseif params.lolloBusStop_snapNodes == 2 then return { 5, }
-				-- 	elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
-				-- 	end
-				-- else
-				-- 	if params.lolloBusStop_snapNodes == 0 then return {}
-				-- 	elseif params.lolloBusStop_snapNodes == 1 then return { 5, }
-				-- 	elseif params.lolloBusStop_snapNodes == 2 then return { 0, }
-				-- 	elseif params.lolloBusStop_snapNodes == 3 then return { 0, 5, }
-				-- 	end
-				-- end
-				-- return {}
+				if params.lolloBusStop_snapNodes == 3 then return { 0, 5, } end
+				return {}
 			end
 			local function _getTramTrackType()
 				return params.lolloBusStop_tramTrack == 0 and 'NO' or params.lolloBusStop_tramTrack == 1 and 'YES' or 'ELECTRIC'
 			end
 			local function _initParams()
-				if params.lolloBusStop_snapNodes ~= 0 and params.lolloBusStop_snapNodes ~= 1 and params.lolloBusStop_snapNodes ~= 2 and params.lolloBusStop_snapNodes ~= 3 then
-					params.lolloBusStop_snapNodes = 3
-				end
-				-- LOLLO TODO make these four smarter or remove them
-				if not(params.lolloBusStop_bothSides) then params.lolloBusStop_bothSides = 0 end
-				if not(params.lolloBusStop_direction) then params.lolloBusStop_direction = 0 end
-				if not(params.lolloBusStop_driveOnLeft) then params.lolloBusStop_driveOnLeft = 0 end
-				if not(params.lolloBusStop_tramTrack) then params.lolloBusStop_tramTrack = 0 end
+				local _, paramsMetadataIndexed = moduleHelpers.getParamsMetadata(two.globalBridgeData, two.globalStreetData, two.globalBusStopModelData)
+				-- logger.print('_initParams got paramsMetadata =') logger.debugPrint(paramsMetadata)
+				logger.print('defaults =') logger.debugPrint({
+					paramsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_direction'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_driveOnLeft'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_tramTrack'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_streetType'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_model'].defaultIndex
+				})
+				if not(params.lolloBusStop_bothSides) then params.lolloBusStop_bothSides = paramsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex end
+				if not(params.lolloBusStop_direction) then params.lolloBusStop_direction = paramsMetadataIndexed['lolloBusStop_direction'].defaultIndex end
+				if not(params.lolloBusStop_driveOnLeft) then params.lolloBusStop_driveOnLeft = paramsMetadataIndexed['lolloBusStop_driveOnLeft'].defaultIndex end
+				if not(params.lolloBusStop_tramTrack) then params.lolloBusStop_tramTrack = paramsMetadataIndexed['lolloBusStop_tramTrack'].defaultIndex end
 
 				if not(params.lolloBusStop_streetType) or not(two.globalStreetData) or not(two.globalStreetData[params.lolloBusStop_streetType + 1]) then
-					params.lolloBusStop_streetType = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
+					params.lolloBusStop_streetType = paramsMetadataIndexed['lolloBusStop_streetType'].defaultIndex
 					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
 				end
 				if params.lolloBusStop_groundBridgeTunnel012 == 1 then -- bridge
 					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalBridgeData) or not(two.globalBridgeData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
-						params.lolloBusStop_bridgeOrTunnelType = 0 -- no bridge
+						params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no bridge
 						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
 						logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
 					end
 				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then -- tunnel
 					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalTunnelData) or not(two.globalTunnelData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
-						params.lolloBusStop_bridgeOrTunnelType = 0 -- no tunnel
+						params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no tunnel
 						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
 						logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
 					end
 				else
-					params.lolloBusStop_bridgeOrTunnelType = 0 -- no tunnel
+					params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no bridge no tunnel
 					params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
 				end
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
-					params.lolloBusStop_model = 0
+					params.lolloBusStop_model = paramsMetadataIndexed['lolloBusStop_model'].defaultIndex
 					logger.print('stopParametric.updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
 				end
 			end
@@ -212,7 +210,7 @@ function data()
                         },
 						edgeType = _getEdgeType(),
 						edgeTypeName = _getEdgeTypeName(),
-						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
+						freeNodes = getFreeNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},
                     },

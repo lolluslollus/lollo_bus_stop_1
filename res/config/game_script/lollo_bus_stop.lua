@@ -25,7 +25,7 @@ local _eventProperties = constants.eventProperties
 
 local _guiConstants = {
     ploppablePassengersModelId = false,
-    conParamsMetadata = {},
+    conParamsMetadataSorted = {},
 }
 
 -- works as a semaphore for all functions that check state.isWorking before doing something
@@ -529,6 +529,8 @@ local _actions = {
             -- lolloBusStop_outerNode1Id = outerNode1Id, -- idem
             lolloBusStop_outerNode0Pos_absolute = (dataForCon.outerNode0Pos), -- arrayUtils.cloneOmittingFields(dataForCon.outerNode0Pos),
             lolloBusStop_outerNode1Pos_absolute = (dataForCon.outerNode1Pos), --arrayUtils.cloneOmittingFields(dataForCon.outerNode1Pos),
+            lolloBusStop_freeNodes = 3,
+            -- lolloBusStop_freeNodes = 0,
             lolloBusStop_snapNodes = 3,
             -- lolloBusStop_snapNodes = 0,
             lolloBusStop_streetType = streetTypeIndexBase0,
@@ -1446,6 +1448,10 @@ local _actions = {
         newCon.fileName = oldCon.fileName
         local newParams = arrayUtils.cloneDeepOmittingFields(oldCon.params, nil, true)
         newParams[paramKey] = newParamValueIndexBase0
+        -- deal with bridges
+        if paramKey == 'lolloBusStop_bridgeOrTunnelType' then
+            newParams['lolloBusStop_groundBridgeTunnel012'] = 1 -- bridge
+        end
         newParams.seed = newParams.seed + 1
         -- clone your own variable, it's safer than cloning newCon.params, which is userdata
         local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
@@ -1559,12 +1565,12 @@ function data()
                         if not(conId) or not(con) then return end
 
                         logger.print('selected one of my stations, it has conId =', conId, 'and con.fileName =', con.fileName)
-                        if not(_guiConstants.conParamsMetadata) then
+                        if not(_guiConstants.conParamsMetadataSorted) then
                             logger.print('_guiConstants.conParams is not available')
                             return
                         end
 
-                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiConstants.conParamsMetadata, con.params)
+                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiConstants.conParamsMetadataSorted, con.params)
                     end,
                     logger.xpErrorHandler
                 )
@@ -1646,7 +1652,7 @@ function data()
         end,
         guiInit = function()
             _guiConstants.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
-            _guiConstants.conParamsMetadata = moduleHelpers.getParamsMetadata()
+            _guiConstants.conParamsMetadataSorted = moduleHelpers.getParamsMetadata()
         end,
         -- guiUpdate = function()
         -- end,

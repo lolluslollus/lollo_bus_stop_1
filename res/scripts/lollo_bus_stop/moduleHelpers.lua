@@ -5,20 +5,55 @@ local streetUtils = require('lollo_bus_stop.streetUtils')
 local stringUtils = require('lollo_bus_stop.stringUtils')
 
 
-local helpers = {}
+local getDefaultStreetTypeIndexBase0 = function(allStreetData)
+    if type(allStreetData) ~= 'table' then return 0 end
 
-helpers.getParamsMetadata = function()
-    local modelData = helpers.getGeldedBusStopModels()
-    local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
-    -- no tunnel param, we don't need it for now
-    logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
-    local allStreetData = streetUtils.getGlobalStreetData({
-        -- streetUtils.getStreetDataFilters().PATHS,
-        streetUtils.getStreetDataFilters().STOCK,
-    })
-    local results = {
+    local result = arrayUtils.findIndex(allStreetData, 'fileName', 'lollo_medium_1_way_1_lane_street_narrow_sidewalk.lua') - 1
+    if result < 0 then
+        result = arrayUtils.findIndex(allStreetData, 'fileName', 'standard/country_small_one_way_new.lua') - 1
+    end
+
+    return result > 0 and result or 0
+end
+
+local getGeldedBusStopModels = function()
+    local results = {}
+    local add = function(fileName)
+        local id = api.res.modelRep.find(fileName)
+        local model = api.res.modelRep.get(id)
+        results[#results+1] = {
+            fileName = fileName,
+            icon = model.metadata.description.icon,
+            id = id,
+            name = model.metadata.description.name
+        }
+    end
+    add('lollo_bus_stop/geldedBusStops/pole_old.mdl')
+    add('lollo_bus_stop/geldedBusStops/pole_mid.mdl')
+    add('lollo_bus_stop/geldedBusStops/pole_new.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_old.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_mid.mdl')
+    add('lollo_bus_stop/geldedBusStops/small_new.mdl')
+    return results
+end
+
+local funcs = {}
+
+-- Returns a sorted table and an indexed table with the same values.
+-- Inside constructions, you must pass all parameters coz the api is not available
+funcs.getParamsMetadata = function(allBridgeData, allStreetData, modelData)
+    if not(allBridgeData) then allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge() end
+    if not(allStreetData) then
+        allStreetData = streetUtils.getGlobalStreetData({
+            -- streetUtils.getStreetDataFilters().PATHS,
+            streetUtils.getStreetDataFilters().STOCK,
+        })
+    end
+    if not(modelData) then modelData = funcs.getGeldedBusStopModels() end
+
+    local metadata_sorted = {
         {
-            defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allStreetData),
+            defaultIndex = getDefaultStreetTypeIndexBase0(allStreetData),
             key = 'lolloBusStop_streetType',
             name = _('streetTypeName'),
             values = arrayUtils.map(
@@ -107,43 +142,25 @@ helpers.getParamsMetadata = function()
         --     uiType = 'SLIDER'
         -- },
     }
-    logger.print('paramsMetadata =') logger.debugPrint(results)
-    return results
-end
-
-helpers.getDefaultStreetTypeIndexBase0 = function(allStreetData)
-    if type(allStreetData) ~= 'table' then return 0 end
-
-    local result = arrayUtils.findIndex(allStreetData, 'fileName', 'lollo_medium_1_way_1_lane_street_narrow_sidewalk.lua') - 1
-    if result < 0 then
-        result = arrayUtils.findIndex(allStreetData, 'fileName', 'standard/country_small_one_way_new.lua') - 1
+    -- add defaultIndex wherever not present
+    for _, record in pairs(metadata_sorted) do
+        record.defaultIndex = record.defaultIndex or 0
     end
-
-    return result > 0 and result or 0
-end
-
-helpers.getGeldedBusStopModels = function()
-    local results = {}
-    local add = function(fileName)
-        local id = api.res.modelRep.find(fileName)
-        local model = api.res.modelRep.get(id)
-        results[#results+1] = {
-            fileName = fileName,
-            icon = model.metadata.description.icon,
-            id = id,
-            name = model.metadata.description.name
-        }
+    local metadata_indexed = {}
+    for _, record in pairs(metadata_sorted) do
+        metadata_indexed[record.key] = record
     end
-    add('lollo_bus_stop/geldedBusStops/pole_old.mdl')
-    add('lollo_bus_stop/geldedBusStops/pole_mid.mdl')
-    add('lollo_bus_stop/geldedBusStops/pole_new.mdl')
-    add('lollo_bus_stop/geldedBusStops/small_old.mdl')
-    add('lollo_bus_stop/geldedBusStops/small_mid.mdl')
-    add('lollo_bus_stop/geldedBusStops/small_new.mdl')
-    return results
+    -- logger.print('metadata_sorted =') logger.debugPrint(metadata_sorted)
+    -- logger.print('metadata_indexed =') logger.debugPrint(metadata_indexed)
+    return metadata_sorted, metadata_indexed
 end
 
-helpers.getStationPoolCapacities = function(params, result)
+-- do not call this from inside the construction
+funcs.getGeldedBusStopModels = function()
+    return getGeldedBusStopModels()
+end
+
+funcs.getStationPoolCapacities = function(params, result)
     local extraCargoCapacity = (params.isStoreCargoOnPavement == 1) and 12 or 0
 
     for _, slot in pairs(result.slots) do
@@ -167,7 +184,7 @@ helpers.updateParamValues_streetType = function(params, allStreetData)
                     return str.name
                 end
             )
-            param.defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allStreetData)
+            param.defaultIndex = getDefaultStreetTypeIndexBase0(allStreetData)
             param.uiType = 2 -- 'COMBOBOX'
             -- print('lolloBusStop_streetType param =')
             -- debugPrint(param)
@@ -185,7 +202,7 @@ helpers.updateParamValues_model = function(params, modelData)
                 end
             )
             logger.print('param.values =') logger.debugPrint(param.values)
-            -- param.defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allModelData)
+            -- param.defaultIndex = getDefaultStreetTypeIndexBase0(allModelData)
             -- param.uiType = 2 -- 'COMBOBOX'
             param.uiType = 3 -- 'ICON_BUTTON'
             -- print('lolloBusStop_streetType param =')
@@ -257,4 +274,4 @@ helpers.setIntParamsFromFloat = function(params, name, float, paramNamePrefix)
     params[_nameDec3] = tonumber(dec3Str)
 end
 ]]
-return helpers
+return funcs

@@ -1,3 +1,4 @@
+local arrayUtils = require('lollo_bus_stop.arrayUtils')
 -- local _constants = require('lollo_bus_stop.constants')
 local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local logger = require('lollo_bus_stop.logger')
@@ -29,7 +30,7 @@ local guiHelpers = {
     end
 }
 
-local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, paramValues, onParamValueChanged, isAddTitle)
+local _getConstructionConfigLayout = function(stationGroupId, paramsMetadataSorted, paramValues, onParamValueChanged, isAddTitle)
     local layout = api.gui.layout.BoxLayout.new('VERTICAL')
     layout:setId(_conConfigLayoutIdPrefix .. stationGroupId)
 
@@ -42,7 +43,7 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, pa
         layout:addItem(title)
     end
 
-    local function addParam(paramMetadata, paramValue)
+    local function addParam(paramKey, paramMetadata, paramValue)
         logger.print('addParam starting')
         if not(paramMetadata) or not(paramValue) then return end
 
@@ -60,7 +61,7 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, pa
             buttonRowLayout:setEmitSignal(false)
             buttonRowLayout:onCurrentIndexChanged(
                 function(newIndexBase0)
-                    onParamValueChanged(stationGroupId, paramsMetadata, paramMetadata.key, newIndexBase0)
+                    onParamValueChanged(stationGroupId, paramsMetadataSorted, paramKey, newIndexBase0)
                 end
             )
             for indexBase1, value in pairs(paramMetadata.values) do
@@ -83,7 +84,7 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, pa
             comboBox:onIndexChanged(
                 function(indexBase0)
                     logger.print('comboBox:onIndexChanged firing, one =') logger.debugPrint(indexBase0)
-                    onParamValueChanged(stationGroupId, paramsMetadata, paramMetadata.key, indexBase0)
+                    onParamValueChanged(stationGroupId, paramsMetadataSorted, paramKey, indexBase0)
                 end
             )
             layout:addItem(comboBox)
@@ -94,7 +95,7 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, pa
             buttonRowLayout:setEmitSignal(false)
             buttonRowLayout:onCurrentIndexChanged(
                 function(newIndexBase0)
-                    onParamValueChanged(stationGroupId, paramsMetadata, paramMetadata.key, newIndexBase0)
+                    onParamValueChanged(stationGroupId, paramsMetadataSorted, paramKey, newIndexBase0)
                 end
             )
             for indexBase1, value in pairs(paramMetadata.values) do
@@ -109,10 +110,10 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadata, pa
     end
     -- logger.print('paramsMetadata =') logger.debugPrint(paramsMetadata)
     -- logger.print('paramValues =') logger.debugPrint(paramValues)
-    for _, paramMetadata in pairs(paramsMetadata) do
-        for key, value in pairs(paramValues) do
-            if key == paramMetadata.key then
-                addParam(paramMetadata, value)
+    for _, paramMetadata in pairs(paramsMetadataSorted) do
+        for valueKey, value in pairs(paramValues) do
+            if valueKey == paramMetadata.key then
+                addParam(valueKey, paramMetadata, value)
                 break
             end
         end
@@ -176,9 +177,8 @@ guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChang
     local minSize = window:calcMinimumSize()
     -- logger.print('rect =') logger.debugPrint(rect)
     logger.print('minSize =') logger.debugPrint(minSize)
-    -- logger.print('#conParams = ', #conParamsMetadata)
 
-    local extraHeight = _extraHeight4Title + #conParamsMetadata * _extraHeight4Param
+    local extraHeight = _extraHeight4Title + arrayUtils.getCount(conParamsMetadata) * _extraHeight4Param
     local size = api.gui.util.Size.new(math.max(rect.w, minSize.w), math.max(rect.h, minSize.h) + extraHeight)
     window:setSize(size)
     window:setResizable(true)

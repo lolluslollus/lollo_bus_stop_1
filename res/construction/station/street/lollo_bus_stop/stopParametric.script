@@ -154,7 +154,7 @@ function data()
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
 			local _streetFileName = _selectedStreetData.fileName
             local _tramTrackType = _getTramTrackType()
-			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 and not(_selectedStreetData.isOneWay)
+			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 -- and not(_selectedStreetData.isOneWay) -- LOLLO TODO try and allow one-lane roads
 			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
@@ -334,8 +334,8 @@ function data()
 			-- LOLLO TEST CODE END
 
             -- join terminals together, similar to result.terminateConstructionHook that fires with modular stations
-			local terminateConstructionHook = function()
-				-- logger.print('starting terminateConstructionHook')
+			local addStationsAndTerminalGroups = function()
+				-- logger.print('starting addStationsAndTerminalGroups')
                 local _extraCargoCapacity = 100
 
 				if _isBothSides then
@@ -343,9 +343,11 @@ function data()
 						{
 							pool = { moreCapacity = _extraCargoCapacity * 2 },
 							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
-							terminals = { 0, 1 } -- 0 is the position of the linked terminal group, in base 0
+							-- LOLLO TODO try making this 0
+							terminals = { 0, 1 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
 						}
 					}
+					-- LOLLO TODO try result.runways like in https://www.transportfever2.com/wiki/doku.php?id=modding:constructiontypes&s[]=terminalgroups
 					result.terminalGroups = {
 						{
 							tag = 0,
@@ -355,7 +357,7 @@ function data()
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						},
 						{
-							tag = 1,
+							tag = 1, -- LOLLO TODO try making this 0
 							terminals = {
 								{ 3, 0 },
 							},
@@ -367,7 +369,7 @@ function data()
 						{
 							pool = { moreCapacity = _extraCargoCapacity },
 							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
-							terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+							terminals = { 0 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
 						}
 					}
 					result.terminalGroups = {
@@ -382,35 +384,36 @@ function data()
 				end
 
 				-- avoid dump when configuring
-				if #(result.stations[1].terminals) == 0 then
-					table.insert(result.stations[1].terminals, 0)
-				end
+				-- if #(result.stations[1].terminals) == 0 then
+				-- 	table.insert(result.stations[1].terminals, 0)
+				-- end
 
 				-- it should output something like (this example has one terminal made of two adjacent bits)
 				-- stock result.stations =
 				-- 	{
 				-- 		{
 				-- 			tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
-				-- 			terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+				-- 			terminals = { 0 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
 				-- 		}
 				-- 	}
 				-- stock result.terminalGroups =
 				-- {
 				-- 	{
-				-- 		tag = -1, -- possibly useless, try to keep them all different tho
+				-- 		tag = -1, -- possibly useless, probably used to tell passengers and cargo terminals
 				-- 		terminals = {
-				-- 			{ 22, 0 }, -- 22 is the position of a model with a terminal, in base 0
-				-- 			{ 25, 0 }, -- 0 is always 0 in the stock station, it is something like a terminal number
+				-- 			{ 22, 0 }, -- 22 is the index (in result.models) of a model with a terminal, in base 0
+				-- 			{ 25, 0 }, -- 0 is always 0 in the stock station,
+				-- 						it should be the terminal index inside the model, in base 0
 				-- 		}
 				-- 	}
 				-- }
 
-				-- logger.print('leaving terminateConstructionHook')
+				-- logger.print('leaving addStationsAndTerminalGroups')
 				-- logger.print('result.models = ') logger.debugPrint(result.models)
 				-- logger.print('result.stations = ') logger.debugPrint(result.stations)
 				-- logger.print('result.terminalGroups = ') logger.debugPrint(result.terminalGroups)
 			end
-            terminateConstructionHook()
+            addStationsAndTerminalGroups()
 
 			logger.print('stopParametric.updateFn.script result = ') logger.debugPrint(result)
 			logger.print('stopParametric.updateFn.script() ending')

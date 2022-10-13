@@ -20,7 +20,7 @@ return {
         secondInnerSplitDone = { conName = nil, eventName = 'secondInnerSplitDone' },
         snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
         snappyRoadsBuilt = { conName = nil, eventName = 'snappyRoadsBuilt'},
-        waypointPlaced = { conName = nil, eventName = 'waypointPlaced' },
+        initialEdgeObjectPlaced = { conName = nil, eventName = 'initialEdgeObjectPlaced' },
         setStateWorking = { conName = nil, eventName = 'setStateWorking' },
     },
 

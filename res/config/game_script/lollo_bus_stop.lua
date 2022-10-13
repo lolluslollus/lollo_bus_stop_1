@@ -4,7 +4,7 @@ local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local guiHelpers = require('lollo_bus_stop.guiHelpers')
 local logger = require('lollo_bus_stop.logger')
 local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
-local pitchHelpers = require('lollo_bus_stop.pitchHelper')
+-- local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 local streetUtils = require('lollo_bus_stop.streetUtils')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
@@ -23,9 +23,10 @@ local state = { isWorking = false }
 local _eventId = constants.eventId
 local _eventProperties = constants.eventProperties
 
-local _guiConstants = {
-    ploppablePassengersModelId = false,
+local _guiData = {
+    conIdAboutToBeBulldozed = false,
     conParamsMetadataSorted = {},
+    ploppablePassengersModelId = false,
 }
 
 -- works as a semaphore for all functions that check state.isWorking before doing something
@@ -327,9 +328,6 @@ local _utils = {
     getPosTransformed = function(pos, transf)
         local result = transfUtils.getVec123Transformed(pos, transf)
         return result
-    end,
-    getTanReversed = function(tan)
-        return {-tan[1], -tan[2], -tan[3]}
     end,
     getTanTransformed = function(tan, transf)
         local _rotateScaleTransf = {
@@ -1565,12 +1563,12 @@ function data()
                         if not(conId) or not(con) then return end
 
                         logger.print('selected one of my stations, it has conId =', conId, 'and con.fileName =', con.fileName)
-                        if not(_guiConstants.conParamsMetadataSorted) then
+                        if not(_guiData.conParamsMetadataSorted) then
                             logger.print('_guiConstants.conParams is not available')
                             return
                         end
 
-                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiConstants.conParamsMetadataSorted, con.params)
+                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiData.conParamsMetadataSorted, con.params)
                     end,
                     logger.xpErrorHandler
                 )
@@ -1584,8 +1582,8 @@ function data()
                         and args.proposal.proposal.edgeObjectsToAdd[1]
                         and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance)
                         then
-                            if _guiConstants.ploppablePassengersModelId
-                            and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiConstants.ploppablePassengersModelId
+                            if _guiData.ploppablePassengersModelId
+                            and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiData.ploppablePassengersModelId
                             then
                                 -- logger.print('args =') logger.debugPrint(args)
                                 local edgeObjectId = args.proposal.proposal.edgeObjectsToAdd[1].resultEntity
@@ -1633,7 +1631,7 @@ function data()
                                 logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
                                 _setStateWorking(
                                     true,
-                                    _eventProperties.waypointPlaced.eventName,
+                                    _eventProperties.initialEdgeObjectPlaced.eventName,
                                     {
                                         edgeId = edgeId,
                                         edgeObjectId = edgeObjectId,
@@ -1648,11 +1646,166 @@ function data()
                     end,
                     logger.xpErrorHandler
                 )
+            elseif (name == 'builder.proposalCreate' and id == 'bulldozer') then
+                if args == nil or args.proposal == nil or args.proposal.toRemove == nil or args.proposal.toRemove[1] == nil then
+                    _guiData.conIdAboutToBeBulldozed = false
+                    return
+                end
+                -- logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') logger.debugPrint(args)
+                local conId = args.proposal.toRemove[1]
+                if not(edgeUtils.isValidAndExistingId(conId)) then
+                    _guiData.conIdAboutToBeBulldozed = false
+                    return
+                end
+
+                local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
+                if con == nil or con.fileName ~= constants.parametricConFileName then
+                    _guiData.conIdAboutToBeBulldozed = false
+                    return
+                end
+
+                logger.print('you are about to bulldoze the construction with id') logger.debugPrint(conId)
+                _guiData.conIdAboutToBeBulldozed = conId
+            elseif (name == 'builder.apply' and id == 'bulldozer') then
+                -- LOLLO NOTE
+                -- Here, the station has been bulldozed.
+                -- Its data has been lost already, except something about an expiring station group.
+                -- I could try some hack to rebuild the road after bulldozing the station, but a bit of manuality will do fine
+                xpcall(
+                    function()
+                        logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') --logger.debugPrint(args)
+                        if not(_guiData.conIdAboutToBeBulldozed) then return end
+                        if args == nil
+                        or args.proposal == nil
+                        or args.proposal.toRemove == nil
+                        or args.proposal.toRemove[1] ~= _guiData.conIdAboutToBeBulldozed
+                        then
+                            return
+                        end
+
+                        _guiData.conIdAboutToBeBulldozed = false
+                        logger.print('you have bulldozed the construction with id') logger.debugPrint(args.proposal.toRemove[1])
+                        -- local gameTimeSec = api.engine.getComponent(api.engine.util.getWorld(), api.type.ComponentType.GAME_TIME).gameTime -- number
+                        -- local expiredStationGroupIds = api.engine.system.stationGroupSystem.getExpiredStationGroups(gameTimeSec * 1000) -- userdata indexed in base 1
+
+                        local getNode0IdNode1Id = function()
+                            local removedNodeIds = {}
+                            for i = 1, #args.proposal.proposal.removedNodes, 1 do
+                                local nodeProps = args.proposal.proposal.removedNodes[i]
+                                removedNodeIds[#removedNodeIds+1] = -nodeProps.entity -1
+                            end
+                            local remainingNodeIds = {}
+                            for i = 1, #args.proposal.proposal.removedSegments, 1 do
+                                local segmentProps = args.proposal.proposal.removedSegments[i]
+                                for _, nodeId in pairs({segmentProps.comp.node0, segmentProps.comp.node1}) do
+                                    if not(arrayUtils.arrayHasValue(removedNodeIds, nodeId)) then
+                                        remainingNodeIds[#remainingNodeIds+1] = nodeId
+                                    end
+                                end
+                            end
+                            if #remainingNodeIds ~= 2 then
+                                logger.warn('cannot rebuild road, there are ~= 2 remainingNodeIds') logger.warningDebugPrint(remainingNodeIds)
+                                return false
+                            end
+                            -- if #removedNodeIds ~= 2 then
+                            --     logger.warn('cannot rebuild road, there are ~= 2 removedNodeIds') logger.warningDebugPrint(removedNodeIds)
+                            --     return false
+                            -- end
+                            return remainingNodeIds[1], remainingNodeIds[2]
+                        end
+                        local node0Id, node1Id = getNode0IdNode1Id()
+                        if not(node0Id) or not(node1Id) then return end
+
+                        local getEdgeProps = function()
+                            local tan0, tan1
+                            local totalLength = 0
+                            local removedSegments = {}
+                            local compType
+                            local compTypeIndex
+                            local streetType
+                            -- keep the outer segments
+                            for i = 1, #args.proposal.proposal.removedSegments, 1 do
+                                local segmentProps = args.proposal.proposal.removedSegments[i]
+                                if segmentProps.comp.node0 == node0Id then
+                                    tan0 = transfUtils.getVectorMultiplied(segmentProps.comp.tangent0, 1)
+                                elseif segmentProps.comp.node1 == node0Id then
+                                    tan0 = transfUtils.getVectorMultiplied(segmentProps.comp.tangent1, -1)
+                                end
+                                if segmentProps.comp.node0 == node1Id then
+                                    tan1 = transfUtils.getVectorMultiplied(segmentProps.comp.tangent0, -1)
+                                elseif segmentProps.comp.node1 == node1Id then
+                                    tan1 = transfUtils.getVectorMultiplied(segmentProps.comp.tangent1, 1)
+                                end
+
+                                totalLength = totalLength + (transfUtils.getVectorLength(segmentProps.comp.tangent0) + transfUtils.getVectorLength(segmentProps.comp.tangent1)) / 2
+
+                                removedSegments[#removedSegments+1] = segmentProps
+
+                                if i == 1 then
+                                    compType = segmentProps.comp.type -- ground, bridge or tunnel
+                                    compTypeIndex = segmentProps.comp.typeIndex -- bridge or tunnel type
+                                    streetType = segmentProps.streetEdge.streetType
+                                end
+                            end
+                            if #removedSegments ~= 3 then
+                                logger.warn('cannot rebuild road, there are ~= 3 removedSegments') logger.warningDebugPrint(removedSegments)
+                                return false
+                            end
+                            local tan0Adjusted = transfUtils.getVectorMultiplied(tan0, totalLength / transfUtils.getVectorLength(tan0))
+                            local tan1Adjusted = transfUtils.getVectorMultiplied(tan1, totalLength / transfUtils.getVectorLength(tan1))
+                            return tan0Adjusted, tan1Adjusted, compType, compTypeIndex, streetType
+                        end
+                        local tan0, tan1, compType, compTypeIndex, streetType = getEdgeProps()
+                        if not(tan0) or not(tan1) or not(streetType) then return end
+
+                        local makeEdge = function()
+                            local newEdge = api.type.SegmentAndEntity.new()
+                            newEdge.entity = -1
+                            newEdge.comp.node0 = node0Id
+                            newEdge.comp.node1 = node1Id
+                            newEdge.comp.tangent0 = api.type.Vec3f.new(tan0.x, tan0.y, tan0.z)
+                            newEdge.comp.tangent1 = api.type.Vec3f.new(tan1.x, tan1.y, tan1.z)
+                            newEdge.comp.type = compType
+                            newEdge.comp.typeIndex = compTypeIndex
+                            newEdge.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
+                            newEdge.streetEdge = api.type.BaseEdgeStreet.new()
+                            newEdge.streetEdge.streetType = streetType
+
+                            local proposal = api.type.SimpleProposal.new()
+                            proposal.streetProposal.edgesToAdd[1] = newEdge
+
+                            local context = api.type.Context:new()
+                            -- context.checkTerrainAlignment = true -- default is false
+                            -- context.cleanupStreetGraph = true -- default is false
+                            -- context.gatherBuildings = true -- default is false
+                            -- context.gatherFields = true -- default is true
+                            -- context.player = api.engine.util.getPlayer()
+                            api.cmd.sendCommand(
+                                api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
+                                function(result, success)
+                                    logger.print('rebuildRoad callback, success =', success)
+                                    -- logger.debugPrint(result)
+                                    if not(success) then
+                                        logger.warn('rebuildRoad callback failed')
+                                        logger.warn('rebuildRoad proposal =') logger.warningDebugPrint(proposal)
+                                        logger.warn('rebuildRoad result =') logger.warningDebugPrint(result)
+                                        -- LOLLO TODO give feedback
+                                    end
+                                end
+                            )
+                        end
+                        makeEdge()
+                    end,
+                    function(error)
+                        logger.warn('cannot rebuild road')
+                        logger.xpErrorHandler(error)
+                    end
+                )
             end
         end,
         guiInit = function()
-            _guiConstants.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
-            _guiConstants.conParamsMetadataSorted = moduleHelpers.getParamsMetadata()
+            _guiData.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
+            _guiData.conParamsMetadataSorted = moduleHelpers.getParamsMetadata()
         end,
         -- guiUpdate = function()
         -- end,
@@ -1666,7 +1819,7 @@ function data()
                 function()
                     -- LOLLO if everything else works, add a function to rebuild the road after deleting.
                     -- The params with the node ids are in place.
-                    if name == _eventProperties.waypointPlaced.eventName then
+                    if name == _eventProperties.initialEdgeObjectPlaced.eventName then
                         _actions.replaceEdgeWithSame(
                             args.edgeId,
                             args.edgeObjectId,
@@ -1880,15 +2033,15 @@ function data()
 
                         if edge0Base.node0 ~= args.outerNode0Id then
                             logger.print('reversing edge0')
-                            args.dataForCon.edge0Tan0, args.dataForCon.edge0Tan1 = _utils.getTanReversed(args.dataForCon.edge0Tan1), _utils.getTanReversed(args.dataForCon.edge0Tan0)
+                            args.dataForCon.edge0Tan0, args.dataForCon.edge0Tan1 = transfUtils.getVectorMultiplied(args.dataForCon.edge0Tan1, -1), transfUtils.getVectorMultiplied(args.dataForCon.edge0Tan0, -1)
                         end
                         if edge1Base.node0 ~= args.innerNode0Id then
                             logger.print('reversing edge1')
-                            args.dataForCon.edge1Tan0, args.dataForCon.edge1Tan1 = _utils.getTanReversed(args.dataForCon.edge1Tan1), _utils.getTanReversed(args.dataForCon.edge1Tan0)
+                            args.dataForCon.edge1Tan0, args.dataForCon.edge1Tan1 = transfUtils.getVectorMultiplied(args.dataForCon.edge1Tan1, -1), transfUtils.getVectorMultiplied(args.dataForCon.edge1Tan0, -1)
                         end
                         if edge2Base.node0 ~= args.innerNode1Id then
                             logger.print('reversing edge2')
-                            args.dataForCon.edge2Tan0, args.dataForCon.edge2Tan1 = _utils.getTanReversed(args.dataForCon.edge2Tan1), _utils.getTanReversed(args.dataForCon.edge2Tan0)
+                            args.dataForCon.edge2Tan0, args.dataForCon.edge2Tan1 = transfUtils.getVectorMultiplied(args.dataForCon.edge2Tan1, -1), transfUtils.getVectorMultiplied(args.dataForCon.edge2Tan0, -1)
                         end
 
                         _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)

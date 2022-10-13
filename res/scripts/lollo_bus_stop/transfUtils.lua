@@ -387,6 +387,25 @@ utils.getVectorNormalised = function(xyz, targetLength)
     end
 end
 
+utils.getVectorMultiplied = function(xyz, factor)
+    if type(xyz) ~= 'table' and type(xyz) ~= 'userdata' then return nil end
+    if type(factor) ~= 'number' then return nil end
+
+    if xyz.x ~= nil and xyz.y ~= nil and xyz.z ~= nil then
+        return {
+            x = xyz.x * factor,
+            y = xyz.y * factor,
+            z = xyz.z * factor
+        }
+    else
+        return {
+            xyz[1] * factor,
+            xyz[2] * factor,
+            xyz[3] * factor
+        }
+    end
+end
+
 utils.getPositionsDistance = function(pos0, pos1)
     local distance = utils.getVectorLength({
         (pos0.x or pos0[1]) - (pos1.x or pos1[1]),

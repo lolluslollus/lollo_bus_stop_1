@@ -24,8 +24,8 @@ local _eventId = constants.eventId
 local _eventProperties = constants.eventProperties
 
 local _guiConstants = {
-    _ploppablePassengersModelId = false,
-    _conParamsMetadata = {},
+    ploppablePassengersModelId = false,
+    conParamsMetadata = {},
 }
 
 -- works as a semaphore for all functions that check state.isWorking before doing something
@@ -1559,12 +1559,12 @@ function data()
                         if not(conId) or not(con) then return end
 
                         logger.print('selected one of my stations, it has conId =', conId, 'and con.fileName =', con.fileName)
-                        if not(_guiConstants._conParamsMetadata) then
+                        if not(_guiConstants.conParamsMetadata) then
                             logger.print('_guiConstants.conParams is not available')
                             return
                         end
 
-                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiConstants._conParamsMetadata, con.params)
+                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiConstants.conParamsMetadata, con.params)
                     end,
                     logger.xpErrorHandler
                 )
@@ -1578,8 +1578,8 @@ function data()
                         and args.proposal.proposal.edgeObjectsToAdd[1]
                         and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance)
                         then
-                            if _guiConstants._ploppablePassengersModelId
-                            and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiConstants._ploppablePassengersModelId
+                            if _guiConstants.ploppablePassengersModelId
+                            and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiConstants.ploppablePassengersModelId
                             then
                                 -- logger.print('args =') logger.debugPrint(args)
                                 local edgeObjectId = args.proposal.proposal.edgeObjectsToAdd[1].resultEntity
@@ -1645,8 +1645,8 @@ function data()
             end
         end,
         guiInit = function()
-            _guiConstants._ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
-            _guiConstants._conParamsMetadata = moduleHelpers.getParamsMetadata()
+            _guiConstants.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
+            _guiConstants.conParamsMetadata = moduleHelpers.getParamsMetadata()
         end,
         -- guiUpdate = function()
         -- end,

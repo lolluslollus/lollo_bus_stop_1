@@ -165,7 +165,7 @@ function data()
                 newCon.createTemplateScript.fileName = scriptFileName .. '.createTemplateFn'
 
                 -- moduleHelpers.updateParamValues_model(newCon.params, geldedBusStopModels)
-                -- moduleHelpers.updateParamValues_streetType_(newCon.params, allStreetData)
+                -- moduleHelpers.updateParamValues_streetType(newCon.params, allStreetData)
 
                 api.res.constructionRep.add(newCon.fileName, newCon, true) -- fileName, resource, visible
             end

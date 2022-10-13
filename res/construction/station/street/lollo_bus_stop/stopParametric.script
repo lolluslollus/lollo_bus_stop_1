@@ -82,12 +82,9 @@ function data()
 					params.lolloBusStop_bridgeOrTunnelType = 0 -- no tunnel
 					params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
 				end
-				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
 					params.lolloBusStop_model = 0
 					logger.print('stopParametric.updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
-				else
-					logger.print('stopParametric.updateFn.script params.lolloBusStop_model =', params.lolloBusStop_model)
 				end
 			end
 			_initParams()

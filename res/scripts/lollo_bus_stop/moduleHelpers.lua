@@ -1,64 +1,14 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local logger = require('lollo_bus_stop.logger')
-local pitchHelpers = require('lollo_bus_stop.pitchHelper')
+-- local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 local streetUtils = require('lollo_bus_stop.streetUtils')
 local stringUtils = require('lollo_bus_stop.stringUtils')
 
+
 local helpers = {}
-helpers.getGroundFace = function(face, key)
-    return {
-        face = face, -- LOLLO NOTE Z is ignored here
-        loop = true,
-        modes = {
-            {
-                type = 'FILL',
-                key = key
-            }
-        }
-    }
-end
-
-helpers.getTerrainAlignmentList = function(face)
-    local _raiseBy = 0.28 -- a lil bit less than 0.3 to avoid bits of construction being covered by earth
-    local raisedFace = {}
-    for i = 1, #face do
-        raisedFace[i] = face[i]
-        raisedFace[i][3] = raisedFace[i][3] + _raiseBy
-    end
-    -- print('LOLLO raisedFaces =')
-    -- debugPrint(raisedFace)
-    return {
-        faces = {raisedFace},
-        optional = true,
-        -- slopeHigh = 9, -- this makes more harm than good
-        -- slopeLow = 0.01, -- this makes more harm than good
-        type = 'EQUAL',
-    }
-end
-
-local getGeldedBusStopModels = function()
-    local results = {}
-    local add = function(fileName)
-        local id = api.res.modelRep.find(fileName)
-        local model = api.res.modelRep.get(id)
-        results[#results+1] = {
-            fileName = fileName,
-            icon = model.metadata.description.icon,
-            id = id,
-            name = model.metadata.description.name
-        }
-    end
-    add('lollo_bus_stop/geldedBusStops/pole_old.mdl')
-    add('lollo_bus_stop/geldedBusStops/pole_mid.mdl')
-    add('lollo_bus_stop/geldedBusStops/pole_new.mdl')
-    add('lollo_bus_stop/geldedBusStops/small_old.mdl')
-    add('lollo_bus_stop/geldedBusStops/small_mid.mdl')
-    add('lollo_bus_stop/geldedBusStops/small_new.mdl')
-    return results
-end
 
 helpers.getParamsMetadata = function()
-    local modelData = getGeldedBusStopModels()
+    local modelData = helpers.getGeldedBusStopModels()
     local allBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
     -- no tunnel param, we don't need it for now
     logger.print('allBridgeData =') logger.debugPrint(allBridgeData)
@@ -68,6 +18,7 @@ helpers.getParamsMetadata = function()
     })
     local results = {
         {
+            defaultIndex = helpers.getDefaultStreetTypeIndexBase0(allStreetData),
             key = 'lolloBusStop_streetType',
             name = _('streetTypeName'),
             values = arrayUtils.map(
@@ -77,7 +28,6 @@ helpers.getParamsMetadata = function()
                 end
             ),
             uiType = 'COMBOBOX',
-            defaultIndex = 0
         },
         {
             key = 'lolloBusStop_bridgeOrTunnelType',
@@ -89,7 +39,6 @@ helpers.getParamsMetadata = function()
                 end
             ),
             uiType = 'COMBOBOX',
-            defaultIndex = 0
         },
         {
             key = 'lolloBusStop_model',
@@ -102,7 +51,6 @@ helpers.getParamsMetadata = function()
                 end
             ),
             uiType = 'ICON_BUTTON',
-            defaultIndex = 0
         },
         {
             key = 'lolloBusStop_bothSides',
@@ -159,7 +107,7 @@ helpers.getParamsMetadata = function()
         --     uiType = 'SLIDER'
         -- },
     }
-    logger.print('params =') logger.debugPrint(results)
+    logger.print('paramsMetadata =') logger.debugPrint(results)
     return results
 end
 
@@ -209,7 +157,8 @@ helpers.getStationPoolCapacities = function(params, result)
     return extraCargoCapacity
 end
 
-helpers.updateParamValues_streetType_ = function(params, allStreetData)
+--[[
+helpers.updateParamValues_streetType = function(params, allStreetData)
     for _, param in pairs(params) do
         if param.key == 'lolloBusStop_streetType' then
             param.values = arrayUtils.map(
@@ -244,7 +193,9 @@ helpers.updateParamValues_model = function(params, modelData)
         end
     end
 end
+]]
 
+--[[
 local _decimalFiguresCount = 9 -- must be smaller than 2147483648
 local _getFloatParamNames = function(paramNamePrefix, name)
     local _nameSuffixInt = 'Int'
@@ -305,4 +256,5 @@ helpers.setIntParamsFromFloat = function(params, name, float, paramNamePrefix)
     params[_nameDec2] = tonumber(dec2Str)
     params[_nameDec3] = tonumber(dec3Str)
 end
+]]
 return helpers

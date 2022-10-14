@@ -281,7 +281,7 @@ function data()
 						{
 							pool = { moreCapacity = _extraCargoCapacity * 2 },
 							tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
-							terminals = { 0, 1 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
+							terminals = { 0, 1 } -- the indexes (in result.terminalGroups) of the linked terminal groups, in base 0
 						}
 					}
 					-- LOLLO TODO try result.runways like in https://www.transportfever2.com/wiki/doku.php?id=modding:constructiontypes&s[]=terminalgroups
@@ -289,6 +289,7 @@ function data()
 						{
 							tag = 0,
 							terminals = {
+								{ 0, 0 },
 								{ 2, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
@@ -296,6 +297,7 @@ function data()
 						{
 							tag = 0,
 							terminals = {
+								{ 1, 0 },
 								{ 3, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
@@ -313,7 +315,8 @@ function data()
 						{
 							tag = 0,
 							terminals = {
-								{ 1, 0 }
+								{ 0, 0 },
+								{ 1, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						}

@@ -33,23 +33,23 @@ function data()
 						transportModes = { 'BUS', 'ELECTRIC_TRAM', 'TRAM', 'TRUCK' },
 					},
 					-- anywhere out of the way, we only need it to avoid crashes
-					{
-						linkable = false,
-						nodes = {
-							{{ -0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3}, -- edge 2
-							{{ 0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3},
-						},
-						speedLimit = 30,
-						-- transportModes = { 'CARGO', 'PERSON' },
-						transportModes = { 'PERSON' },
-					},
+					-- {
+					-- 	linkable = false,
+					-- 	nodes = {
+					-- 		{{ -0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3}, -- edge 2
+					-- 		{{ 0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3},
+					-- 	},
+					-- 	speedLimit = 30,
+					-- 	-- transportModes = { 'CARGO', 'PERSON' },
+					-- 	transportModes = { 'PERSON' },
+					-- },
 				},
 				runways = { },
 				terminals = {
 					{
 						-- order = 999,
-						personEdges = { 2 },
-						personNodes = { 5 },
+						-- personEdges = { 2 },
+						-- personNodes = { 5 },
 						vehicleNode = 2,
 					},
 				},

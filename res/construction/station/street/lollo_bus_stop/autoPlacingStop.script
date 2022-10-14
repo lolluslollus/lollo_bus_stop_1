@@ -270,7 +270,7 @@ function data()
 			-- 	}
 			-- }
 -- LOLLO TEST CODE END
-
+-- LOLLO TODO people don't use these stations, why?
             -- join terminals together, similar to result.terminateConstructionHook that fires with modular stations
 			local addStationsAndTerminalGroups = function()
 				-- logger.print('starting addStationsAndTerminalGroups')
@@ -289,16 +289,16 @@ function data()
 						{
 							tag = 0,
 							terminals = {
-								-- { 0, 0 },
-								{ 2, 0 },
+								{ 2, 0 }, -- first this, which contains the vehi8cle node
+								{ 0, 0 }, -- then this, which does not but connects to the pavement
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						},
 						{
 							tag = 0,
 							terminals = {
-								-- { 1, 0 },
 								{ 3, 0 },
+								{ 1, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						},
@@ -315,8 +315,8 @@ function data()
 						{
 							tag = 0,
 							terminals = {
-								-- { 0, 0 },
 								{ 1, 0 },
+								{ 0, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						}

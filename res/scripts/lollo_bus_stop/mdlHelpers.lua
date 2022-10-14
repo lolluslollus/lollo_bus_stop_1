@@ -43,7 +43,7 @@ local helpers = {
                 {
                     -- order = 999,
                     personEdges = { 0, 1 },
-                    personNodes = { 0, 3 },
+                    personNodes = { 1 },
                     -- vehicleNode = 2,
                 },
             },

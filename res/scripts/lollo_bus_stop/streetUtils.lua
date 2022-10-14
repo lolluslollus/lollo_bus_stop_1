@@ -650,6 +650,9 @@ helper.getStreetDataFilters = function()
     }
 end
 
+-- In postRunFn, api.res.streetTypeRep.getAll() only returns street types, which are available in the present game.
+-- In other lua states, eg in game_script, it returns all street types, which have ever been present in the game, including those from inactive mods.
+-- So, only call this function in postRunFn to avoid inconsistencies.
 helper.getGlobalStreetData = function(filters)
     if type(filters) ~= 'table' or #filters == 0 then filters = {helper.getStreetDataFilters().STOCK} end
 
@@ -664,6 +667,9 @@ helper.getGlobalStreetData = function(filters)
     return results
 end
 
+-- In postRunFn, api.res.streetTypeRep.getAll() only returns street types, which are available in the present game.
+-- In other lua states, eg in game_script, it returns all street types, which have ever been present in the game, including those from inactive mods.
+-- So, only call this function in postRunFn to avoid inconsistencies.
 helper.getGlobalBridgeData = function(carrierId)
     if not(carrierId) then carrierId = api.type.enum.Carrier.ROAD end
     _initLolloBridgeDataWithApi(carrierId)
@@ -671,12 +677,18 @@ helper.getGlobalBridgeData = function(carrierId)
     return arrayUtils.sort(_bridgeDataBuffer.data, 'name')
 end
 
+-- In postRunFn, api.res.streetTypeRep.getAll() only returns street types, which are available in the present game.
+-- In other lua states, eg in game_script, it returns all street types, which have ever been present in the game, including those from inactive mods.
+-- So, only call this function in postRunFn to avoid inconsistencies.
 helper.getGlobalBridgeDataPlusNoBridge = function(carrierId)
     local results = helper.getGlobalBridgeData(carrierId)
     table.insert(results, 1, {name = _texts.noBridge, icon = 'ui/bridges/no_bridge.tga'})
     return results
 end
 
+-- In postRunFn, api.res.streetTypeRep.getAll() only returns street types, which are available in the present game.
+-- In other lua states, eg in game_script, it returns all street types, which have ever been present in the game, including those from inactive mods.
+-- So, only call this function in postRunFn to avoid inconsistencies.
 helper.getGlobalTunnelData = function(carrierId)
     if not(carrierId) then carrierId = api.type.enum.Carrier.ROAD end
     _initLolloTunnelDataWithApi(carrierId)
@@ -684,6 +696,9 @@ helper.getGlobalTunnelData = function(carrierId)
     return arrayUtils.sort(_bridgeDataBuffer.data, 'name')
 end
 
+-- In postRunFn, api.res.streetTypeRep.getAll() only returns street types, which are available in the present game.
+-- In other lua states, eg in game_script, it returns all street types, which have ever been present in the game, including those from inactive mods.
+-- So, only call this function in postRunFn to avoid inconsistencies.
 helper.getGlobalTunnelDataPlusNoTunnel = function(carrierId)
     local results = helper.getGlobalTunnelData(carrierId)
     table.insert(results, 1, {name = _texts.noBridge, icon = 'ui/tunnels/no_tunnel.tga'})

@@ -25,15 +25,14 @@ local helpers = {
         local yShift = -0.25
         return {
             laneLists = {
-                -- in the middle of the road
                 {
                     linkable = false,
                     nodes = {
-                        {{ -xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, 0, 0, }, 1}, -- edge 0 -- node 0
-                        {{ 0, yShift, 0 }, { xFactor * constants.outerEdgeX, 0, 0, }, 1}, -- node 1
+                        {{ -xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- edge 0 -- node 0
+                        {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- node 1
 
-                        {{ 0, yShift, 0 }, { xFactor * constants.outerEdgeX, 0, -0 }, 1}, -- edge 1 -- node 2
-                        {{ xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, 0, -0 }, 1}, -- node 3
+                        {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, yShift, -0 }, 1}, -- edge 1 -- node 2
+                        {{ xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, yShift, -0 }, 1}, -- node 3
                     },
                     speedLimit = 20,
                     transportModes = { 'PERSON' },
@@ -44,7 +43,7 @@ local helpers = {
                 {
                     -- order = 999,
                     personEdges = { 0, 1 },
-                    personNodes = { 0, 1, 2, 3 },
+                    personNodes = { 0, 3 },
                     -- vehicleNode = 2,
                 },
             },

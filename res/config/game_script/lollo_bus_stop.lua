@@ -438,7 +438,7 @@ local _actions = {
         logger.print('_inverseConTransf =') logger.debugPrint(_inverseConTransf)
 
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
-        -- newCon.fileName = 'station/street/lollo_bus_stop/manualPlacingStop_dynamic'
+        -- newCon.fileName = constants.manualPlacingConFileName
         newCon.fileName = constants.autoPlacingConFileName
         --[[
             LOLLO NOTE
@@ -1640,9 +1640,8 @@ function data()
                     _guiData.conIdAboutToBeBulldozed = false
                     return
                 end
-
                 local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
-                if con == nil or con.fileName ~= constants.autoPlacingConFileName then
+                if con == nil or not(arrayUtils.arrayHasValue({constants.autoPlacingConFileName, constants.manualPlacingConFileName}, con.fileName)) then
                     _guiData.conIdAboutToBeBulldozed = false
                     return
                 end

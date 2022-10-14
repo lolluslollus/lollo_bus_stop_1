@@ -190,7 +190,7 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
     if not(globalBridgeData) then globalBridgeData = arrayUtils.cloneDeepOmittingFields(
         api.res.constructionRep.get(
             api.res.constructionRep.find(
-                constants.autoPlacingConFileName
+                constants.manualPlacingConFileName
             )
         ).updateScript.params.globalBridgeData,
         nil,
@@ -201,7 +201,7 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
         globalStreetData = arrayUtils.cloneDeepOmittingFields(
             api.res.constructionRep.get(
                 api.res.constructionRep.find(
-                    constants.autoPlacingConFileName
+                    constants.manualPlacingConFileName
                 )
             ).updateScript.params.globalStreetData,
             nil,

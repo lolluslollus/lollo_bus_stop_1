@@ -238,7 +238,7 @@ function data()
             end
             addManualCon(
                 'station/street/lollo_bus_stop/stop.con',
-                'station/street/lollo_bus_stop/manualPlacingStop_dynamic',
+                'station/street/lollo_bus_stop/manualPlacingStop_dynamic.con',
                 'construction/station/street/lollo_bus_stop/manualPlacingStop',
                 1925,
                 0

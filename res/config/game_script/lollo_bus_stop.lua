@@ -22,6 +22,7 @@ local state = { isWorking = false }
 local _eventId = constants.eventId
 local _eventProperties = constants.eventProperties
 
+-- only accessible in the UI thread
 local _guiData = {
     conIdAboutToBeBulldozed = false,
     conParamsMetadataSorted = {},
@@ -492,6 +493,8 @@ local _actions = {
             math.sqrt((dataForCon.outerNode1Pos[1] - dataForCon.outerNode0Pos[1])^2 + (dataForCon.outerNode1Pos[2] - dataForCon.outerNode0Pos[2])^2)
                 -- * ((dataForCon.outerNode1Pos[1] > dataForCon.outerNode0Pos[1]) and 1 or -1)
         )
+
+        local _, conParamsMetadataIndexed = moduleHelpers.getAutoPlacingParamsMetadata()
         local newParams = {
             -- lolloBusStop_testHuge = 12345678901234567890, -- it becomes 1.2345678901235e+19 at first, -2147483648 at the first upgrade
             -- it will not change if no params are declared with the construction.
@@ -517,13 +520,13 @@ local _actions = {
             --     lolloBusStop_testStrTab2 = {'-123.456, 124.457'},
             -- },
 
-            lolloBusStop_bothSides = 0,
+            lolloBusStop_bothSides = conParamsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex,
             lolloBusStop_bridgeOrTunnelType = groundBridgeTunnel012 == 0 and 0 or (groundBridgeTunnel012 == 1 and bridgeTypeIndexBase0 or tunnelTypeIndexBase0),
             lolloBusStop_groundBridgeTunnel012 = groundBridgeTunnel012,
-            lolloBusStop_direction = 0,
-            lolloBusStop_driveOnLeft = 0,
+            lolloBusStop_direction = conParamsMetadataIndexed['lolloBusStop_direction'].defaultIndex,
+            lolloBusStop_driveOnLeft = conParamsMetadataIndexed['lolloBusStop_driveOnLeft'].defaultIndex,
             lolloBusStop_hasBus = hasBus,
-            lolloBusStop_model = 5, -- it's easier to see transf problems
+            lolloBusStop_model = conParamsMetadataIndexed['lolloBusStop_model'].defaultIndex,
             -- these make no sense coz they will be replaced with operations outside the station
             -- lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
             -- lolloBusStop_outerNode1Id = outerNode1Id, -- idem
@@ -550,6 +553,7 @@ local _actions = {
             -- lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_pitchAngle = _pitchAngle,
         }
+        logger.print('lolloBusStop_model =', newParams.lolloBusStop_model or 'NIL')
         -- these work but we don't need them anymore, since we moved to parameterless con
         --[[
         moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[1], 'lolloBusStop_')
@@ -1797,10 +1801,10 @@ function data()
             end
         end,
         guiInit = function()
-            logger.print('guiInit starting')
+            -- logger.print('guiInit starting')
             _guiData.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
             _guiData.conParamsMetadataSorted = moduleHelpers.getAutoPlacingParamsMetadata()
-            logger.print('guiInit ending')
+            -- logger.print('guiInit ending')
         end,
         -- guiUpdate = function()
         -- end,

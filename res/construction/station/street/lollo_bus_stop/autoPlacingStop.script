@@ -270,7 +270,7 @@ function data()
 			-- 	}
 			-- }
 -- LOLLO TEST CODE END
--- LOLLO TODO people don't use these stations, why?
+-- LOLLO TODO people don't use these stations coz they are not connected to the pavement, fix it
             -- join terminals together, similar to result.terminateConstructionHook that fires with modular stations
 			local addStationsAndTerminalGroups = function()
 				-- logger.print('starting addStationsAndTerminalGroups')

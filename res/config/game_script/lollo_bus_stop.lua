@@ -1761,7 +1761,7 @@ function data()
                             newEdge.type = 0 -- 0 is api.type.enum.Carrier.ROAD, 1 is api.type.enum.Carrier.RAIL
                             newEdge.streetEdge = api.type.BaseEdgeStreet.new()
                             newEdge.streetEdge.streetType = streetType
-                            newEdge.streetEdge.hasBus = hasBus or false
+                            newEdge.streetEdge.hasBus = hasBus or false -- this is always false coz the hasBus in constructions is broken
                             newEdge.streetEdge.tramTrackType = tramTrackType or 0
 
                             local proposal = api.type.SimpleProposal.new()

@@ -25,14 +25,26 @@ local helpers = {
         local yShift = -0.25
         return {
             laneLists = {
-                {
-                    linkable = false,
-                    nodes = {
-                        {{ -xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- edge 0 -- node 0
-                        {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- node 1
+                -- { -- with this, passengers look inwards
+                --     linkable = true, -- this is vital coz pavements are not split like the middle of the road. Sigh.
+                --     nodes = {
+                --         {{ -xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- edge 0 -- node 0
+                --         {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- node 1
 
-                        {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, yShift, -0 }, 1}, -- edge 1 -- node 2
-                        {{ xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, yShift, -0 }, 1}, -- node 3
+                --         {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, yShift, 0 }, 1}, -- edge 1 -- node 2
+                --         {{ xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, yShift, -0 }, 1}, -- node 3
+                --     },
+                --     speedLimit = 20,
+                --     transportModes = { 'PERSON' },
+                -- },
+                { -- with this, passengers look outwards
+                    linkable = true, -- this is vital coz pavements are not split like the middle of the road. Sigh.
+                    nodes = {
+                        {{ xFactor * constants.outerEdgeX, yShift, 0 }, { -xFactor * constants.outerEdgeX, -yShift, -0 }, 1}, -- node 0
+                        {{ 0, 0, 0 }, { -xFactor * constants.outerEdgeX, -yShift, 0 }, 1}, -- edge 0 -- node 1
+
+                        {{ 0, 0, 0 }, { -xFactor * constants.outerEdgeX, yShift, 0, }, 1}, -- node 2
+                        {{ -xFactor * constants.outerEdgeX, yShift, 0 }, { -xFactor * constants.outerEdgeX, yShift, 0, }, 1}, -- edge 1 -- node 3
                     },
                     speedLimit = 20,
                     transportModes = { 'PERSON' },

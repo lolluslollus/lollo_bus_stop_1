@@ -52,7 +52,7 @@ function data()
 				return params.lolloBusStop_tramTrack == 0 and 'NO' or params.lolloBusStop_tramTrack == 1 and 'YES' or 'ELECTRIC'
 			end
 			local function _initParams()
-				local _, paramsMetadataIndexed = moduleHelpers.getAutoPlacingParamsMetadata(two.globalBridgeData, two.globalStreetData, two.globalBusStopModelData)
+				local _, paramsMetadataIndexed = moduleHelpers.getManualPlacingParamsMetadata(two.globalBridgeData, two.globalStreetData, two.globalBusStopModelData)
 				-- logger.print('_initParams got paramsMetadata =') logger.debugPrint(paramsMetadata)
 				logger.print('defaults =') logger.debugPrint({
 					paramsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex,

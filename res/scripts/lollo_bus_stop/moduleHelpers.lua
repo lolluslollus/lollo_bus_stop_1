@@ -306,13 +306,13 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
     for _, record in pairs(metadata_sorted) do
         record.defaultIndex = record.defaultIndex or 0
     end
-    -- local metadata_indexed = {}
-    -- for _, record in pairs(metadata_sorted) do
-    --     metadata_indexed[record.key] = record
-    -- end
+    local metadata_indexed = {}
+    for _, record in pairs(metadata_sorted) do
+        metadata_indexed[record.key] = record
+    end
     -- logger.print('metadata_sorted =') logger.debugPrint(metadata_sorted)
     -- logger.print('metadata_indexed =') logger.debugPrint(metadata_indexed)
-    return metadata_sorted --, metadata_indexed
+    return metadata_sorted, metadata_indexed
 end
 
 -- do not call this from inside the construction

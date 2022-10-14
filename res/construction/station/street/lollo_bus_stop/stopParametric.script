@@ -166,6 +166,7 @@ function data()
                 edgeLists = {
                     {
                         type = 'STREET',
+						alignTerrain = params.lolloBusStop_groundBridgeTunnel012 == 0,
                         params = {
                             hasBus = true, -- UG TODO broken
                             type = _streetFileName,

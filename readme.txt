@@ -6,3 +6,5 @@ The problem occurs just after proposalData = api.engine.util.proposal.makePropos
 The error goes away if I remove the deges from the construction (the file is res/construction/station/street/lollo_bus_stop/stopParametric.script).
 
 To reproduce this, load up the savegame attached here and look at the screenshots. Just start the game and build one of these stations where the screenshot shows.
+
+I use build 35050 on Windows 11.

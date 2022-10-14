@@ -2,7 +2,6 @@ local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local constants = require('lollo_bus_stop.constants')
 local logger = require('lollo_bus_stop.logger')
 -- local pitchHelpers = require('lollo_bus_stop.pitchHelper')
-local streetUtils = require('lollo_bus_stop.streetUtils')
 local stringUtils = require('lollo_bus_stop.stringUtils')
 
 

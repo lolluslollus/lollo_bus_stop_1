@@ -2,8 +2,10 @@ local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local constants = require('lollo_bus_stop.constants')
 local logger = require('lollo_bus_stop.logger')
 local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
+local streetUtilUG = require('streetutil')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
+local vec3 = require('vec3')
 
 function data()
 	return {
@@ -89,69 +91,9 @@ function data()
 				end
 			end
 			_initParams()
---[[ 
-			local _dyn = {}
-			local function _readDynamiParams()
-				_dyn.tan00 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0X', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0Y', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan0Z', 'lolloBusStop_'),
-				}
-				_dyn.tan01 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1X', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1Y', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge0Tan1Z', 'lolloBusStop_'),
-				}
-				_dyn.tan10 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0X', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0Y', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan0Z', 'lolloBusStop_'),
-				}
-				_dyn.tan11 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1X', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1Y', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge1Tan1Z', 'lolloBusStop_'),
-				}
-				_dyn.tan20 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0X', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0Y', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan0Z', 'lolloBusStop_'),
-				}
-				_dyn.tan21 = {
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1X', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1Y', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'edge2Tan1Z', 'lolloBusStop_'),
-				}
-				_dyn.outerPos0 = {
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosX', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosY', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode0PosZ', 'lolloBusStop_'),
-				}
-				_dyn.outerPos1 = {
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosX', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosY', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'outerNode1PosZ', 'lolloBusStop_'),
-				}
-				_dyn.innerPos0 = {
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosX', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosY', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode0PosZ', 'lolloBusStop_'),
-				}
-				_dyn.innerPos1 = {
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosX', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosY', 'lolloBusStop_'),
-					moduleHelpers.getFloatFromIntParams(params, 'innerNode1PosZ', 'lolloBusStop_'),
-				}
-				_dyn.pitchAngle = moduleHelpers.getFloatFromIntParams(params, 'pitchAngle', 'lolloBusStop_')
-				_dyn.sidewalkHeight = moduleHelpers.getFloatFromIntParams(params, 'sidewalkHeight', 'lolloBusStop_')
-			end 
-			_readDynamiParams()
-			logger.print('stopParametric.updateFn _dyn =') logger.debugPrint(_dyn)
-]]
 
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType + 1] or two.globalStreetData[1]
 			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
-			-- logger.print('stopParametric.updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
@@ -159,7 +101,6 @@ function data()
             local _tramTrackType = _getTramTrackType()
 			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 -- and not(_selectedStreetData.isOneWay)
 
-			-- logger.print('stopParametric.updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
             local result = {
                 colliders = {},
                 cost = 1000,
@@ -172,6 +113,7 @@ function data()
                             type = _streetFileName,
                             tramTrackType = _tramTrackType
                         },
+-- --[[
                         edges = params.lolloBusStop_direction == 0
 						and {
                             {
@@ -212,6 +154,10 @@ function data()
 								params.lolloBusStop_outerNode0Pos,  _getInverseTan(params.lolloBusStop_edge0Tan0)
 							},  -- node 5
                         },
+-- ]]
+--[[
+						edges = {},
+]]
 						edgeType = _getEdgeType(),
 						edgeTypeName = _getEdgeTypeName(),
 						freeNodes = getFreeNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
@@ -229,6 +175,33 @@ function data()
 					faces =  { }
 				} },
             }
+
+--[[
+			-- this is an alternative way to add the edges. It also produces unhandled crashes at the same locations.
+			streetUtilUG.addEdgeAutoTangents(
+                result.edgeLists[1].edges,
+                vec3.new(table.unpack(params.lolloBusStop_outerNode0Pos)),
+                vec3.new(table.unpack(params.lolloBusStop_innerNode0Pos)),
+                vec3.new(table.unpack(params.lolloBusStop_edge0Tan0)),
+                vec3.new(table.unpack(params.lolloBusStop_edge0Tan1))
+            )
+			streetUtilUG.addEdgeAutoTangents(
+                result.edgeLists[1].edges,
+                vec3.new(table.unpack(params.lolloBusStop_innerNode0Pos)),
+                vec3.new(table.unpack(params.lolloBusStop_innerNode1Pos)),
+                vec3.new(table.unpack(params.lolloBusStop_edge1Tan0)),
+				-- vec3.new(table.unpack(params.lolloBusStop_edge0Tan1)),
+                vec3.new(table.unpack(params.lolloBusStop_edge1Tan1))
+				-- vec3.new(table.unpack(params.lolloBusStop_edge2Tan0))
+            )
+			streetUtilUG.addEdgeAutoTangents(
+                result.edgeLists[1].edges,
+                vec3.new(table.unpack(params.lolloBusStop_innerNode1Pos)),
+                vec3.new(table.unpack(params.lolloBusStop_outerNode1Pos)),
+                vec3.new(table.unpack(params.lolloBusStop_edge2Tan0)),
+                vec3.new(table.unpack(params.lolloBusStop_edge2Tan1))
+            )
+]]
 
 			local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)
 			logger.print('stopParametric.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
@@ -298,47 +271,6 @@ function data()
 			-- }
 -- LOLLO TEST CODE END
 
-			-- LOLLO TEST CODE BEGIN
---[[
-			local testVehicleEdgeTransfLeft = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset + 3.5, 0, 1})
-			local testVehicleEdgeTransfRight = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset - 3.5, 0, 1})
-			result.models[#result.models+1] = {
-				-- id = 'lollo_bus_stop/vehicle_edge_left.mdl',
-				id = 'lollo_bus_stop/icon/blue.mdl',
-				-- tag = 'stationTag',
-				transf = params.lolloBusStop_direction == 0
-					and testVehicleEdgeTransfLeft
-					or testVehicleEdgeTransfRight
-			}
-			if _isBothSides then
-				result.models[#result.models+1] = {
-					-- id = 'lollo_bus_stop/vehicle_edge_left.mdl',
-					id = 'lollo_bus_stop/icon/blue.mdl',
-					-- tag = 'stationTag',
-					transf = params.lolloBusStop_direction == 0
-						and testVehicleEdgeTransfRight
-						or testVehicleEdgeTransfLeft
-				}
-			end
-			result.models[#result.models+1] = {
-				id = 'lollo_bus_stop/vehicle_edge_left.mdl',
-				-- tag = 'stationTag',
-				transf = params.lolloBusStop_direction == 0
-					and testVehicleEdgeTransfLeft
-					or testVehicleEdgeTransfRight
-			}
-			if _isBothSides then
-				result.models[#result.models+1] = {
-					id = 'lollo_bus_stop/vehicle_edge_left.mdl',
-					-- tag = 'stationTag',
-					transf = params.lolloBusStop_direction == 0
-						and testVehicleEdgeTransfRight
-						or testVehicleEdgeTransfLeft
-				}
-			end
-]]
-			-- LOLLO TEST CODE END
-
             -- join terminals together, similar to result.terminateConstructionHook that fires with modular stations
 			local addStationsAndTerminalGroups = function()
 				-- logger.print('starting addStationsAndTerminalGroups')
@@ -389,9 +321,9 @@ function data()
 				end
 
 				-- avoid dump when configuring
-				-- if #(result.stations[1].terminals) == 0 then
-				-- 	table.insert(result.stations[1].terminals, 0)
-				-- end
+				if #(result.stations[1].terminals) == 0 then
+					table.insert(result.stations[1].terminals, 0)
+				end
 
 				-- it should output something like (this example has one terminal made of two adjacent bits)
 				-- stock result.stations =

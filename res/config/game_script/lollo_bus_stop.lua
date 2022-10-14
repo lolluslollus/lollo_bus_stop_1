@@ -5,7 +5,6 @@ local guiHelpers = require('lollo_bus_stop.guiHelpers')
 local logger = require('lollo_bus_stop.logger')
 local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
 -- local pitchHelpers = require('lollo_bus_stop.pitchHelper')
-local streetUtils = require('lollo_bus_stop.streetUtils')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
 

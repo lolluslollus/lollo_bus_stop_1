@@ -43,6 +43,14 @@ local funcs = {}
 -- Returns a sorted table and an indexed table with the same values.
 -- Inside constructions, you must pass all parameters coz the api is not available
 funcs.getParamsMetadata = function(globalBridgeData, globalStreetData, modelData)
+    --[[
+        LOLLO NOTE
+        In postRunFn, api.res.streetTypeRep.getAll() only returns street types,
+        which are available in the present game.
+        In other lua states, eg in game_script, it returns all street types, which have ever been present in the game,
+        including those from inactive mods.
+        This is why we read the data from the table that we set in postRunFn, and not from the api.
+    ]]
     if not(globalBridgeData) then globalBridgeData = arrayUtils.cloneDeepOmittingFields(
         api.res.constructionRep.get(
             api.res.constructionRep.find(

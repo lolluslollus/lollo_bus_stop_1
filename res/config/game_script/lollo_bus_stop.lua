@@ -441,6 +441,14 @@ local _actions = {
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
         -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
         newCon.fileName = constants.parametricConFileName
+        --[[
+            LOLLO NOTE
+            In postRunFn, api.res.streetTypeRep.getAll() only returns street types,
+            which are available in the present game.
+            In other lua states, eg in game_script, it returns all street types, which have ever been present in the game,
+            including those from inactive mods.
+            This is why we read the data from the table that we set in postRunFn, and not from the api.
+        ]]
         local globalBridgeData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalBridgeData, nil, true)
         local globalTunnelData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalTunnelData, nil, true)
         local globalStreetData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalStreetData, nil, true)

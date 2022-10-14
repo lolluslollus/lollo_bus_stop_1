@@ -48,7 +48,7 @@ function data()
 			local function _initParams()
 				local _, paramsMetadataIndexed = moduleHelpers.getAutoPlacingParamsMetadata(two.globalBridgeData, two.globalStreetData, two.globalBusStopModelData)
 				-- logger.print('_initParams got paramsMetadata =') logger.debugPrint(paramsMetadata)
-				logger.print('defaults =') logger.debugPrint({
+				logger.print('autoPlacingStop defaults =') logger.debugPrint({
 					paramsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex,
 					paramsMetadataIndexed['lolloBusStop_direction'].defaultIndex,
 					paramsMetadataIndexed['lolloBusStop_driveOnLeft'].defaultIndex,

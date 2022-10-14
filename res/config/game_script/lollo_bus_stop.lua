@@ -438,7 +438,7 @@ local _actions = {
         logger.print('_inverseConTransf =') logger.debugPrint(_inverseConTransf)
 
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
-        -- newCon.fileName = 'station/street/lollo_bus_stop/manualPlacingStop_dynamic'
+        -- newCon.fileName = constants.manualPlacingConFileName
         newCon.fileName = constants.autoPlacingConFileName
         --[[
             LOLLO NOTE

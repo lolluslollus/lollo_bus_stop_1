@@ -32,4 +32,5 @@ return {
     },
 
     autoPlacingConFileName = 'station/street/lollo_bus_stop/autoPlacingStop_dynamic.con',
+    manualPlacingConFileName = 'station/street/lollo_bus_stop/manualPlacingStop_dynamic.con',
 }

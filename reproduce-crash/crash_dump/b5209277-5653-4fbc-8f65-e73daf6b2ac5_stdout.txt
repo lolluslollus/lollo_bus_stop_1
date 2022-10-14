@@ -1,0 +1,1024 @@
+user data folder: C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/
+starting up build version: 35050
+
+__CRASHDB_INIT__
+PreventSetUnhandledExceptionFilter: 1
+Found 0 mods
+language: en
+locale: en_US
+
+
+
+========================================
+Startup at Fri Oct 14 12:44:27 2022
+========================================
+
+
+
+seed: 1665744267
+Requested instance extensions: 
+ - VK_KHR_surface
+ - VK_KHR_win32_surface
+ - VK_KHR_get_physical_device_properties2
+Requested layers: 
+Create Vulkan instance.
+Supported depth resolve: { SampleZero | Average | Min | Max }
+Supperted stencil resolve: { SampleZero | Min | Max }
+Found device #0: NVIDIA GeForce RTX 2060 SUPER (id: 7942, vulkan version: 1.3.205, driver version: 2169110528 [517.40.0.0], vendor id: 4318 [Nvidia])
+ -> Selected device #0
+__CRASHDB_RENDERER__ Vulkan|Nvidia|NVIDIA GeForce RTX 2060 SUPER|1.3.205 517.40.0.0|1.3.205|517.40.0.0|
+Count: 16
+Flags: { Graphics | Compute | Transfer | SparseBinding }
+Count: 2
+Flags: { Transfer | SparseBinding }
+Count: 8
+Flags: { Compute | Transfer | SparseBinding }
+Optional extension not found: 'VK_AMD_memory_overallocation_behavior'
+Requested device extensions: 
+ - VK_KHR_swapchain
+ - VK_EXT_memory_budget
+ - VK_KHR_create_renderpass2
+ - VK_KHR_depth_stencil_resolve
+ - VK_KHR_get_memory_requirements2
+ - VK_KHR_dedicated_allocation
+ - VK_KHR_maintenance1
+ - VK_EXT_memory_priority
+Format support:
+ * R8Unorm:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R8G8Unorm:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R8G8B8Unorm:
+   - linear: {}
+   - optimal: {}
+ * R8G8B8A8Unorm:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R16Unorm:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R16G16Unorm:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R16G16B16Unorm:
+   - linear: {}
+   - optimal: {}
+ * R16G16B16A16Unorm:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R32Sfloat:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | StorageImageAtomic | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R32G32Sfloat:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R32G32B32Sfloat:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: {}
+ * R32G32B32A32Sfloat:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * B10G11R11UfloatPack32:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R16G16B16A16Sfloat:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | StorageImage | ColorAttachment | ColorAttachmentBlend | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * R16G16B16Sfloat:
+   - linear: {}
+   - optimal: {}
+ * D24UnormS8Uint:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | DepthStencilAttachment | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * D32SfloatS8Uint:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | DepthStencilAttachment | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+ * D16UnormS8Uint:
+   - linear: {}
+   - optimal: {}
+ * D16Unorm:
+   - linear: { SampledImage | BlitSrc | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+   - optimal: { SampledImage | DepthStencilAttachment | BlitSrc | BlitDst | SampledImageFilterLinear | TransferSrc | TransferDst | SampledImageFilterMinmax }
+Memory types:
+ * 0 {}: heap #1
+ * 1 { DeviceLocal }: heap #0
+ * 2 { HostVisible | HostCoherent }: heap #1
+ * 3 { HostVisible | HostCoherent | HostCached }: heap #1
+ * 4 { DeviceLocal | HostVisible | HostCoherent }: heap #2
+Memory heaps:
+ * 0 { DeviceLocal } 8031 MB
+ * 1 {} 32724 MB
+ * 2 { DeviceLocal } 214 MB
+Fifo
+FifoRelaxed
+Mailbox
+Immediate
+Use present mode: Immediate
+Swapchain size: 2 (requested 2: 2-8)
+Sucessfully read pipeline cache C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/shader_cache/pipelines.cache
+opened device OpenAL Soft
+sampling rate: 48000 Hz
+
+Build: Build 35050 Windows 64-bit
+Found 714 mods
+eatglobal: init [C:/Program Files (x86)/Steam/steamapps/workshop/content/1066780/2868656728/res/scripts/eatglobal_v2_29.lua] (Version 2.29)
+eatglobal: init [C:/Program Files (x86)/Steam/steamapps/workshop/content/1066780/1962843709/res/scripts/eatglobal_v2_31.lua] (Version 2.31)
+eatglobal: init [C:/Program Files (x86)/Steam/steamapps/workshop/content/1066780/1977033666/res/scripts/eatglobal_v2_26.lua] (Version 2.26)
+Loaded 715 of 715 mod descriptions from disk
+Update of mod descriptions: 645.981 ms
+Mods changed, recreating data...
+Settings:
+ - numSamples: 4
+ - textureQuality: 1
+ - terrainTextureResolution: 1
+Found 714 mods
+Loaded 16 of 715 mod descriptions from disk
+Update of mod descriptions: 228.857 ms
+Found 714 mods
+Loaded 16 of 715 mod descriptions from disk
+Update of mod descriptions: 223.966 ms
+Found 714 mods
+Loaded 16 of 715 mod descriptions from disk
+Update of mod descriptions: 226.854 ms
+Found 714 mods
+Loaded 16 of 715 mod descriptions from disk
+Update of mod descriptions: 225.123 ms
+Loading from file lollo-test-02-dump
+savegame version 329
+active mods:
+  urbangames_sandbox/1 (0) (Sandbox mode)
+  ?lollo_bus_stop/1 (1) (Bus / tram stops with extra capacity )
+config dict:
+  climate: temperate
+  vehicles: europe
+  nameList: europe
+  environment: temperate
+  difficulty: easy
+mod params:
+  : { 
+	advancedOptions.cargoSupplySensitivityScale = 4,
+	advancedOptions.emissionSensitivityScale = 4,
+	advancedOptions.infrastructureMaintenanceScale = 2,
+	advancedOptions.infrastructurePurchaseCostScale = 2,
+	advancedOptions.loanInterestScale = 2,
+	advancedOptions.maximumLoanScale = 2,
+	advancedOptions.privateTransportDestinationsSensitivityScale = 4,
+	advancedOptions.publicTransportDestinationsSensitivityScale = 4,
+	advancedOptions.stationOverflowSensitivityScale = 4,
+	advancedOptions.trafficSpeedSensitivityScale = 4,
+	advancedOptions.vehicleMaintenanceScale = 2,
+	advancedOptions.vehiclePurchaseCostScale = 2,
+	economy.industryDevelopment.closureProbability = 0,
+	economy.townDevelopment.cargoNeedsPerTown = 0,
+	locations.industry.maxNumberPerArea = 1,
+	locations.industry.targetMaxNumberPerArea = 0,
+}
+script load from lollo-test-02-dump.sav.lua
+achievements earnable: 0
+init version: 296
+map seed text: jCPp2WLjYYV
+debug mode is active
+adding archive res/models/models.zip
+ModelRep: 3011.88 ms
+lollo_1m_path.lua not found in res/config/streets but was saved with savegame
+lollo_internal_1_way_1_lane_street_no_sidewalk.lua not found in res/config/streets but was saved with savegame
+lollo_internal_only_bus_right.lua not found in res/config/streets but was saved with savegame
+lollo_internal_only_cargo_right.lua not found in res/config/streets but was saved with savegame
+lollo_internal_only_passengers_right.lua not found in res/config/streets but was saved with savegame
+lollo_internal_only_tram_right.lua not found in res/config/streets but was saved with savegame
+lollo_internal_only_tyres_right.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_country_road_narrow_sidewalk.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street_narrow_sidewalk.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_medium_sidewalk_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_medium_sidewalk_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_4_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_2_lane_medium_sidewalk_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_street.lua not found in res/config/streets but was saved with savegame
+lollo_ultrathin_path.lua not found in res/config/streets but was saved with savegame
+lollo_ultrathin_path_smooth_sides.lua not found in res/config/streets but was saved with savegame
+lollo_ultrathin_path_steep_sides.lua not found in res/config/streets but was saved with savegame
+lollo_ultrathin_street.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_country_road.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_street.lua not found in res/config/streets but was saved with savegame
+standard/country_x_large_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_x_large_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_x_large_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_x_large_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_x_large_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_x_large_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_x_large_6_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_small_one_way_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_small_one_way_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_small_one_way_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_large_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_large_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_large_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_large_one_way_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_large_one_way_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_large_one_way_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_large_one_way_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_large_one_way_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_large_one_way_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_1_way_3_lane_3_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_large_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_large_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_large_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_4_lane_4_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_large_6_lane_6_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_medium_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_medium_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_medium_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_medium_one_way_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_medium_one_way_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_medium_one_way_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_country_road-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_country_road-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_country_road-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_medium_one_way_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_medium_one_way_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_medium_one_way_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_medium_sidewalk_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_medium_sidewalk_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_2_tram_tracks_medium_sidewalk_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_medium_sidewalk_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_medium_sidewalk_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_2_lane_medium_sidewalk_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_3_lane_3_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_4_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_4_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_4_lane_4_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_medium_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_medium_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_medium_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_2_lane_medium_sidewalk_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_2_lane_medium_sidewalk_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_2_lane_medium_sidewalk_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_4_lane_4_tram_tracks_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_country_road_narrow_sidewalk-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_country_road_narrow_sidewalk-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_country_road_narrow_sidewalk-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street_narrow_sidewalk-0001000000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street_narrow_sidewalk-0001011000000000.lua not found in res/config/streets but was saved with savegame
+lollo_medium_1_way_1_lane_street_narrow_sidewalk-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_small_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_small_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/country_small_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_small_one_way_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_small_one_way_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_small_one_way_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_small_new-0001000000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_small_new-0001011000000000.lua not found in res/config/streets but was saved with savegame
+standard/town_small_new-0001100000000000.lua not found in res/config/streets but was saved with savegame
+lollo_1m_path_cobbles.lua not found in res/config/streets but was saved with savegame
+lollo_1m_path_cobbles_bridge.lua not found in res/config/streets but was saved with savegame
+lollo_1m_path_cobbles_large.lua not found in res/config/streets but was saved with savegame
+lollo_1m_path_cobbles_large_bridge.lua not found in res/config/streets but was saved with savegame
+lollo_1m_path_concrete.lua not found in res/config/streets but was saved with savegame
+lollo_1m_path_concrete_bridge.lua not found in res/config/streets but was saved with savegame
+standard/wk_street_dummy.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_a_cargo_platform_10m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_a_cargo_platform_20m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_a_cargo_platform_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_a_passenger_platform_2_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_a_passenger_platform_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_b_cargo_platform_10m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_b_cargo_platform_20m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_b_cargo_platform_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_b_passenger_platform_2_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_b_passenger_platform_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_cargo_platform_10m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_cargo_platform_20m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_cargo_platform_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_passenger_platform_2_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_passenger_platform_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/invisible_platform_10m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/invisible_platform_20m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/invisible_platform_2_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/invisible_platform_5m.lua not found in res/config/streets but was saved with savegame
+wk_track_dummy.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_invisible_platform_10m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_invisible_platform_20m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_invisible_platform_2_5m.lua not found in res/config/streets but was saved with savegame
+lollo_freestyle_train_station/era_c_invisible_platform_5m.lua not found in res/config/streets but was saved with savegame
+No resources are missing!
+lollo_bus_stop INFO: 	script.load firing from the worker thread, state =
+{
+  isWorking = false,
+}
+lollo_bus_stop INFO: 	script.load firing from the worker thread, state =
+{
+  isWorking = false,
+}
+Shader reload took : 3.259 ms
+prepare material ubo's: 261.072 ms
+Using 200 UBOs, total 0 bytes
+Texture load error: file name empty
+Initial material index generation: 1258.71 ms
+Texture load error: file name empty
+Texture load error: file not found: res/textures/ui/models/station/bus/lollo_bus_stop/initialStation.tga
+lollo_bus_stop INFO: 	guiInit starting
+lollo_bus_stop INFO: 	guiInit ending
+lollo_bus_stop INFO: 	guiHandleEvent caught id =	streetTerminalBuilder	name =	builder.apply	args =
+lollo_bus_stop INFO: 	edgeObjectId =
+19877
+lollo_bus_stop INFO: 	edgeId =
+19878
+lollo_bus_stop INFO: 	edgeObjectTransf =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 448.14279174805, 875.57025146484, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	baseEdge.objects[1][2] =	0
+lollo_bus_stop INFO: 	edgeObjectTransf =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 448.14279174805, 875.57025146484, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	edgeObjectTransf_y0 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	edgeObjectTransf_yz0 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	_setStateWorking starting, isWorking =	true
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	setStateWorking	, args =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = false,
+}
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	initialEdgeObjectPlaced	, args =
+{
+  bridgeOrTunnelType = -1,
+  edgeId = 19878,
+  edgeObjectId = 19877,
+  edgeObjectTransf = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+  groundBridgeTunnel012 = 0,
+  streetType = 25,
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	replaceEdgeWithSame starting
+lollo_bus_stop INFO: 	objectIdToBeRemoved =	19877
+lollo_bus_stop INFO: 	successEventName =	ploppableStreetsidePassengerStationBuilt
+lollo_bus_stop INFO: 	successEventArgs =
+{
+  bridgeOrTunnelType = -1,
+  edgeObjectTransf = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+  groundBridgeTunnel012 = 0,
+  streetType = 25,
+}
+lollo_bus_stop INFO: 	oldBaseEdge =
+{
+  node0 = 24307,
+  node1 = 25962,
+  tangent0 = {
+    x = -35.061904907227,
+    y = -59.77730178833,
+    z = -7.408109664917,
+  },
+  tangent1 = {
+    x = -24.136615753174,
+    y = -65.598663330078,
+    z = -6.2014617919922,
+  },
+  type = 0,
+  typeIndex = -1,
+  objects = {
+    { 19877, 0, },
+  },
+}
+lollo_bus_stop INFO: 	replaceEdgeWithSame succeeded, result =
+lollo_bus_stop INFO: 	edgeIdsBetweenNodes =
+{ 20242, }
+lollo_bus_stop INFO: 	edgeTan0 =
+{
+  x = -35.061904907227,
+  y = -59.77730178833,
+  z = -7.408109664917,
+}
+lollo_bus_stop INFO: 	edgeTan1 =
+{
+  x = -24.136615753174,
+  y = -65.598663330078,
+  z = -6.2014617919922,
+}
+lollo_bus_stop INFO: 	testBaseEdge.tangent0 =
+{
+  x = -35.061904907227,
+  y = -59.77730178833,
+  z = -7.408109664917,
+}
+lollo_bus_stop INFO: 	testBaseEdge.tangent1 =
+{
+  x = -24.136615753174,
+  y = -65.598663330078,
+  z = -6.2014617919922,
+}
+lollo_bus_stop INFO: 	found the edge, it is 20242
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	ploppableStreetsidePassengerStationBuilt	, args =
+{
+  bridgeOrTunnelType = -1,
+  edgeId = 20242,
+  edgeObjectTransf = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+  groundBridgeTunnel012 = 0,
+  streetType = 25,
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	outerTransf0 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.73424494267, 876.91736532748, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	outerTransf1 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.71970933676, 878.65772737563, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	outerPos0 =
+{ 443.73424494267, 876.91736532748, 30.771810531616, }
+lollo_bus_stop INFO: 	outerPos1 =
+{ 444.71970933676, 878.65772737563, 30.771810531616, }
+lollo_bus_stop INFO: 	innerTransf0 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.98061104119, 877.35245583951, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	innerTransf1 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.47334323823, 878.22263686359, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	innerPos0 =
+{ 443.98061104119, 877.35245583951, 30.771810531616, }
+lollo_bus_stop INFO: 	innerPos1 =
+{ 444.47334323823, 878.22263686359, 30.771810531616, }
+lollo_bus_stop INFO: 	first outer nodeBetween =
+{
+  position = {
+    x = 443.74673547961,
+    y = 876.93681551902,
+    z = 30.667502546087,
+  },
+  refDistance0 = 7.0096592296364,
+  refDistance1 = 62.924768736166,
+  refPosition0 = {
+    x = 447.20846557617,
+    y = 882.96075439453,
+    z = 31.409997940063,
+  },
+  refPosition1 = {
+    x = 417.52780151367,
+    y = 820.16235351563,
+    z = 24.39089012146,
+  },
+  refTangent0 = {
+    x = -35.061904907227,
+    y = -59.77730178833,
+    z = -7.408109664917,
+  },
+  refTangent1 = {
+    x = -24.136615753174,
+    y = -65.598663330078,
+    z = -6.2014617919922,
+  },
+  tangent = {
+    x = -0.48775543875506,
+    y = -0.866500237386,
+    z = -0.10616953694383,
+  },
+}
+lollo_bus_stop INFO: 	splitEdge starting
+lollo_bus_stop INFO: 	splitEdge succeeded, result =
+lollo_bus_stop INFO: 	nodeId found, it is 20272
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	firstOuterSplitDone	, args =
+{
+  bridgeOrTunnelType = -1,
+  groundBridgeTunnel012 = 0,
+  innerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.98061104119, 877.35245583951, 30.771810531616, 1, },
+  innerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.47334323823, 878.22263686359, 30.771810531616, 1, },
+  outerNode0EdgeIds = { 20276, 20613, },
+  outerNode0Id = 20272,
+  outerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.73424494267, 876.91736532748, 30.771810531616, 1, },
+  outerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.71970933676, 878.65772737563, 30.771810531616, 1, },
+  streetType = 25,
+  transfMid = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	args.outerNode0EdgeIds =
+{ 20276, 20613, }
+lollo_bus_stop INFO: 	getSplit1Data starting, transf1 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.71970933676, 878.65772737563, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	baseNode0.position =
+{
+  x = 447.20846557617,
+  y = 882.96075439453,
+  z = 31.409997940063,
+}
+lollo_bus_stop INFO: 	baseNode1.position =
+{
+  x = 443.74673461914,
+  y = 876.93682861328,
+  z = 30.667503356934,
+}
+lollo_bus_stop INFO: 	testNodeBetween.position =
+{
+  x = 444.71701922323,
+  y = 878.65049734462,
+  z = 30.877848392316,
+}
+lollo_bus_stop INFO: 	currentDistance =
+0.10631809799331
+lollo_bus_stop INFO: 	setting nodeBetween
+lollo_bus_stop INFO: 	baseNode0.position =
+{
+  x = 443.74673461914,
+  y = 876.93682861328,
+  z = 30.667503356934,
+}
+lollo_bus_stop INFO: 	baseNode1.position =
+{
+  x = 417.52780151367,
+  y = 820.16235351563,
+  z = 24.39089012146,
+}
+lollo_bus_stop INFO: 	testNodeBetween.position =
+{
+  x = 442.84101773385,
+  y = 875.31884595539,
+  z = 30.469609547844,
+}
+lollo_bus_stop INFO: 	currentDistance =
+3.8430374330481
+lollo_bus_stop INFO: 	final second outer nodeBetween =
+{
+  position = {
+    x = 444.71701922323,
+    y = 878.65049734462,
+    z = 30.877848392316,
+  },
+  refDistance0 = 5.0248206368865,
+  refDistance1 = 1.9848386332137,
+  refPosition0 = {
+    x = 447.20846557617,
+    y = 882.96075439453,
+    z = 31.409997940063,
+  },
+  refPosition1 = {
+    x = 443.74673461914,
+    y = 876.93682861328,
+    z = 30.667503356934,
+  },
+  refTangent0 = {
+    x = -3.5263392925262,
+    y = -6.0120816230774,
+    z = -0.74506813287735,
+  },
+  refTangent1 = {
+    x = -3.4189994335175,
+    y = -6.0738716125488,
+    z = -0.74421226978302,
+  },
+  tangent = {
+    x = -0.49209363193476,
+    y = -0.86403499592021,
+    z = -0.10624209727987,
+  },
+}
+lollo_bus_stop INFO: 	splitEdge starting
+lollo_bus_stop INFO: 	splitEdge succeeded, result =
+lollo_bus_stop INFO: 	nodeId found, it is 22085
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	secondOuterSplitDone	, args =
+{
+  bridgeOrTunnelType = -1,
+  groundBridgeTunnel012 = 0,
+  innerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.98061104119, 877.35245583951, 30.771810531616, 1, },
+  innerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.47334323823, 878.22263686359, 30.771810531616, 1, },
+  outerNode0EdgeIds = { 20276, 20613, },
+  outerNode0Id = 20272,
+  outerNode1EdgeIds = { 22169, 22392, },
+  outerNode1Id = 22085,
+  outerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.73424494267, 876.91736532748, 30.771810531616, 1, },
+  outerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.71970933676, 878.65772737563, 30.771810531616, 1, },
+  streetType = 25,
+  transfMid = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	first inner nodeBetween =
+{
+  position = {
+    x = 443.98484411797,
+    y = 877.35923239902,
+    z = 30.719281694488,
+  },
+  refDistance0 = 1.4965312762761,
+  refDistance1 = 0.48830734627436,
+  refPosition0 = {
+    x = 444.71701049805,
+    y = 878.65051269531,
+    z = 30.877847671509,
+  },
+  refPosition1 = {
+    x = 443.74673461914,
+    y = 876.93682861328,
+    z = 30.667503356934,
+  },
+  refTangent0 = {
+    x = -0.97672647237778,
+    y = -1.7149699926376,
+    z = -0.21087342500687,
+  },
+  refTangent1 = {
+    x = -0.96811580657959,
+    y = -1.7198631763458,
+    z = -0.21072939038277,
+  },
+  tangent = {
+    x = -0.48880749530793,
+    y = -0.86590479158356,
+    z = -0.10618909757321,
+  },
+}
+lollo_bus_stop INFO: 	splitEdge starting
+lollo_bus_stop INFO: 	splitEdge succeeded, result =
+lollo_bus_stop INFO: 	nodeId found, it is 22963
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	firstInnerSplitDone	, args =
+{
+  bridgeOrTunnelType = -1,
+  groundBridgeTunnel012 = 0,
+  innerNode0EdgeIds = { 22990, 23012, },
+  innerNode0Id = 22963,
+  innerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.98061104119, 877.35245583951, 30.771810531616, 1, },
+  innerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.47334323823, 878.22263686359, 30.771810531616, 1, },
+  outerNode0EdgeIds = { 20276, 20613, },
+  outerNode0Id = 20272,
+  outerNode1EdgeIds = { 22169, 22392, },
+  outerNode1Id = 22085,
+  outerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.73424494267, 876.91736532748, 30.771810531616, 1, },
+  outerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.71970933676, 878.65772737563, 30.771810531616, 1, },
+  streetType = 25,
+  transfMid = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	args.innerNode0EdgeIds =
+{ 22990, 23012, }
+lollo_bus_stop INFO: 	getSplit1Data starting, transf1 =
+{ -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.47334323823, 878.22263686359, 30.771810531616, 1, }
+lollo_bus_stop INFO: 	baseNode0.position =
+{
+  x = 444.71701049805,
+  y = 878.65051269531,
+  z = 30.877847671509,
+}
+lollo_bus_stop INFO: 	baseNode1.position =
+{
+  x = 443.98483276367,
+  y = 877.35925292969,
+  z = 30.719282150269,
+}
+lollo_bus_stop INFO: 	testNodeBetween.position =
+{
+  x = 444.4699938587,
+  y = 878.21615574465,
+  z = 30.824462033303,
+}
+lollo_bus_stop INFO: 	currentDistance =
+0.053154528272106
+lollo_bus_stop INFO: 	setting nodeBetween
+lollo_bus_stop INFO: 	baseNode0.position =
+{
+  x = 443.98483276367,
+  y = 877.35925292969,
+  z = 30.719282150269,
+}
+lollo_bus_stop INFO: 	baseNode1.position =
+{
+  x = 443.74673461914,
+  y = 876.93682861328,
+  z = 30.667503356934,
+}
+lollo_bus_stop INFO: 	testNodeBetween.position =
+{
+  x = 443.88915014986,
+  y = 877.1896430826,
+  z = 30.698486641097,
+}
+lollo_bus_stop INFO: 	currentDistance =
+1.1890055126022
+lollo_bus_stop INFO: 	final second inner nodeBetween =
+{
+  position = {
+    x = 444.4699938587,
+    y = 878.21615574465,
+    z = 30.824462033303,
+  },
+  refDistance0 = 0.50349827447538,
+  refDistance1 = 0.99303302994413,
+  refPosition0 = {
+    x = 444.71701049805,
+    y = 878.65051269531,
+    z = 30.877847671509,
+  },
+  refPosition1 = {
+    x = 443.98483276367,
+    y = 877.35925292969,
+    z = 30.719282150269,
+  },
+  refTangent0 = {
+    x = -0.73643356561661,
+    y = -1.2930554151535,
+    z = -0.15899462997913,
+  },
+  refTangent1 = {
+    x = -0.73151570558548,
+    y = -1.2958536148071,
+    z = -0.1589153110981,
+  },
+  tangent = {
+    x = -0.49100040672892,
+    y = -0.86465864334801,
+    z = -0.10622632006996,
+  },
+}
+lollo_bus_stop INFO: 	splitEdge starting
+lollo_bus_stop INFO: 	splitEdge succeeded, result =
+lollo_bus_stop INFO: 	nodeId found, it is 25697
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	secondInnerSplitDone	, args =
+{
+  bridgeOrTunnelType = -1,
+  groundBridgeTunnel012 = 0,
+  innerNode0EdgeIds = { 22990, 23012, },
+  innerNode0Id = 22963,
+  innerNode1EdgeIds = { 25842, 25851, },
+  innerNode1Id = 25697,
+  innerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.98061104119, 877.35245583951, 30.771810531616, 1, },
+  innerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.47334323823, 878.22263686359, 30.771810531616, 1, },
+  outerNode0EdgeIds = { 20276, 20613, },
+  outerNode0Id = 20272,
+  outerNode1EdgeIds = { 22169, 22392, },
+  outerNode1Id = 22085,
+  outerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.73424494267, 876.91736532748, 30.771810531616, 1, },
+  outerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.71970933676, 878.65772737563, 30.771810531616, 1, },
+  streetType = 25,
+  transfMid = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	edgeIdsBetweenNodesNested =
+{
+  { 23012, },
+  { 25851, },
+  { 25842, },
+}
+lollo_bus_stop INFO: 	edgeIdsBetweenNodes =
+{ 23012, 25851, 25842, }
+lollo_bus_stop INFO: 	reversing edge0
+lollo_bus_stop INFO: 	reversing edge1
+lollo_bus_stop INFO: 	reversing edge2
+lollo_bus_stop INFO: 	removeEdges starting, oldEdgeIds =
+{ 23012, 25851, 25842, }
+lollo_bus_stop INFO: 	removeEdges succeeded, result =
+lollo_bus_stop INFO: 	handleEvent starting, src =	C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua	, id =	__lolloBusStopEvent__	, name =	edgesRemoved	, args =
+{
+  bridgeOrTunnelType = -1,
+  dataForCon = {
+    edge0Tan0 = { 0.23817455768585, 0.42311844229698, 0.051843363791704, },
+    edge0Tan1 = { 0.23868829011917, 0.42282766103745, 0.051852915436029, },
+    edge1Tan0 = { 0.48540198802948, 0.85987204313278, 0.1054492816329, },
+    edge1Tan1 = { 0.48757961392403, 0.8586345911026, 0.10548624396324, },
+    edge2Tan0 = { 0.24721786379814, 0.43535414338112, 0.0534847676754, },
+    edge2Tan1 = { 0.24776831269264, 0.43504011631012, 0.053492713719606, },
+    innerNode0Pos = { 443.98483276367, 877.35925292969, 30.719282150269, },
+    innerNode1Pos = { 444.4700012207, 878.21612548828, 30.824462890625, },
+    outerNode0Pos = { 443.74673461914, 876.93682861328, 30.667503356934, },
+    outerNode1Pos = { 444.71701049805, 878.65051269531, 30.877847671509, },
+  },
+  groundBridgeTunnel012 = 0,
+  innerNode0EdgeIds = { 22990, 23012, },
+  innerNode0Id = 22963,
+  innerNode1EdgeIds = { 25842, 25851, },
+  innerNode1Id = 25697,
+  innerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.98061104119, 877.35245583951, 30.771810531616, 1, },
+  innerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.47334323823, 878.22263686359, 30.771810531616, 1, },
+  outerNode0EdgeIds = { 20276, 20613, },
+  outerNode0Id = 20272,
+  outerNode1EdgeIds = { 22169, 22392, },
+  outerNode1Id = 22085,
+  outerTransf0 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 443.73424494267, 876.91736532748, 30.771810531616, 1, },
+  outerTransf1 = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.71970933676, 878.65772737563, 30.771810531616, 1, },
+  streetType = 25,
+  transfMid = { -0.49273219704628, -0.87018102407455, 0, 0, 0.87018102407455, -0.49273219704628, 0, 0, 0, 0, 1, 0, 444.22697713971, 877.78754635155, 30.771810531616, 1, },
+}
+lollo_bus_stop INFO: 	state =
+{
+  isWorking = true,
+}
+lollo_bus_stop INFO: 	buildConstruction starting, streetType =	25	groundBridgeTunnel012 =	0	bridgeOrTunnelType =	-1
+lollo_bus_stop INFO: 	_inverseConTransf =
+{ 0.49473667889491, -0.87019894030021, -0.052328494431238, 0, 0.87379516470607, 0.49270052192016, -0.092421660574063, 0, 0.1072530502713, 0, 0.99434398742452, 0, -990.09012963013, -45.919294921522, 73.774508878101, 1, }
+lollo_bus_stop INFO: 	bridgeTypeFileName =	NIL
+lollo_bus_stop INFO: 	tunnelTypeFileName =	NIL
+lollo_bus_stop INFO: 	stopParametric.updateFn.script() starting, params =
+{
+  lolloBusStop_bothSides = 0,
+  lolloBusStop_bridgeOrTunnelType = 0,
+  lolloBusStop_direction = 0,
+  lolloBusStop_driveOnLeft = 0,
+  lolloBusStop_edge0Tan0 = { 0.49311289754681, 0.00121142964907, -1.8487997981501e-05, },
+  lolloBusStop_edge0Tan1 = { 0.49311400100913, 0.00062111215165955, -8.9987357825561e-06, },
+  lolloBusStop_edge1Tan0 = { 1.0028079581461, 0.0012631088332107, -1.8298165147354e-05, },
+  lolloBusStop_edge1Tan1 = { 1.0028079942712, -0.0012415521737157, 1.8870592802811e-05, },
+  lolloBusStop_edge2Tan0 = { 0.5084544947964, -0.00062950943644124, 9.5656786857495e-06, },
+  lolloBusStop_edge2Tan1 = { 0.50845327895562, -0.0012632307829036, 1.7685521422804e-05, },
+  lolloBusStop_freeNodes = 3,
+  lolloBusStop_groundBridgeTunnel012 = 0,
+  lolloBusStop_innerNode0Pos = { -0.50753835606918, 0.00093592810683418, -1.4542390601946e-05, },
+  lolloBusStop_innerNode1Pos = { 0.49250432876863, 0.00092440776936797, -1.0425291861793e-05, },
+  lolloBusStop_model = 5,
+  lolloBusStop_outerNode0Pos = { -1.0000000000003, 2.6290081223124e-13, 1.4210854715202e-14, },
+  lolloBusStop_outerNode0Pos_absolute = { 443.74673461914, 876.93682861328, 30.667503356934, },
+  lolloBusStop_outerNode1Pos = { 0.99999999999977, 2.6290081223124e-13, 1.4210854715202e-14, },
+  lolloBusStop_outerNode1Pos_absolute = { 444.71701049805, 878.65051269531, 30.877847671509, },
+  lolloBusStop_pitchAngle = 0.10640819872753,
+  lolloBusStop_sidewalkHeight = 0,
+  lolloBusStop_snapNodes = 3,
+  lolloBusStop_streetType = 13,
+  lolloBusStop_tramTrack = 0,
+  seed = 44424,
+}
+lollo_bus_stop INFO: 	defaults =
+{ 0, 0, 0, 0, 2, 0, 0, }
+lollo_bus_stop INFO: 	stopParametric.updateFn.script _pitchTransf =
+{ 0.99434398742452, 0, -0.1062075076099, 0, 0, 1, 0, 0, 0.1062075076099, 0, 0.99434398742452, 0, 0, 0, 0, 1, }
+lollo_bus_stop INFO: 	stopParametric.updateFn.script result = 
+{
+  colliders = { },
+  cost = 1000,
+  edgeLists = {
+    {
+      edges = {
+        {
+          { -1.0000000000003, 2.6290081223124e-13, 1.4210854715202e-14, },
+          { 0.49311289754681, 0.00121142964907, -1.8487997981501e-05, },
+        },
+        {
+          { -0.50753835606918, 0.00093592810683418, -1.4542390601946e-05, },
+          { 0.49311400100913, 0.00062111215165955, -8.9987357825561e-06, },
+        },
+        {
+          { -0.50753835606918, 0.00093592810683418, -1.4542390601946e-05, },
+          { 1.0028079581461, 0.0012631088332107, -1.8298165147354e-05, },
+        },
+        {
+          { 0.49250432876863, 0.00092440776936797, -1.0425291861793e-05, },
+          { 1.0028079942712, -0.0012415521737157, 1.8870592802811e-05, },
+        },
+        {
+          { 0.49250432876863, 0.00092440776936797, -1.0425291861793e-05, },
+          { 0.5084544947964, -0.00062950943644124, 9.5656786857495e-06, },
+        },
+        {
+          { 0.99999999999977, 2.6290081223124e-13, 1.4210854715202e-14, },
+          { 0.50845327895562, -0.0012632307829036, 1.7685521422804e-05, },
+        },
+      },
+      freeNodes = { 0, 5, },
+      params = {
+        hasBus = true,
+        tramTrackType = "NO",
+        type = "standard/town_small_new.lua",
+      },
+      snapNodes = { 0, 5, },
+      type = "STREET",
+    },
+  },
+  models = {
+    {
+      id = "lollo_bus_stop/geldedBusStops/small_new.mdl",
+      transf = { -0.99434398742452, 0, 0.1062075076099, 0, 0, -1, 0, 0, 0.1062075076099, 0, 0.99434398742452, 0, 0, -4.5, 0, 1, },
+    },
+    {
+      id = "lollo_bus_stop/vehicle_edge_left.mdl",
+      transf = { 1.0000426848378, -1.1520337466209e-05, 4.1170987401529e-06, 0, 1.1519845742697e-05, 0.99999999993365, 0, 0, -4.1169230093807e-06, 4.7426318005773e-11, 0.99999999999153, 0, -0.0075342934188861, -1.4990698319624, -1.248384123187e-05, 1, },
+    },
+  },
+  stations = {
+    {
+      pool = {
+        moreCapacity = 100,
+      },
+      tag = 0,
+      terminals = { 0, },
+    },
+  },
+  terminalGroups = {
+    {
+      tag = 0,
+      terminals = {
+        { 1, 0, },
+      },
+    },
+  },
+  terrainAlignmentLists = {
+    {
+      faces = { },
+      optional = true,
+      type = "EQUAL",
+    },
+  },
+}
+lollo_bus_stop INFO: 	stopParametric.updateFn.script() ending
+MinidumpCallback: dumpPath "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/crash_dump/", minidumpId "b5209277-5653-4fbc-8f65-e73daf6b2ac5", succeeded 1
+local time is Fri Oct 14 12:45:09 2022
+
+Calling thread crashtrace handlers
+ thread: 14084
+ (empty)
+
+ thread: 16284
+  lollo_bus_stop.lua - game/res/gameScript/lollo_bus_stop.lua_handleEvent() - hints: src = "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua", id = "__lolloBusStopEvent__", name = "initialEdgeObjectPlaced" - mod: "?lollo_bus_stop" version 1
+  lollo_bus_stop.lua - game/res/gameScript/lollo_bus_stop.lua_handleEvent() - hints: src = "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua", id = "__lolloBusStopEvent__", name = "ploppableStreetsidePassengerStationBuilt" - mod: "?lollo_bus_stop" version 1
+  lollo_bus_stop.lua - game/res/gameScript/lollo_bus_stop.lua_handleEvent() - hints: src = "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua", id = "__lolloBusStopEvent__", name = "firstOuterSplitDone" - mod: "?lollo_bus_stop" version 1
+  lollo_bus_stop.lua - game/res/gameScript/lollo_bus_stop.lua_handleEvent() - hints: src = "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua", id = "__lolloBusStopEvent__", name = "secondOuterSplitDone" - mod: "?lollo_bus_stop" version 1
+  lollo_bus_stop.lua - game/res/gameScript/lollo_bus_stop.lua_handleEvent() - hints: src = "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua", id = "__lolloBusStopEvent__", name = "firstInnerSplitDone" - mod: "?lollo_bus_stop" version 1
+  lollo_bus_stop.lua - game/res/gameScript/lollo_bus_stop.lua_handleEvent() - hints: src = "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua", id = "__lolloBusStopEvent__", name = "secondInnerSplitDone" - mod: "?lollo_bus_stop" version 1
+  lollo_bus_stop.lua - game/res/gameScript/lollo_bus_stop.lua_handleEvent() - hints: src = "C:/Program Files (x86)/Steam/userdata/71590188/1066780/local/staging_area/lollo_bus_stop_1/res/config/game_script/lollo_bus_stop.lua", id = "__lolloBusStopEvent__", name = "edgesRemoved" - mod: "?lollo_bus_stop" version 1
+
+All thread handlers called
+Minidump Callback

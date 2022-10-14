@@ -125,10 +125,7 @@ function data()
                 -- streetUtils.getStreetDataFilters().PATHS,
                 streetUtils.getStreetDataFilters().STOCK,
             })
-            -- logger.print('postRunFn: #globalStreetData =', #globalStreetData)
-            -- logger.print('postRunFn: globalStreetData =') logger.debugPrint(globalStreetData)
-            local test = api.res.streetTypeRep.getAll()
-            logger.print('postRunFn: the api found ' .. #test .. ' street types')
+            -- logger.print('postRunFn: the api found ' .. #api.res.streetTypeRep.getAll() .. ' street types')
             local globalTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
             local geldedBusStopModels = moduleHelpers.getGeldedBusStopModels()
 

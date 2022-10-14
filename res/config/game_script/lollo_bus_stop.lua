@@ -441,14 +441,10 @@ local _actions = {
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
         -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
         newCon.fileName = constants.parametricConFileName
-        local globalBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
-        local globalTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
-        local globalStreetData = streetUtils.getGlobalStreetData({
-            -- streetUtils.getStreetDataFilters().PATHS,
-            streetUtils.getStreetDataFilters().STOCK,
-        })
+        local globalBridgeData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalBridgeData, nil, true)
+        local globalTunnelData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalTunnelData, nil, true)
+        local globalStreetData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalStreetData, nil, true)
 
-        -- logger.print('globalBridgeData =') logger.debugPrint(globalBridgeData)
         local bridgeTypeFileName = groundBridgeTunnel012 == 1 and type(bridgeOrTunnelType) == 'number' and bridgeOrTunnelType > -1 and api.res.bridgeTypeRep.getName(bridgeOrTunnelType) or nil
         logger.print('bridgeTypeFileName =', bridgeTypeFileName or 'NIL')
         local bridgeTypeIndexBase0 = 0 -- no bridge
@@ -460,7 +456,6 @@ local _actions = {
             end
         end
 
-        -- logger.print('globalTunnelData =') logger.debugPrint(globalTunnelData)
         local tunnelTypeFileName = groundBridgeTunnel012 == 2 and type(bridgeOrTunnelType) == 'number' and bridgeOrTunnelType > -1 and api.res.tunnelTypeRep.getName(bridgeOrTunnelType) or nil
         logger.print('tunnelTypeFileName =', tunnelTypeFileName or 'NIL')
         local tunnelTypeIndexBase0 = 0 -- no tunnel
@@ -472,9 +467,7 @@ local _actions = {
             end
         end
 
-        logger.print('buildConstruction: #globalStreetData =', #globalStreetData)
-        local test = api.res.streetTypeRep.getAll()
-        logger.print('buildConstruction: the api found ' .. #test .. ' street types')
+        -- logger.print('buildConstruction: the api found ' .. #api.res.streetTypeRep.getAll() .. ' street types')
         local streetTypeFileName = api.res.streetTypeRep.getName(streetType)
         if type(streetTypeFileName) ~= 'string' then
             logger.warn('cannot find street type', streetType or 'NIL')

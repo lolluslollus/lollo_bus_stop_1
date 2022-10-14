@@ -1,4 +1,5 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
+local constants = require('lollo_bus_stop.constants')
 local logger = require('lollo_bus_stop.logger')
 -- local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 local streetUtils = require('lollo_bus_stop.streetUtils')
@@ -42,14 +43,27 @@ local funcs = {}
 -- Returns a sorted table and an indexed table with the same values.
 -- Inside constructions, you must pass all parameters coz the api is not available
 funcs.getParamsMetadata = function(globalBridgeData, globalStreetData, modelData)
-    if not(globalBridgeData) then globalBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge() end
+    if not(globalBridgeData) then globalBridgeData = arrayUtils.cloneDeepOmittingFields(
+        api.res.constructionRep.get(
+            api.res.constructionRep.find(
+                constants.parametricConFileName
+            )
+        ).updateScript.params.globalBridgeData,
+        nil,
+        true
+    )
+    end
     if not(globalStreetData) then
-        globalStreetData = streetUtils.getGlobalStreetData({
-            -- streetUtils.getStreetDataFilters().PATHS,
-            streetUtils.getStreetDataFilters().STOCK,
-        })
-        logger.print('getParamsMetadata: #globalStreetData =', #globalStreetData)
-        -- logger.print('getParamsMetadata: globalStreetData =') logger.debugPrint(globalStreetData)
+        globalStreetData = arrayUtils.cloneDeepOmittingFields(
+            api.res.constructionRep.get(
+                api.res.constructionRep.find(
+                    constants.parametricConFileName
+                )
+            ).updateScript.params.globalStreetData,
+            nil,
+            true
+        )
+        -- logger.print('getParamsMetadata: the api found ' .. #api.res.streetTypeRep.getAll() .. ' street types')
     end
     if not(modelData) then modelData = funcs.getGeldedBusStopModels() end
 

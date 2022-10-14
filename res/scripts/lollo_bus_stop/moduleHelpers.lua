@@ -99,6 +99,7 @@ funcs.getAutoPlacingParamsMetadata = function(globalBridgeData, globalStreetData
             uiType = 'COMBOBOX',
         },
         {
+            defaultIndex = 5, -- it's easier to see transf problems
             key = 'lolloBusStop_model',
             name = _('modelName'),
             values = arrayUtils.map(
@@ -236,6 +237,7 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
             uiType = 'COMBOBOX',
         },
         {
+            defaultIndex = 5, -- it's easier to see transf problems
             key = 'lolloBusStop_model',
             name = _('modelName'),
             values = arrayUtils.map(

@@ -140,7 +140,7 @@ local _utils = {
     getIsProposalOK = function(proposal, context)
         logger.print('getIsProposalOK starting with state =') logger.debugPrint(state)
         if not(proposal) then logger.err('getIsProposalOK got no proposal') return false end
-        if not(context) then logger.err('getIsProposalOK got no context') return false end
+        -- if not(context) then logger.err('getIsProposalOK got no context') return false end
 
         local isErrorsOtherThanCollision = false
         local isWarnings = false
@@ -615,6 +615,7 @@ local _actions = {
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
+        -- context = nil
 
         if not(_utils.getIsProposalOK(proposal, context)) then
             logger.warn('buildConstruction made a dangerous proposal')

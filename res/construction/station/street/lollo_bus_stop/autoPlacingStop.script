@@ -289,7 +289,7 @@ function data()
 						{
 							tag = 0,
 							terminals = {
-								{ 0, 0 },
+								-- { 0, 0 },
 								{ 2, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
@@ -297,7 +297,7 @@ function data()
 						{
 							tag = 0,
 							terminals = {
-								{ 1, 0 },
+								-- { 1, 0 },
 								{ 3, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
@@ -315,7 +315,7 @@ function data()
 						{
 							tag = 0,
 							terminals = {
-								{ 0, 0 },
+								-- { 0, 0 },
 								{ 1, 0 },
 							},
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it

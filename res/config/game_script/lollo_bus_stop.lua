@@ -416,8 +416,8 @@ local _utils = {
     -- end,
 }
 local _actions = {
-    buildConstruction = function(outerNode0Id, outerNode1Id, streetType, groundBridgeTunnel012, bridgeOrTunnelType, dataForCon)
-        logger.print('buildConstruction starting, streetType =', streetType, 'groundBridgeTunnel012 =', groundBridgeTunnel012, 'bridgeOrTunnelType =', bridgeOrTunnelType)
+    buildConstruction = function(outerNode0Id, outerNode1Id, streetType, groundBridgeTunnel012, bridgeOrTunnelType, tramTrackType, hasBus, dataForCon)
+        logger.print('buildConstruction starting, streetType =', streetType, 'groundBridgeTunnel012 =', groundBridgeTunnel012, 'bridgeOrTunnelType =', bridgeOrTunnelType, 'tramTrackType =', tramTrackType, 'hasBus =', hasBus)
         -- logger.print('dataForCon =') logger.debugPrint(dataForCon)
         if not(edgeUtils.isValidAndExistingId(outerNode0Id)) or not(edgeUtils.isValidAndExistingId(outerNode1Id)) then
             logger.warn('buildConstruction received an invalid node id')
@@ -522,6 +522,7 @@ local _actions = {
             lolloBusStop_groundBridgeTunnel012 = groundBridgeTunnel012,
             lolloBusStop_direction = 0,
             lolloBusStop_driveOnLeft = 0,
+            lolloBusStop_hasBus = hasBus,
             lolloBusStop_model = 5, -- it's easier to see transf problems
             -- these make no sense coz they will be replaced with operations outside the station
             -- lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
@@ -533,7 +534,7 @@ local _actions = {
             lolloBusStop_snapNodes = 3,
             -- lolloBusStop_snapNodes = 0,
             lolloBusStop_streetType = streetTypeIndexBase0,
-            lolloBusStop_tramTrack = 0,
+            lolloBusStop_tramTrack = tramTrackType,
             seed = math.abs(math.ceil(conTransf_lua[13] * 100)),
             lolloBusStop_edge0Tan0 = _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf),
             lolloBusStop_edge0Tan1 = _utils.getTanTransformed(dataForCon.edge0Tan1, _inverseConTransf),
@@ -1619,9 +1620,11 @@ function data()
                                         edgeId = edgeId,
                                         edgeObjectId = edgeObjectId,
                                         edgeObjectTransf = edgeObjectTransf_yz0,
-                                        streetType = baseEdgeStreet.streetType,
                                         bridgeOrTunnelType = baseEdge.typeIndex,
                                         groundBridgeTunnel012 = baseEdge.type,
+                                        streetType = baseEdgeStreet.streetType,
+                                        tramTrackType = baseEdgeStreet.tramTrackType,
+                                        hasBus = baseEdgeStreet.hasBus,
                                     }
                                 )
                             end
@@ -1821,6 +1824,8 @@ function data()
                                 streetType = args.streetType,
                                 bridgeOrTunnelType = args.bridgeOrTunnelType,
                                 groundBridgeTunnel012 = args.groundBridgeTunnel012,
+                                tramTrackType = args.tramTrackType,
+                                hasBus = args.hasBus,
                             }
                         )
                     elseif name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
@@ -1872,6 +1877,8 @@ function data()
                                 streetType = args.streetType,
                                 bridgeOrTunnelType = args.bridgeOrTunnelType,
                                 groundBridgeTunnel012 = args.groundBridgeTunnel012,
+                                tramTrackType = args.tramTrackType,
+                                hasBus = args.hasBus,
                                 innerTransf0 = innerTransf0,
                                 innerTransf1 = innerTransf1,
                                 outerTransf0 = outerTransf0,
@@ -2038,7 +2045,7 @@ function data()
 
                         _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
-                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.groundBridgeTunnel012, args.bridgeOrTunnelType, args.dataForCon)
+                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.groundBridgeTunnel012, args.bridgeOrTunnelType, args.tramTrackType, args.hasBus, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _actions.upgradeCon(args.conId, args.conParams)

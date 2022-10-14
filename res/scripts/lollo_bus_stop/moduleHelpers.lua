@@ -1,7 +1,7 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
 local constants = require('lollo_bus_stop.constants')
 local logger = require('lollo_bus_stop.logger')
--- local pitchHelpers = require('lollo_bus_stop.pitchHelper')
+local pitchHelpers = require('lollo_bus_stop.pitchHelper')
 local stringUtils = require('lollo_bus_stop.stringUtils')
 
 
@@ -41,7 +41,7 @@ local funcs = {}
 
 -- Returns a sorted table and an indexed table with the same values.
 -- Inside constructions, you must pass all parameters coz the api is not available
-funcs.getParamsMetadata = function(globalBridgeData, globalStreetData, modelData)
+funcs.getAutoPlacingParamsMetadata = function(globalBridgeData, globalStreetData, modelData)
     --[[
         LOLLO NOTE
         In postRunFn, api.res.streetTypeRep.getAll() only returns street types,
@@ -53,7 +53,7 @@ funcs.getParamsMetadata = function(globalBridgeData, globalStreetData, modelData
     if not(globalBridgeData) then globalBridgeData = arrayUtils.cloneDeepOmittingFields(
         api.res.constructionRep.get(
             api.res.constructionRep.find(
-                constants.parametricConFileName
+                constants.autoPlacingConFileName
             )
         ).updateScript.params.globalBridgeData,
         nil,
@@ -64,7 +64,7 @@ funcs.getParamsMetadata = function(globalBridgeData, globalStreetData, modelData
         globalStreetData = arrayUtils.cloneDeepOmittingFields(
             api.res.constructionRep.get(
                 api.res.constructionRep.find(
-                    constants.parametricConFileName
+                    constants.autoPlacingConFileName
                 )
             ).updateScript.params.globalStreetData,
             nil,
@@ -176,6 +176,143 @@ funcs.getParamsMetadata = function(globalBridgeData, globalStreetData, modelData
     -- logger.print('metadata_sorted =') logger.debugPrint(metadata_sorted)
     -- logger.print('metadata_indexed =') logger.debugPrint(metadata_indexed)
     return metadata_sorted, metadata_indexed
+end
+
+funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetData, modelData)
+    --[[
+        LOLLO NOTE
+        In postRunFn, api.res.streetTypeRep.getAll() only returns street types,
+        which are available in the present game.
+        In other lua states, eg in game_script, it returns all street types, which have ever been present in the game,
+        including those from inactive mods.
+        This is why we read the data from the table that we set in postRunFn, and not from the api.
+    ]]
+    if not(globalBridgeData) then globalBridgeData = arrayUtils.cloneDeepOmittingFields(
+        api.res.constructionRep.get(
+            api.res.constructionRep.find(
+                constants.autoPlacingConFileName
+            )
+        ).updateScript.params.globalBridgeData,
+        nil,
+        true
+    )
+    end
+    if not(globalStreetData) then
+        globalStreetData = arrayUtils.cloneDeepOmittingFields(
+            api.res.constructionRep.get(
+                api.res.constructionRep.find(
+                    constants.autoPlacingConFileName
+                )
+            ).updateScript.params.globalStreetData,
+            nil,
+            true
+        )
+        -- logger.print('getParamsMetadata: the api found ' .. #api.res.streetTypeRep.getAll() .. ' street types')
+    end
+    if not(modelData) then modelData = funcs.getGeldedBusStopModels() end
+
+    local metadata_sorted = {
+        {
+            defaultIndex = getDefaultStreetTypeIndexBase0(globalStreetData),
+            key = 'lolloBusStop_streetType',
+            name = _('streetTypeName'),
+            values = arrayUtils.map(
+                globalStreetData,
+                function(str)
+                    return str.name
+                end
+            ),
+            uiType = 'COMBOBOX',
+        },
+        {
+            key = 'lolloBusStop_bridgeOrTunnelType',
+            name = _('bridgeTypeName'),
+            values = arrayUtils.map(
+                globalBridgeData,
+                function(str)
+                    return str.name
+                end
+            ),
+            uiType = 'COMBOBOX',
+        },
+        {
+            key = 'lolloBusStop_model',
+            name = _('modelName'),
+            values = arrayUtils.map(
+                modelData,
+                function(model)
+                    -- return model.name
+                    return model.icon
+                end
+            ),
+            uiType = 'ICON_BUTTON',
+        },
+        {
+            key = 'lolloBusStop_bothSides',
+            name = _('bothSidesName'),
+            tooltip = _('bothSidesDesc'),
+            values = {
+                _('No'),
+                _('Yes'),
+            },
+        },
+        {
+            key = 'lolloBusStop_direction',
+            name = _('directionName'),
+            values = {
+                _('↑'),
+                _('↓')
+            },
+        },
+        {
+            key = 'lolloBusStop_driveOnLeft',
+            name = _('driveOnLeftName'),
+            values = {
+                _('No'),
+                _('Yes'),
+            },
+        },
+        {
+            key = 'lolloBusStop_snapNodes',
+            name = _('snapNodesName'),
+            tooltip = _('snapNodesDesc'),
+            values = {
+                _('No'),
+                _('Left'),
+                _('Right'),
+                _('Both')
+            },
+            defaultIndex = 3
+        },
+        {
+            key = 'lolloBusStop_tramTrack',
+            name = _('tramTrackName'),
+            values = {
+                -- must be in this sequence
+                _('NO'),
+                _('YES'),
+                _('ELECTRIC')
+            },
+        },
+        {
+            key = 'lolloBusStop_pitch',
+            name = _('pitchName'),
+            values = pitchHelpers.getPitchParamValues(),
+            defaultIndex = pitchHelpers.getDefaultPitchParamValue(),
+            uiType = 'SLIDER'
+        },
+    }
+    -- add defaultIndex wherever not present
+    for _, record in pairs(metadata_sorted) do
+        record.defaultIndex = record.defaultIndex or 0
+    end
+    -- local metadata_indexed = {}
+    -- for _, record in pairs(metadata_sorted) do
+    --     metadata_indexed[record.key] = record
+    -- end
+    -- logger.print('metadata_sorted =') logger.debugPrint(metadata_sorted)
+    -- logger.print('metadata_indexed =') logger.debugPrint(metadata_indexed)
+    return metadata_sorted --, metadata_indexed
 end
 
 -- do not call this from inside the construction

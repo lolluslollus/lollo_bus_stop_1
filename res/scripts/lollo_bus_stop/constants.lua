@@ -31,5 +31,5 @@ return {
         0, 0, 0, 1,
     },
 
-    parametricConFileName = 'station/street/lollo_bus_stop/stop_3.con',
+    autoPlacingConFileName = 'station/street/lollo_bus_stop/autoPlacingStop_dynamic.con',
 }

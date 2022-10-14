@@ -70,8 +70,8 @@ return {
 			price = 1200,
 		},
 		description = {
-			description = _("Small bus/tram stop for passengers, to be placed on the sidewalk."),
-			name = _("Extended capacity bus/tram stop"),
+			description = _("autoPlacingBusStopDesc"),
+			name = _("autoPlacingBusStopName"),
 		},
 		-- signal = {
 		-- 	type = "WAYPOINT",

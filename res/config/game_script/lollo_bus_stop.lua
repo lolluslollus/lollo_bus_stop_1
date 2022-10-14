@@ -76,7 +76,7 @@ local _utils = {
                 local conId = api.engine.system.streetConnectorSystem.getConstructionEntityForStation(stationId)
                 if edgeUtils.isValidAndExistingId(conId) then
                     local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
-                    if con ~= nil and con.fileName == constants.parametricConFileName then
+                    if con ~= nil and con.fileName == constants.autoPlacingConFileName then
                         return conId, con
                     end
                 end
@@ -438,8 +438,8 @@ local _actions = {
         logger.print('_inverseConTransf =') logger.debugPrint(_inverseConTransf)
 
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
-        -- newCon.fileName = 'station/street/lollo_bus_stop/stop_2.con'
-        newCon.fileName = constants.parametricConFileName
+        -- newCon.fileName = 'station/street/lollo_bus_stop/manualPlacingStop_dynamic'
+        newCon.fileName = constants.autoPlacingConFileName
         --[[
             LOLLO NOTE
             In postRunFn, api.res.streetTypeRep.getAll() only returns street types,
@@ -448,9 +448,9 @@ local _actions = {
             including those from inactive mods.
             This is why we read the data from the table that we set in postRunFn, and not from the api.
         ]]
-        local globalBridgeData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalBridgeData, nil, true)
-        local globalTunnelData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalTunnelData, nil, true)
-        local globalStreetData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.parametricConFileName)).updateScript.params.globalStreetData, nil, true)
+        local globalBridgeData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.autoPlacingConFileName)).updateScript.params.globalBridgeData, nil, true)
+        local globalTunnelData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.autoPlacingConFileName)).updateScript.params.globalTunnelData, nil, true)
+        local globalStreetData = arrayUtils.cloneDeepOmittingFields(api.res.constructionRep.get(api.res.constructionRep.find(constants.autoPlacingConFileName)).updateScript.params.globalStreetData, nil, true)
 
         local bridgeTypeFileName = groundBridgeTunnel012 == 1 and type(bridgeOrTunnelType) == 'number' and bridgeOrTunnelType > -1 and api.res.bridgeTypeRep.getName(bridgeOrTunnelType) or nil
         logger.print('bridgeTypeFileName =', bridgeTypeFileName or 'NIL')
@@ -487,7 +487,6 @@ local _actions = {
             _setStateReady()
             return
         end
-        local _sidewalkHeight = (globalStreetData[streetTypeIndexBase0 + 1] or {}).sidewalkHeight or 0
         local _pitchAngle = math.atan2(
             dataForCon.outerNode1Pos[3] - dataForCon.outerNode0Pos[3],
             math.sqrt((dataForCon.outerNode1Pos[1] - dataForCon.outerNode0Pos[1])^2 + (dataForCon.outerNode1Pos[2] - dataForCon.outerNode0Pos[2])^2)
@@ -546,7 +545,6 @@ local _actions = {
             lolloBusStop_innerNode1Pos = _utils.getPosTransformed(dataForCon.innerNode1Pos, _inverseConTransf),
             lolloBusStop_outerNode0Pos = _utils.getPosTransformed(dataForCon.outerNode0Pos, _inverseConTransf),
             lolloBusStop_outerNode1Pos = _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf),
-            lolloBusStop_sidewalkHeight = _sidewalkHeight,
             -- lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
             -- lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_pitchAngle = _pitchAngle,
@@ -660,7 +658,7 @@ local _actions = {
             end
         )
     end,
-    -- LOLLO NOTE the new parametric construction does not play well with curves, unless I rebuild adjacent roads snappy.
+    -- LOLLO NOTE the new autoPlacing construction does not play well with curves, unless I rebuild adjacent roads snappy.
     -- I tried Proposal instead of SimpleProposal but it is not meant to be.
     -- The trouble seems to be with collisions between external edges and inner edges.
     buildSnappyRoads = function(conParams, conId)
@@ -944,7 +942,6 @@ local _actions = {
         end
         api.cmd.sendCommand(
             -- let's try without force and see if the random crashes go away, yes they do, some of them.
-            -- Only checking for collisions won't do, even a parametric con does not cut it
             api.cmd.make.buildProposal(proposal, context, false), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
             function(result, success)
                 logger.print('makeConstructionSnappy callback, success =', success) -- logger.debugPrint(result)
@@ -1645,7 +1642,7 @@ function data()
                 end
 
                 local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
-                if con == nil or con.fileName ~= constants.parametricConFileName then
+                if con == nil or con.fileName ~= constants.autoPlacingConFileName then
                     _guiData.conIdAboutToBeBulldozed = false
                     return
                 end
@@ -1800,7 +1797,7 @@ function data()
         guiInit = function()
             logger.print('guiInit starting')
             _guiData.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
-            _guiData.conParamsMetadataSorted = moduleHelpers.getParamsMetadata()
+            _guiData.conParamsMetadataSorted = moduleHelpers.getAutoPlacingParamsMetadata()
             logger.print('guiInit ending')
         end,
         -- guiUpdate = function()

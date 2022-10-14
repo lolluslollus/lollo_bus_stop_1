@@ -129,7 +129,7 @@ function data()
             local globalTunnelData = streetUtils.getGlobalTunnelDataPlusNoTunnel()
             local geldedBusStopModels = moduleHelpers.getGeldedBusStopModels()
 
-            local function addCon(sourceFileName, targetFileName, scriptFileName, yearFrom, yearTo)
+            local function addAutoPlacingCon(sourceFileName, targetFileName, scriptFileName, yearFrom, yearTo)
                 local staticCon = api.res.constructionRep.get(
                     api.res.constructionRep.find(
                         sourceFileName
@@ -179,19 +179,69 @@ function data()
 
                 api.res.constructionRep.add(newCon.fileName, newCon, true) -- fileName, resource, visible
             end
-            -- addCon(
-            --     'station/street/lollo_bus_stop/stop.con',
-            --     'station/street/lollo_bus_stop/stop_2.con',
-            --     'construction/station/street/lollo_bus_stop/stop',
-            --     1925, -- same year as modern streets
-            --     0 -- never expire
-            -- )
-            addCon(
+            addAutoPlacingCon(
                 'station/street/lollo_bus_stop/stop.con',
-                'station/street/lollo_bus_stop/stop_3.con',
-                'construction/station/street/lollo_bus_stop/stopParametric',
+                'station/street/lollo_bus_stop/autoPlacingStop_dynamic.con',
+                'construction/station/street/lollo_bus_stop/autoPlacingStop',
                 -1,
                 -1
+            )
+
+            local function addManualCon(sourceFileName, targetFileName, scriptFileName, yearFrom, yearTo)
+                local staticCon = api.res.constructionRep.get(
+                    api.res.constructionRep.find(
+                        sourceFileName
+                    )
+                )
+                local newCon = api.type.ConstructionDesc.new()
+                newCon.fileName = targetFileName
+                newCon.type = staticCon.type
+                newCon.snapping = staticCon.snapping
+                newCon.description = staticCon.description
+                -- newCon.availability = { yearFrom = 1925, yearTo = 0 } -- this dumps, the api wants it different
+                newCon.availability.yearFrom = yearFrom
+                newCon.availability.yearTo = yearTo
+                newCon.buildMode = staticCon.buildMode
+                newCon.categories = staticCon.categories
+                newCon.order = staticCon.order
+                newCon.skipCollision = staticCon.skipCollision
+                newCon.autoRemovable = staticCon.autoRemovable
+                for _, par in pairs(moduleHelpers.getManualPlacingParamsMetadata(globalBridgeData, globalStreetData, geldedBusStopModels)) do
+                    local newConParam = api.type.ScriptParam.new()
+                    newConParam.key = par.key
+                    newConParam.name = par.name
+                    newConParam.tooltip = par.tooltip or ''
+                    newConParam.values = par.values
+                    newConParam.defaultIndex = par.defaultIndex or 0
+                    newConParam.uiType = _getUiTypeNumber(par.uiType)
+                    if par.yearFrom ~= nil then newConParam.yearFrom = par.yearFrom end
+                    if par.yearTo ~= nil then newConParam.yearTo = par.yearTo end
+                    newCon.params[#newCon.params + 1] = newConParam -- the api wants it this way, all the table at once dumps
+                end
+                -- UG TODO it would be nice to alter the soundSet here, but there is no suitable type
+                newCon.updateScript.fileName = scriptFileName .. '.updateFn'
+                newCon.updateScript.params = {
+                    globalBridgeData = globalBridgeData,
+                    globalStreetData = globalStreetData,
+                    globalTunnelData = globalTunnelData,
+                    globalBusStopModelData = geldedBusStopModels,
+                }
+                -- these are useless but the game wants them
+                newCon.preProcessScript.fileName = scriptFileName .. '.preProcessFn'
+                newCon.upgradeScript.fileName = scriptFileName .. '.upgradeFn'
+                newCon.createTemplateScript.fileName = scriptFileName .. '.createTemplateFn'
+
+                -- moduleHelpers.updateParamValues_model(newCon.params, geldedBusStopModels)
+                -- moduleHelpers.updateParamValues_streetType(newCon.params, globalStreetData)
+
+                api.res.constructionRep.add(newCon.fileName, newCon, true) -- fileName, resource, visible
+            end
+            addManualCon(
+                'station/street/lollo_bus_stop/stop.con',
+                'station/street/lollo_bus_stop/manualPlacingStop_dynamic',
+                'construction/station/street/lollo_bus_stop/manualPlacingStop',
+                1925,
+                0
             )
         end,
     }

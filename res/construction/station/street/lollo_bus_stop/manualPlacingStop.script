@@ -8,8 +8,30 @@ local transfUtilsUG = require('transf')
 function data()
 	return {
 		updateFn = function(params, two)
-			logger.print('updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
+			logger.print('manualPlacingStop.updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
 			-- no api, no game, and I cannot pass the api as a param
+
+			local function _getEdgeType()
+				if params.lolloBusStop_groundBridgeTunnel012 == 1 then
+					return 'BRIDGE'
+				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then
+					return 'TUNNEL'
+				end
+				return nil
+			end
+
+			local function _getEdgeTypeName()
+				if params.lolloBusStop_groundBridgeTunnel012 == 1 then
+					return (two.globalBridgeData[params.lolloBusStop_bridgeOrTunnelType + 1]).fileName
+				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then
+					return (two.globalTunnelData[params.lolloBusStop_bridgeOrTunnelType + 1]).fileName
+				end
+				return nil
+			end
+
+			local function _getInverseTan(tan)
+				return {-tan[1], -tan[2], -tan[3]}
+			end
 			local getSnapNodes = function()
 				if params.lolloBusStop_direction == 0 then
 					if params.lolloBusStop_snapNodes == 0 then return {}
@@ -30,43 +52,64 @@ function data()
 				return params.lolloBusStop_tramTrack == 0 and 'NO' or params.lolloBusStop_tramTrack == 1 and 'YES' or 'ELECTRIC'
 			end
 			local function _initParams()
-				if params.lolloBusStop_snapNodes ~= 0 and params.lolloBusStop_snapNodes ~= 1 and params.lolloBusStop_snapNodes ~= 2 and params.lolloBusStop_snapNodes ~= 3 then
-					params.lolloBusStop_snapNodes = 3
+				local _, paramsMetadataIndexed = moduleHelpers.getAutoPlacingParamsMetadata(two.globalBridgeData, two.globalStreetData, two.globalBusStopModelData)
+				-- logger.print('_initParams got paramsMetadata =') logger.debugPrint(paramsMetadata)
+				logger.print('defaults =') logger.debugPrint({
+					paramsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_direction'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_driveOnLeft'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_tramTrack'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_streetType'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_model'].defaultIndex
+				})
+				if not(params.lolloBusStop_bothSides) then params.lolloBusStop_bothSides = paramsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex end
+				if not(params.lolloBusStop_direction) then params.lolloBusStop_direction = paramsMetadataIndexed['lolloBusStop_direction'].defaultIndex end
+				if not(params.lolloBusStop_driveOnLeft) then params.lolloBusStop_driveOnLeft = paramsMetadataIndexed['lolloBusStop_driveOnLeft'].defaultIndex end
+				if not(params.lolloBusStop_tramTrack) then params.lolloBusStop_tramTrack = paramsMetadataIndexed['lolloBusStop_tramTrack'].defaultIndex end
+
+				if not(params.lolloBusStop_streetType) or not(two.globalStreetData) or not(two.globalStreetData[params.lolloBusStop_streetType + 1]) then
+					-- LOLLO TODO make a construction with a warning
+					logger.print('params.lolloBusStop_streetType was', params.lolloBusStop_streetType or 'NIL')
+					params.lolloBusStop_streetType = paramsMetadataIndexed['lolloBusStop_streetType'].defaultIndex
+					logger.print('manualPlacingStop.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
+					logger.print('two.globalStreetData =') logger.debugPrint(two.globalStreetData)
 				end
-				if params.lolloBusStop_direction ~= 0 and params.lolloBusStop_direction ~= 1 then params.lolloBusStop_direction = 1 end
-				if not(params.lolloBusStop_streetType) or not(two.globalStreetData[params.lolloBusStop_streetType + 1]) then
-					params.lolloBusStop_streetType = moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData)
-					logger.print('updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
+				if params.lolloBusStop_groundBridgeTunnel012 == 1 then -- bridge
+					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalBridgeData) or not(two.globalBridgeData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
+						params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no bridge
+						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
+						logger.print('manualPlacingStop.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
+					end
+				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then -- tunnel
+					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalTunnelData) or not(two.globalTunnelData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
+						params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no tunnel
+						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
+						logger.print('manualPlacingStop.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
+					end
 				else
-					-- logger.print('updateFn.script params.lolloBusStop_streetType =', params.lolloBusStop_streetType)
-					-- logger.print('updateFn.script moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData) =', moduleHelpers.getDefaultStreetTypeIndexBase0(two.globalStreetData))
+					params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no bridge no tunnel
+					params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
 				end
-				-- logger.print('two.globalBusStopModelData =') logger.debugPrint(two.globalBusStopModelData)
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
-					params.lolloBusStop_model = 0
-					logger.print('updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
-				else
-					logger.print('updateFn.script params.lolloBusStop_model =', params.lolloBusStop_model)
+					params.lolloBusStop_model = paramsMetadataIndexed['lolloBusStop_model'].defaultIndex
+					logger.print('manualPlacingStop.updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
 				end
 			end
 			_initParams()
 
 			local _pitchAngle = pitchHelpers.getPitchAngle(params)
-			logger.print('updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
-			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
+			logger.print('manualPlacingStop.updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
+			
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType + 1] or two.globalStreetData[1]
-			-- logger.print('updateFn.script _selectedStreetData =') logger.debugPrint(_selectedStreetData)
+			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
 			local _streetFileName = _selectedStreetData.fileName
-            local _tramTrackType = _getTramTrackType()
-			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 and not(_selectedStreetData.isOneWay)
-			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
-			local _modelYOffset = params.lolloBusStop_driveOnLeft == 0
-				and -_selectedStreetData.streetWidth * 0.5 -_selectedStreetData.sidewalkWidth * 0.5
-				or _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
-			-- logger.print('updateFn.script _selectedModel =') logger.debugPrint(_selectedModel)
+			local _tramTrackType = _getTramTrackType()
+			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 -- and not(_selectedStreetData.isOneWay)
+
             local result = {
                 colliders = {},
                 cost = 1000,
@@ -118,7 +161,9 @@ function data()
 								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { constants.innerEdgeXCon -constants.outerEdgeXCon, 0, 0 }
 							},  -- node 5
                         },
-						freeNodes = getSnapNodes(), -- useless? LOLLO TODO try switching it on and off. It really seems useless
+						edgeType = _getEdgeType(),
+						edgeTypeName = _getEdgeTypeName(),
+						freeNodes = {}, -- useless? LOLLO TODO try switching it on and off. It really seems useless
 						snapNodes = getSnapNodes(),
                         -- tag2Nodes = {},
                     },
@@ -126,6 +171,7 @@ function data()
 				-- groundFaces = {},
 				-- labelText = {},
 				models = { },
+				-- slotToModels = { }, -- game.config.ConstructWithModules adds this
 				terrainAlignmentLists = { { -- LOLLO NOTE this thing with the empty faces is required , otherwise the game will make its own alignments, with spikes and all on bridges or tunnels.
 					type = 'EQUAL',
 					optional = true,
@@ -133,8 +179,15 @@ function data()
 				} },
             }
 
-			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, 0, 1})
-			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, 0, 1})
+			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
+			logger.print('manualPlacingStop.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
+			-- _pitchTransf = constants.idTransf
+			local _modelYOffset = _selectedStreetData.streetWidth * 0.5 + _selectedStreetData.sidewalkWidth * 0.5
+			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, _selectedStreetData.sidewalkHeight, 1})
+			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, _selectedStreetData.sidewalkHeight, 1})
+			if params.lolloBusStop_driveOnLeft == 1 then
+				modelTransfLeft, modelTransfRight = modelTransfRight, modelTransfLeft
+			end
 			result.models[#result.models+1] = {
 				id = _selectedModel.fileName,
 				-- tag = 'stationTag',
@@ -151,9 +204,14 @@ function data()
 						or modelTransfLeft
 				}
 			end
-
-			local vehicleEdgeTransfLeft = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1})
-			local vehicleEdgeTransfRight = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1})
+			local vehicleEdgeTransfLeft = transfUtilsUG.mul(
+				_pitchTransf,
+				{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}
+			)
+			local vehicleEdgeTransfRight = transfUtilsUG.mul(
+				_pitchTransf,
+				{-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1}
+			)
 			result.models[#result.models+1] = {
 				id = 'lollo_bus_stop/vehicle_edge_left.mdl',
 				-- tag = 'stationTag',
@@ -172,15 +230,15 @@ function data()
 			end
 
             -- join terminals together, similar to result.terminateConstructionHook that fires with modular stations
-			local terminateConstructionHook = function()
-				-- logger.print('starting terminateConstructionHook')
+			local addStationsAndTerminalGroups = function()
+				-- logger.print('starting addStationsAndTerminalGroups')
                 local _extraCargoCapacity = 100
 
 				if _isBothSides then
 					result.stations = {
 						{
 							pool = { moreCapacity = _extraCargoCapacity * 2 },
-							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
+							tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
 							terminals = { 0, 1 } -- 0 is the position of the linked terminal group, in base 0
 						}
 					}
@@ -193,7 +251,7 @@ function data()
 							-- vehicleNodeOverride = 2 -- this lands on the pavement, so you cannot use it
 						},
 						{
-							tag = 1,
+							tag = 0,
 							terminals = {
 								{ 3, 0 },
 							},
@@ -204,8 +262,8 @@ function data()
 					result.stations = {
 						{
 							pool = { moreCapacity = _extraCargoCapacity },
-							tag = 1, -- in the stock station, this is 0 for cargo and 1 for passengers
-							terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+							tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
+							terminals = { 0 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
 						}
 					}
 					result.terminalGroups = {
@@ -220,38 +278,38 @@ function data()
 				end
 
 				-- avoid dump when configuring
-				if #(result.stations[1].terminals) == 0 then
-					table.insert(result.stations[1].terminals, 0)
-				end
+				-- if #(result.stations[1].terminals) == 0 then
+				-- 	table.insert(result.stations[1].terminals, 0)
+				-- end
 
 				-- it should output something like (this example has one terminal made of two adjacent bits)
 				-- stock result.stations =
 				-- 	{
 				-- 		{
 				-- 			tag = 0, -- in the stock station, this is 0 for cargo and 1 for passengers
-				-- 			terminals = { 0 } -- 0 is the position of the linked terminal group, in base 0
+				-- 			terminals = { 0 } -- 0 is the index (in result.terminalGroups) of the linked terminal group, in base 0
 				-- 		}
 				-- 	}
 				-- stock result.terminalGroups =
 				-- {
 				-- 	{
-				-- 		tag = -1, -- possibly useless, try to keep them all different tho
+				-- 		tag = -1, -- possibly useless, probably used to tell passengers and cargo terminals
 				-- 		terminals = {
-				-- 			{ 22, 0 }, -- 22 is the position of a model with a terminal, in base 0
-				-- 			{ 25, 0 }, -- 0 is always 0 in the stock station, it is something like a terminal number
+				-- 			{ 22, 0 }, -- 22 is the index (in result.models) of a model with a terminal, in base 0
+				-- 			{ 25, 0 }, -- 0 is always 0 in the stock station,
+				-- 						it should be the terminal index inside the model, in base 0
 				-- 		}
 				-- 	}
 				-- }
 
-				-- logger.print('leaving terminateConstructionHook')
 				-- logger.print('result.models = ') logger.debugPrint(result.models)
 				-- logger.print('result.stations = ') logger.debugPrint(result.stations)
 				-- logger.print('result.terminalGroups = ') logger.debugPrint(result.terminalGroups)
 			end
-            terminateConstructionHook()
+            addStationsAndTerminalGroups()
 
-			-- logger.print('updateFn.script result = ') logger.debugPrint(result)
-			logger.print('updateFn.script() ending')
+			-- logger.print('manualPlacingStop.updateFn.script result = ') logger.debugPrint(result)
+			logger.print('manualPlacingStop.updateFn.script() ending')
 			return result
 		end,
 --[[  	
@@ -289,8 +347,8 @@ function data()
 ]]
  		-- useless
 		upgradeFn = function(one, two)
-			logger.print('upgradeFn.script starting, one =') logger.debugPrint(one)
-			logger.print('upgradeFn.script two =') logger.debugPrint(two)
+			logger.print('manualPlacingStop.upgradeFn.script starting, one =') logger.debugPrint(one)
+			logger.print('manualPlacingStop.upgradeFn.script two =') logger.debugPrint(two)
 			return {}
         end,
 	}

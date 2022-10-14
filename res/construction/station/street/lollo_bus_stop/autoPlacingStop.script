@@ -10,7 +10,7 @@ local vec3 = require('vec3')
 function data()
 	return {
 		updateFn = function(params, two)
-			logger.print('stopParametric.updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
+			logger.print('autoPlacingStop.updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
 			-- no api, no game, and I cannot pass the api as a param
 
 			local function _getEdgeType()
@@ -46,7 +46,7 @@ function data()
 				return params.lolloBusStop_tramTrack == 0 and 'NO' or params.lolloBusStop_tramTrack == 1 and 'YES' or 'ELECTRIC'
 			end
 			local function _initParams()
-				local _, paramsMetadataIndexed = moduleHelpers.getParamsMetadata(two.globalBridgeData, two.globalStreetData, two.globalBusStopModelData)
+				local _, paramsMetadataIndexed = moduleHelpers.getAutoPlacingParamsMetadata(two.globalBridgeData, two.globalStreetData, two.globalBusStopModelData)
 				-- logger.print('_initParams got paramsMetadata =') logger.debugPrint(paramsMetadata)
 				logger.print('defaults =') logger.debugPrint({
 					paramsMetadataIndexed['lolloBusStop_bothSides'].defaultIndex,
@@ -66,20 +66,20 @@ function data()
 					-- LOLLO TODO make a construction with a warning
 					logger.print('params.lolloBusStop_streetType was', params.lolloBusStop_streetType or 'NIL')
 					params.lolloBusStop_streetType = paramsMetadataIndexed['lolloBusStop_streetType'].defaultIndex
-					logger.print('stopParametric.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
+					logger.print('autoPlacingStop.updateFn.script set params.lolloBusStop_streetType to') debugPrint(params.lolloBusStop_streetType)
 					logger.print('two.globalStreetData =') logger.debugPrint(two.globalStreetData)
 				end
 				if params.lolloBusStop_groundBridgeTunnel012 == 1 then -- bridge
 					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalBridgeData) or not(two.globalBridgeData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
 						params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no bridge
 						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
-						logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
+						logger.print('autoPlacingStop.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
 					end
 				elseif params.lolloBusStop_groundBridgeTunnel012 == 2 then -- tunnel
 					if not(params.lolloBusStop_bridgeOrTunnelType) or not(two.globalTunnelData) or not(two.globalTunnelData[params.lolloBusStop_bridgeOrTunnelType + 1]) then
 						params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no tunnel
 						params.lolloBusStop_groundBridgeTunnel012 = 0 -- ground
-						logger.print('stopParametric.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
+						logger.print('autoPlacingStop.updateFn.script set params.lolloBusStop_bridgeOrTunnelType to') debugPrint(params.lolloBusStop_bridgeOrTunnelType)
 					end
 				else
 					params.lolloBusStop_bridgeOrTunnelType = paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex -- no bridge no tunnel
@@ -87,7 +87,7 @@ function data()
 				end
 				if not(params.lolloBusStop_model) or not(two.globalBusStopModelData[params.lolloBusStop_model + 1]) then
 					params.lolloBusStop_model = paramsMetadataIndexed['lolloBusStop_model'].defaultIndex
-					logger.print('stopParametric.updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
+					logger.print('autoPlacingStop.updateFn.script set params.lolloBusStop_model to') debugPrint(params.lolloBusStop_model)
 				end
 			end
 			_initParams()
@@ -204,11 +204,11 @@ function data()
 ]]
 
 			local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)
-			logger.print('stopParametric.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
+			logger.print('autoPlacingStop.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
 			-- _pitchTransf = constants.idTransf
-			local _modelYOffset = _selectedStreetData.streetWidth * 0.5 +_selectedStreetData.sidewalkWidth * 0.5
-			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
-			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, params.lolloBusStop_sidewalkHeight, 1})
+			local _modelYOffset = _selectedStreetData.streetWidth * 0.5 + _selectedStreetData.sidewalkWidth * 0.5
+			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, _selectedStreetData.sidewalkHeight, 1})
+			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, _selectedStreetData.sidewalkHeight, 1})
 			if params.lolloBusStop_driveOnLeft == 1 then
 				modelTransfLeft, modelTransfRight = modelTransfRight, modelTransfLeft
 			end
@@ -230,8 +230,8 @@ function data()
 			end
 -- LOLLO TEST CODE BEGIN
 -- if true then
--- 	logger.print('stopParametric.updateFn.script result = ') logger.debugPrint(result)
--- 	logger.print('stopParametric.updateFn.script() ending')
+-- 	logger.print('autoPlacingStop.updateFn.script result = ') logger.debugPrint(result)
+-- 	logger.print('autoPlacingStop.updateFn.script() ending')
 -- 	return result
 -- end
 -- LOLLO TEST CODE END
@@ -321,9 +321,9 @@ function data()
 				end
 
 				-- avoid dump when configuring
-				if #(result.stations[1].terminals) == 0 then
-					table.insert(result.stations[1].terminals, 0)
-				end
+				-- if #(result.stations[1].terminals) == 0 then
+				-- 	table.insert(result.stations[1].terminals, 0)
+				-- end
 
 				-- it should output something like (this example has one terminal made of two adjacent bits)
 				-- stock result.stations =
@@ -345,15 +345,14 @@ function data()
 				-- 	}
 				-- }
 
-				-- logger.print('leaving addStationsAndTerminalGroups')
 				-- logger.print('result.models = ') logger.debugPrint(result.models)
 				-- logger.print('result.stations = ') logger.debugPrint(result.stations)
 				-- logger.print('result.terminalGroups = ') logger.debugPrint(result.terminalGroups)
 			end
             addStationsAndTerminalGroups()
 
-			logger.print('stopParametric.updateFn.script result = ') logger.debugPrint(result)
-			logger.print('stopParametric.updateFn.script() ending')
+			logger.print('autoPlacingStop.updateFn.script result = ') logger.debugPrint(result)
+			logger.print('autoPlacingStop.updateFn.script() ending')
 			return result
 		end,
 --[[  	
@@ -391,8 +390,8 @@ function data()
 ]]
  		-- useless
 		upgradeFn = function(one, two)
-			logger.print('upgradeFn.script starting, one =') logger.debugPrint(one)
-			logger.print('upgradeFn.script two =') logger.debugPrint(two)
+			logger.print('autoPlacingStop.upgradeFn.script starting, one =') logger.debugPrint(one)
+			logger.print('autoPlacingStop.upgradeFn.script two =') logger.debugPrint(two)
 			return {}
         end,
 	}

@@ -193,8 +193,12 @@ local function _getStreetFilesContents(streetDirPath, fileNamePrefix)
                 name = fileData.name or '',
                 sidewalkWidth = fileData.sidewalkWidth or 0.2,
                 streetWidth = fileData.streetWidth or 0.2,
-                -- LOLLO UG TODO isVisible may return true even if street.visibility = false.
+                -- LOLLO NOTE isVisible may return true even if street.visibility = false.
                 -- I use yearFrom to get around this.
+                -- For streets and tracks, isVisible is set to false for invisible street / track types
+                -- AND for the "backup streets/tracks",
+                -- ie mods that were present in a previous savegame but are inactive now,
+                -- which are fetched in the game script but not in postRunFn.                
                 visibility = (fileData.yearFrom < 65535 and fileData.visibility) or false, -- false means, do not show this street in the menu
                 yearTo = fileData.yearTo or 1925
             }
@@ -433,7 +437,6 @@ local function _getStreetTypesWithApi()
     local results = {}
     local streetTypes = api.res.streetTypeRep.getAll()
     for ii, fileName in pairs(streetTypes) do
-        -- LOLLO TODO see if a different loop returns the sequence with better consistency
         local streetProperties = api.res.streetTypeRep.get(ii)
         results[#results+1] = {
             aiLock = streetProperties.aiLock or false,
@@ -451,6 +454,10 @@ local function _getStreetTypesWithApi()
             -- LOLLO NOTE isVisible may return true even if street.visibility = false.
             -- The reason is, visibility was introduced with a beta and quickly taken back.
             -- I use yearFrom = 65535 to get around this.
+            -- For streets and tracks, isVisible is set to false for invisible street / track types
+            -- AND for the "backup streets/tracks",
+            -- ie mods that were present in a previous savegame but are inactive now,
+            -- which are fetched in the game script but not in postRunFn.                
             visibility = (streetProperties.yearFrom < 65535 and streetProperties.yearTo == 0 and api.res.streetTypeRep.isVisible(ii)) or false,
             yearTo = streetProperties.yearTo
         }

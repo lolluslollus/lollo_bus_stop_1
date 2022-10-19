@@ -1043,7 +1043,8 @@ local _actions = {
         local context = api.type.Context:new()
         -- context.checkTerrainAlignment = true -- default is false
         -- context.cleanupStreetGraph = true
-        -- context.gatherBuildings = true -- default is false
+        -- LOLLO TODO check if this helps preserve buildings
+        context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
 

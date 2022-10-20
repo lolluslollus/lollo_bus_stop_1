@@ -894,91 +894,6 @@ local _actions = {
             end
         )
     end,
-    makeConstructionSnappyUNUSED = function(oldConId, conParams, conTransf)
-        logger.print('makeConstructionSnappy starting, oldConId =', oldConId or 'NIL')
-        logger.print('conParams =') logger.debugPrint(conParams)
-        logger.print('conTransf =') logger.debugPrint(conTransf)
-
-        if not(edgeUtils.isValidAndExistingId(oldConId)) then
-            logger.err('makeConstructionSnappy got an invalid conId =', oldConId or 'NIL')
-            _setStateReady()
-            return
-        end
-        local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
-        if not(oldCon) then
-            logger.err('makeConstructionSnappy got an invalid con =')
-            _setStateReady()
-            return
-        end
-
-        local newCon = api.type.SimpleProposal.ConstructionEntity.new()
-        newCon.fileName = oldCon.fileName
-        local newParams = conParams
-        newParams.lolloBusStop_snapNodes = 3
-        newParams.seed = conParams.seed + 1
-        -- clone your own variable, it's safer than cloning newCon.params, which is userdata
-        local conParamsBak = arrayUtils.cloneDeepOmittingFields(newParams)
-        logger.print('makeConstructionSnappy just made conParamsBak, it is') logger.debugPrint(conParamsBak)
-        newCon.params = newParams
-        newCon.playerEntity = api.engine.util.getPlayer()
-        newCon.transf = api.type.Mat4f.new(
-            api.type.Vec4f.new(conTransf[1], conTransf[2], conTransf[3], conTransf[4]),
-            api.type.Vec4f.new(conTransf[5], conTransf[6], conTransf[7], conTransf[8]),
-            api.type.Vec4f.new(conTransf[9], conTransf[10], conTransf[11], conTransf[12]),
-            api.type.Vec4f.new(conTransf[13], conTransf[14], conTransf[15], conTransf[16])
-        )
-        local proposal = api.type.SimpleProposal.new()
-        proposal.constructionsToAdd[1] = newCon
-        proposal.constructionsToRemove = { oldConId }
-        -- proposal.old2new = { oldConId, 1 } -- this is wrong and makes trouble like
-        -- C:\GitLab-Runner\builds\1BJoMpBZ\0\ug\urban_games\train_fever\src\Game\UrbanSim\StockListUpdateHelper.cpp:166: __cdecl StockListUpdateHelper::~StockListUpdateHelper(void) noexcept(false): Assertion `0 <= pr.second && pr.second < (int)m_data->addedEntities->size()' failed.
-
-        local context = api.type.Context:new()
-        -- context.checkTerrainAlignment = true -- default is false
-        -- context.cleanupStreetGraph = true -- default is false
-        -- context.gatherBuildings = true -- default is false
-        -- context.gatherFields = true -- default is true
-        context.player = api.engine.util.getPlayer()
-
-        if not(_utils.getIsProposalOK(proposal, context)) then
-            logger.warn('makeConstructionSnappy made a dangerous proposal')
-            _setStateReady()
-            return
-        end
-        api.cmd.sendCommand(
-            -- let's try without force and see if the random crashes go away, yes they do, some of them.
-            api.cmd.make.buildProposal(proposal, context, false), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
-            function(result, success)
-                logger.print('makeConstructionSnappy callback, success =', success) -- logger.debugPrint(result)
-                if not(success) then
-                    logger.warn('makeConstructionSnappy callback failed')
-                    logger.warn('makeConstructionSnappy proposal =') logger.warningDebugPrint(proposal)
-                    logger.warn('makeConstructionSnappy result =') logger.warningDebugPrint(result)
-                    _setStateReady()
-                else
-                    local newConId = result.resultEntities[1]
-                    logger.print('makeConstructionSnappy succeeded, stationConId = ', newConId)
-                    xpcall(
-                        function ()
-                            api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
-                                string.sub(debug.getinfo(1, 'S').source, 1),
-                                _eventId,
-                                _eventProperties.snappyConBuilt.eventName,
-                                {
-                                    conId = newConId,
-                                    conParams = conParamsBak,
-                                }
-                            ))
-                        end,
-                        function(error)
-                            logger.xpErrorHandler(error)
-                            _setStateReady()
-                        end
-                    )
-                end
-            end
-        )
-    end,
     removeEdges = function(oldEdgeIds, successEventName, successEventArgs)
         logger.print('removeEdges starting, oldEdgeIds =') logger.debugPrint(oldEdgeIds)
         -- removes edges even if they have a street type, which has changed or disappeared
@@ -2051,7 +1966,6 @@ function data()
                     elseif name == _eventProperties.edgesRemoved.eventName then
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.groundBridgeTunnel012, args.bridgeOrTunnelType, args.tramTrackType, args.hasBus, args.dataForCon)
                     elseif name == _eventProperties.conBuilt.eventName then
-                        -- _actions.makeConstructionSnappy(args.conId, args.conParams, args.conTransf)
                         -- _actions.upgradeCon(args.conId, args.conParams)
                         _actions.buildSnappyRoads(args.conParams, args.conId)
                     elseif name == _eventProperties.snappyConBuilt.eventName then

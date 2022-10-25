@@ -7,7 +7,6 @@ return {
     innerEdgeXCon = 0.5,
     vehicleNodeZ = 0,
     minInitialEdgeLength = 2.5, -- must be >= 2 * outerEdgeX
-    innerX0To1 = 0.25,
 
     eventId = '__lolloBusStopEvent__',
     eventProperties = {

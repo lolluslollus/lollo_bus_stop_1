@@ -1853,8 +1853,8 @@ function data()
                             local pos1XYZ = is0To1 and outerBaseNode1.position or outerBaseNode0.position
                             -- local tan0XYZ = is0To1 and edge0Base.tangent0 or transfUtils.getVectorMultiplied(edge0Base.tangent1, -1) -- NO!
                             -- local tan1XYZ = is0To1 and edge0Base.tangent1 or transfUtils.getVectorMultiplied(edge0Base.tangent0, -1) -- NO!
-                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or edge0Base.tangent1
-                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or edge0Base.tangent0
+                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or edge0Base.tangent1 -- NO!
+                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or edge0Base.tangent0 -- NO!
                             local tan0XYZ = edge0Base.tangent0
                             local tan1XYZ = edge0Base.tangent1
 
@@ -1864,12 +1864,14 @@ function data()
                         local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved = _getEdgeData()
                         if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then _setStateReady() return end
 
+                        local _innerX0To1 = constants.innerEdgeX / constants.outerEdgeX / 2
+                        logger.print('_innerX0To1  =', _innerX0To1)
                         local nodeBetween0 = edgeUtils.getNodeBetween(
                             pos0XYZ,
                             pos1XYZ,
                             tan0XYZ,
                             tan1XYZ,
-                            constants.innerX0To1,
+                            _innerX0To1,
                             logger
                         )
                         -- logger.print('first inner nodeBetween =') logger.debugPrint(nodeBetween0)
@@ -1879,7 +1881,7 @@ function data()
                             pos1XYZ,
                             tan0XYZ,
                             tan1XYZ,
-                            (1 - constants.innerX0To1),
+                            (1 - _innerX0To1),
                             logger
                         )
                         -- logger.print('second inner nodeBetween =') logger.debugPrint(nodeBetween1)
@@ -1906,12 +1908,12 @@ function data()
                             innerNode0Pos = transfUtils.xYZ2OneTwoThree(nodeBetween0.position),
                             innerNode1Pos = transfUtils.xYZ2OneTwoThree(nodeBetween1.position),
                             outerNode1Pos = transfUtils.xYZ2OneTwoThree(pos1XYZ),
-                            edge0Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan0XYZ), constants.innerX0To1),
+                            edge0Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan0XYZ), _innerX0To1),
                             edge0Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance00 * tanSign0),
                             edge1Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance01 * tanSign0),
                             edge1Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance10 * tanSign1),
                             edge2Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance11 * tanSign1),
-                            edge2Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan1XYZ), constants.innerX0To1),
+                            edge2Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan1XYZ), _innerX0To1),
                         }
 
                         _actions.removeEdges(edgeIdsToBeRemoved, _eventProperties.edgesRemoved.eventName, args)

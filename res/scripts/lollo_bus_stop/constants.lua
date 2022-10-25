@@ -7,13 +7,14 @@ return {
     innerEdgeXCon = 0.5,
     vehicleNodeZ = 0,
     minInitialEdgeLength = 2.5, -- must be >= 2 * outerEdgeX
+    innerX0To1 = 0.25,
 
     eventId = '__lolloBusStopEvent__',
     eventProperties = {
         edgesRemoved = { conName = nil, eventName = 'edgesRemoved' },
         conBuilt = { conName = nil, eventName = 'conBuilt' },
         conParamsUpdated = { conName = nil, eventName = 'conParamsUpdated' },
-        ploppableStreetsidePassengerStationBuilt = { conName = nil, eventName = 'ploppableStreetsidePassengerStationBuilt' },
+        ploppableStreetsidePassengerStationRemoved = { conName = nil, eventName = 'ploppableStreetsidePassengerStationRemoved' },
         firstOuterSplitDone = { conName = nil, eventName = 'firstOuterSplitDone'},
         secondOuterSplitDone = { conName = nil, eventName = 'secondOuterSplitDone' },
         firstInnerSplitDone = { conName = nil, eventName = 'firstInnerSplitDone'},

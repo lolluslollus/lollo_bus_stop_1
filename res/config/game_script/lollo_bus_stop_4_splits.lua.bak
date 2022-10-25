@@ -1731,13 +1731,11 @@ function data()
 
             xpcall(
                 function()
-                    -- LOLLO if everything else works, add a function to rebuild the road after deleting.
-                    -- The params with the node ids are in place.
                     if name == _eventProperties.initialEdgeObjectPlaced.eventName then
                         _actions.replaceEdgeWithSame(
                             args.edgeId,
                             args.edgeObjectId,
-                            _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName,
+                            _eventProperties.ploppableStreetsidePassengerStationRemoved.eventName,
                             {
                                 edgeObjectTransf = args.edgeObjectTransf,
                                 streetType = args.streetType,
@@ -1747,7 +1745,7 @@ function data()
                                 hasBus = args.hasBus,
                             }
                         )
-                    elseif name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
+                    elseif name == _eventProperties.ploppableStreetsidePassengerStationRemoved.eventName then
                         if not(edgeUtils.isValidAndExistingId(args.edgeId)) or edgeUtils.isEdgeFrozen(args.edgeId) then
                             logger.warn('edge invalid or frozen')
                             _setStateReady()

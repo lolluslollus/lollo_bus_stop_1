@@ -124,41 +124,41 @@ function data()
                         edges = params.lolloBusStop_direction == 0
 						and {
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { -constants.innerEdgeXCon + constants.outerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXManualCon, 0, 0 }),  { -constants.innerEdgeXManualCon + constants.outerEdgeXManualCon, 0, 0 }
 							},  -- node 0
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXCon, 0, 0 }),  { -constants.innerEdgeXCon + constants.outerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXManualCon, 0, 0 }),  { -constants.innerEdgeXManualCon + constants.outerEdgeXManualCon, 0, 0 }
 							},  -- node 1
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXCon, 0, 0 }),  { constants.innerEdgeXCon * 2, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXManualCon, 0, 0 }),  { constants.innerEdgeXManualCon * 2, 0, 0 }
 							},  -- node 2
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXCon, 0, 0 }),  { constants.innerEdgeXCon * 2, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXManualCon, 0, 0 }),  { constants.innerEdgeXManualCon * 2, 0, 0 }
 							},  -- node 3
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXCon, 0, 0 }),  { constants.outerEdgeXCon -constants.innerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXManualCon, 0, 0 }),  { constants.outerEdgeXManualCon -constants.innerEdgeXManualCon, 0, 0 }
 							},  -- node 4
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXCon, 0, 0 }),  { constants.outerEdgeXCon -constants.innerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXManualCon, 0, 0 }),  { constants.outerEdgeXManualCon -constants.innerEdgeXManualCon, 0, 0 }
 							},  -- node 5
                         } or {
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXCon, 0, 0 }),  { constants.innerEdgeXCon -constants.outerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.outerEdgeXManualCon, 0, 0 }),  { constants.innerEdgeXManualCon -constants.outerEdgeXManualCon, 0, 0 }
 							},  -- node 0
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXCon, 0, 0 }),  { constants.innerEdgeXCon -constants.outerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXManualCon, 0, 0 }),  { constants.innerEdgeXManualCon -constants.outerEdgeXManualCon, 0, 0 }
 							},  -- node 1
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXCon, 0, 0 }),  { -constants.innerEdgeXCon * 2, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { constants.innerEdgeXManualCon, 0, 0 }),  { -constants.innerEdgeXManualCon * 2, 0, 0 }
 							},  -- node 2
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXCon, 0, 0 }),  { -constants.innerEdgeXCon * 2, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXManualCon, 0, 0 }),  { -constants.innerEdgeXManualCon * 2, 0, 0 }
 							},  -- node 3
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXCon, 0, 0 }),  { constants.innerEdgeXCon -constants.outerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.innerEdgeXManualCon, 0, 0 }),  { constants.innerEdgeXManualCon -constants.outerEdgeXManualCon, 0, 0 }
 							},  -- node 4
                             {
-								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXCon, 0, 0 }),  { constants.innerEdgeXCon -constants.outerEdgeXCon, 0, 0 }
+								pitchHelpers.getXYZPitched(_pitchAngle, { -constants.outerEdgeXManualCon, 0, 0 }),  { constants.innerEdgeXManualCon -constants.outerEdgeXManualCon, 0, 0 }
 							},  -- node 5
                         },
 						edgeType = _getEdgeType(),

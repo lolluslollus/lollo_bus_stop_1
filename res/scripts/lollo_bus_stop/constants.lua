@@ -1,10 +1,9 @@
 return {
     cargoNodeZ = -2,
     outerEdgeX = 1, -- 1 is enough for straightaways, curves need more than 10. The longer this is, the more buildings will be destroyed; 10 is a killer already.
-    -- outerEdgeXCon = 0.7, -- we make this smaller then outerEdgeX so we can snap in curves -- useless, curves fail anyway
-    outerEdgeXCon = 1,
+    outerEdgeXManualCon = 1,
     innerEdgeX = 0.5,
-    innerEdgeXCon = 0.5,
+    innerEdgeXManualCon = 0.5,
     vehicleNodeZ = 0,
     minInitialEdgeLength = 2.5, -- must be >= 2 * outerEdgeX
 

@@ -417,9 +417,9 @@ local _utils = {
     -- end,
 }
 local _actions = {
-    buildConstruction = function(outerNode0Id, outerNode1Id, streetType, groundBridgeTunnel012, bridgeOrTunnelType, tramTrackType, hasBus, dataForCon)
+    buildConstruction = function(outerNode0Id, outerNode1Id, streetType, groundBridgeTunnel012, bridgeOrTunnelType, tramTrackType, hasBus, edgeData4Con)
         logger.print('buildConstruction starting, streetType =', streetType, 'groundBridgeTunnel012 =', groundBridgeTunnel012, 'bridgeOrTunnelType =', bridgeOrTunnelType, 'tramTrackType =', tramTrackType, 'hasBus =', hasBus)
-        -- logger.print('dataForCon =') logger.debugPrint(dataForCon)
+        logger.print('edgeData4Con =') logger.debugPrint(edgeData4Con)
         if not(edgeUtils.isValidAndExistingId(outerNode0Id)) or not(edgeUtils.isValidAndExistingId(outerNode1Id)) then
             logger.warn('buildConstruction received an invalid node id')
             _setStateReady()
@@ -489,9 +489,9 @@ local _actions = {
             return
         end
         local _pitchAngle = math.atan2(
-            dataForCon.outerNode1Pos[3] - dataForCon.outerNode0Pos[3],
-            math.sqrt((dataForCon.outerNode1Pos[1] - dataForCon.outerNode0Pos[1])^2 + (dataForCon.outerNode1Pos[2] - dataForCon.outerNode0Pos[2])^2)
-                -- * ((dataForCon.outerNode1Pos[1] > dataForCon.outerNode0Pos[1]) and 1 or -1)
+            edgeData4Con.outerNode1Pos[3] - edgeData4Con.outerNode0Pos[3],
+            math.sqrt((edgeData4Con.outerNode1Pos[1] - edgeData4Con.outerNode0Pos[1])^2 + (edgeData4Con.outerNode1Pos[2] - edgeData4Con.outerNode0Pos[2])^2)
+                -- * ((edgeData4Con.outerNode1Pos[1] > edgeData4Con.outerNode0Pos[1]) and 1 or -1)
         )
 
         local _, conParamsMetadataIndexed = moduleHelpers.getAutoPlacingParamsMetadata()
@@ -530,8 +530,8 @@ local _actions = {
             -- these make no sense coz they will be replaced with operations outside the station
             -- lolloBusStop_outerNode0Id = outerNode0Id, -- this stays across upgrades because it's an integer
             -- lolloBusStop_outerNode1Id = outerNode1Id, -- idem
-            lolloBusStop_outerNode0Pos_absolute = (dataForCon.outerNode0Pos), -- arrayUtils.cloneOmittingFields(dataForCon.outerNode0Pos),
-            lolloBusStop_outerNode1Pos_absolute = (dataForCon.outerNode1Pos), --arrayUtils.cloneOmittingFields(dataForCon.outerNode1Pos),
+            lolloBusStop_outerNode0Pos_absolute = (edgeData4Con.outerNode0Pos), -- arrayUtils.cloneOmittingFields(edgeData4Con.outerNode0Pos),
+            lolloBusStop_outerNode1Pos_absolute = (edgeData4Con.outerNode1Pos), --arrayUtils.cloneOmittingFields(edgeData4Con.outerNode1Pos),
             lolloBusStop_freeNodes = 3,
             -- lolloBusStop_freeNodes = 0,
             lolloBusStop_snapNodes = 3,
@@ -539,16 +539,16 @@ local _actions = {
             lolloBusStop_streetType = streetTypeIndexBase0,
             lolloBusStop_tramTrack = tramTrackType,
             seed = math.abs(math.ceil(conTransf_lua[13] * 100)),
-            lolloBusStop_edge0Tan0 = _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf),
-            lolloBusStop_edge0Tan1 = _utils.getTanTransformed(dataForCon.edge0Tan1, _inverseConTransf),
-            lolloBusStop_edge1Tan0 = _utils.getTanTransformed(dataForCon.edge1Tan0, _inverseConTransf),
-            lolloBusStop_edge1Tan1 = _utils.getTanTransformed(dataForCon.edge1Tan1, _inverseConTransf),
-            lolloBusStop_edge2Tan0 = _utils.getTanTransformed(dataForCon.edge2Tan0, _inverseConTransf),
-            lolloBusStop_edge2Tan1 = _utils.getTanTransformed(dataForCon.edge2Tan1, _inverseConTransf),
-            lolloBusStop_innerNode0Pos = _utils.getPosTransformed(dataForCon.innerNode0Pos, _inverseConTransf),
-            lolloBusStop_innerNode1Pos = _utils.getPosTransformed(dataForCon.innerNode1Pos, _inverseConTransf),
-            lolloBusStop_outerNode0Pos = _utils.getPosTransformed(dataForCon.outerNode0Pos, _inverseConTransf),
-            lolloBusStop_outerNode1Pos = _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf),
+            lolloBusStop_edge0Tan0 = _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf),
+            lolloBusStop_edge0Tan1 = _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf),
+            lolloBusStop_edge1Tan0 = _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf),
+            lolloBusStop_edge1Tan1 = _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf),
+            lolloBusStop_edge2Tan0 = _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf),
+            lolloBusStop_edge2Tan1 = _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf),
+            lolloBusStop_innerNode0Pos = _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf),
+            lolloBusStop_innerNode1Pos = _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf),
+            lolloBusStop_outerNode0Pos = _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf),
+            lolloBusStop_outerNode1Pos = _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf),
             -- lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
             -- lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_pitchAngle = _pitchAngle,
@@ -556,42 +556,42 @@ local _actions = {
         logger.print('lolloBusStop_model =', newParams.lolloBusStop_model or 'NIL')
         -- these work but we don't need them anymore, since we moved to parameterless con
         --[[
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Y', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Z', _utils.getTanTransformed(dataForCon.edge0Tan0, _inverseConTransf)[3], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1X', _utils.getTanTransformed(dataForCon.edge0Tan1, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Y', _utils.getTanTransformed(dataForCon.edge0Tan1, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Z', _utils.getTanTransformed(dataForCon.edge0Tan1, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Y', _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Z', _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1X', _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Y', _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Z', _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0X', _utils.getTanTransformed(dataForCon.edge1Tan0, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Y', _utils.getTanTransformed(dataForCon.edge1Tan0, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Z', _utils.getTanTransformed(dataForCon.edge1Tan0, _inverseConTransf)[3], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1X', _utils.getTanTransformed(dataForCon.edge1Tan1, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Y', _utils.getTanTransformed(dataForCon.edge1Tan1, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Z', _utils.getTanTransformed(dataForCon.edge1Tan1, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0X', _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Y', _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Z', _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1X', _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Y', _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Z', _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0X', _utils.getTanTransformed(dataForCon.edge2Tan0, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Y', _utils.getTanTransformed(dataForCon.edge2Tan0, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Z', _utils.getTanTransformed(dataForCon.edge2Tan0, _inverseConTransf)[3], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1X', _utils.getTanTransformed(dataForCon.edge2Tan1, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Y', _utils.getTanTransformed(dataForCon.edge2Tan1, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Z', _utils.getTanTransformed(dataForCon.edge2Tan1, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0X', _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Y', _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Z', _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1X', _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Y', _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Z', _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosX', _utils.getPosTransformed(dataForCon.innerNode0Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosY', _utils.getPosTransformed(dataForCon.innerNode0Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosZ', _utils.getPosTransformed(dataForCon.innerNode0Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosX', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosY', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosZ', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosX', _utils.getPosTransformed(dataForCon.innerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosY', _utils.getPosTransformed(dataForCon.innerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosZ', _utils.getPosTransformed(dataForCon.innerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosX', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosY', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosZ', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosX', _utils.getPosTransformed(dataForCon.outerNode0Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosY', _utils.getPosTransformed(dataForCon.outerNode0Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosZ', _utils.getPosTransformed(dataForCon.outerNode0Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosX', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosY', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosZ', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosX', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosY', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZ', _utils.getPosTransformed(dataForCon.outerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosX', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosY', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZ', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
 
         moduleHelpers.setIntParamsFromFloat(newParams, 'sidewalkHeight', _sidewalkHeight, 'lolloBusStop_')
         moduleHelpers.setIntParamsFromFloat(newParams, 'pitchAngle', _pitchAngle, 'lolloBusStop_')
@@ -1731,13 +1731,11 @@ function data()
 
             xpcall(
                 function()
-                    -- LOLLO if everything else works, add a function to rebuild the road after deleting.
-                    -- The params with the node ids are in place.
                     if name == _eventProperties.initialEdgeObjectPlaced.eventName then
                         _actions.replaceEdgeWithSame(
                             args.edgeId,
                             args.edgeObjectId,
-                            _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName,
+                            _eventProperties.ploppableStreetsidePassengerStationRemoved.eventName,
                             {
                                 edgeObjectTransf = args.edgeObjectTransf,
                                 streetType = args.streetType,
@@ -1747,7 +1745,7 @@ function data()
                                 hasBus = args.hasBus,
                             }
                         )
-                    elseif name == _eventProperties.ploppableStreetsidePassengerStationBuilt.eventName then
+                    elseif name == _eventProperties.ploppableStreetsidePassengerStationRemoved.eventName then
                         if not(edgeUtils.isValidAndExistingId(args.edgeId)) or edgeUtils.isEdgeFrozen(args.edgeId) then
                             logger.warn('edge invalid or frozen')
                             _setStateReady()
@@ -1763,21 +1761,13 @@ function data()
 
                         local outerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
                         local outerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
-                        local innerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.innerEdgeX)
-                        local innerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.innerEdgeX)
                         -- these are identical to the ones above, except they only have the position
                         local outerPos0 = transfUtils.getVec123Transformed({constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
                         local outerPos1 = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        local innerPos0 = transfUtils.getVec123Transformed({constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
-                        local innerPos1 = transfUtils.getVec123Transformed({-constants.innerEdgeX, 0, 0}, args.edgeObjectTransf)
                         logger.print('outerTransf0 =') logger.debugPrint(outerTransf0)
                         logger.print('outerTransf1 =') logger.debugPrint(outerTransf1)
                         logger.print('outerPos0 =') logger.debugPrint(outerPos0)
                         logger.print('outerPos1 =') logger.debugPrint(outerPos1)
-                        logger.print('innerTransf0 =') logger.debugPrint(innerTransf0)
-                        logger.print('innerTransf1 =') logger.debugPrint(innerTransf1)
-                        logger.print('innerPos0 =') logger.debugPrint(innerPos0)
-                        logger.print('innerPos1 =') logger.debugPrint(innerPos1)
 
                         local nodeBetween = edgeUtils.getNodeBetweenByPosition(
                             args.edgeId,
@@ -1798,8 +1788,6 @@ function data()
                                 groundBridgeTunnel012 = args.groundBridgeTunnel012,
                                 tramTrackType = args.tramTrackType,
                                 hasBus = args.hasBus,
-                                innerTransf0 = innerTransf0,
-                                innerTransf1 = innerTransf1,
                                 outerTransf0 = outerTransf0,
                                 outerTransf1 = outerTransf1,
                                 transfMid = args.edgeObjectTransf,
@@ -1831,140 +1819,106 @@ function data()
                         logger.print('final second outer nodeBetween =') logger.debugPrint(nodeBetween)
                         _actions.splitEdge(edgeIdToBeSplit, nodeBetween, _eventProperties.secondOuterSplitDone.eventName, args)
                     elseif name == _eventProperties.secondOuterSplitDone.eventName then
-                        local edgeIdsBetweenNodes = _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.outerNode1Id)
-                        if #edgeIdsBetweenNodes ~= 1 then
-                            logger.warn('no edges or too many edges found between outerNode0Id and outerNode1Id')
-                            _setStateReady()
-                            return
-                        end
-
-                        local nodeBetween = edgeUtils.getNodeBetweenByPosition(
-                            edgeIdsBetweenNodes[1],
-                            {
-                                x = args.innerTransf0[13],
-                                y = args.innerTransf0[14],
-                                z = args.innerTransf0[15],
-                            }
-                        )
-                        logger.print('first inner nodeBetween =') logger.debugPrint(nodeBetween)
-                        _actions.splitEdge(
-                            edgeIdsBetweenNodes[1],
-                            nodeBetween,
-                            _eventProperties.firstInnerSplitDone.eventName,
-                            args
-                        )
-                    elseif name == _eventProperties.firstInnerSplitDone.eventName then
-                        -- find out which edge needs splitting
-                        logger.print('args.innerNode0EdgeIds =') logger.debugPrint(args.innerNode0EdgeIds)
-                        if #args.innerNode0EdgeIds == 0 then
-                            logger.warn('cannot find an edge for the second inner split')
-                            _setStateReady()
-                            return
-                        end
-                        local edgeIdToBeSplit, nodeBetween = _utils.getSplit1Data(
-                            args.innerTransf1,
-                            args.innerNode0EdgeIds
-                        )
-                        if not(edgeIdToBeSplit) then
-                            logger.warn('cannot decide on an edge id for the second inner split')
-                            _setStateReady()
-                            return
-                        end
-                        if not(nodeBetween) then
-                            logger.warn('cannot find out nodeBetween for the second inner split')
-                            _setStateReady()
-                            return
-                        end
-
-                        logger.print('final second inner nodeBetween =') logger.debugPrint(nodeBetween)
-                        _actions.splitEdge(edgeIdToBeSplit, nodeBetween, _eventProperties.secondInnerSplitDone.eventName, args)
-                    elseif name == _eventProperties.secondInnerSplitDone.eventName then
-                        local edgeIdsBetweenNodesNested = {
-                            _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.innerNode0Id),
-                            _utils.getEdgeIdsLinkingNodes(args.innerNode0Id, args.innerNode1Id),
-                            _utils.getEdgeIdsLinkingNodes(args.innerNode1Id, args.outerNode1Id),
-                        }
-                        logger.print('edgeIdsBetweenNodesNested =') logger.debugPrint(edgeIdsBetweenNodesNested)
-                        local edgeIdsBetweenNodes = {}
-                        for index, edgeIds in pairs(edgeIdsBetweenNodesNested) do
-                            if #edgeIds == 1 then
-                                edgeIdsBetweenNodes[index] = edgeIds[1]
-                            else
-                                logger.warn('no edges or too many edges found between split nodes; edgeIdsBetweenNodesNested =')
-                                logger.warningDebugPrint(edgeIdsBetweenNodesNested)
-                                _setStateReady()
-                                return
+                        local _getEdgeData = function()
+                            local edgeIdsBetweenNodes = _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.outerNode1Id)
+                            if #edgeIdsBetweenNodes ~= 1 then
+                                logger.warn('no edges or too many edges found between outerNode0Id and outerNode1Id')
+                                return false
                             end
+
+                            logger.print('edgeIdsBetweenNodes =') logger.debugPrint(edgeIdsBetweenNodes)
+                            local outerBaseNode0 = api.engine.getComponent(args.outerNode0Id, api.type.ComponentType.BASE_NODE)
+                            local outerBaseNode1 = api.engine.getComponent(args.outerNode1Id, api.type.ComponentType.BASE_NODE)
+                            local edge0Base = api.engine.getComponent(edgeIdsBetweenNodes[1], api.type.ComponentType.BASE_EDGE)
+                            if outerBaseNode0 == nil or outerBaseNode1 == nil or edge0Base == nil then
+                                logger.warn('some edges or nodes cannot be read')
+                                return false
+                            end
+
+                            local isEdgeNodesOK = true
+                            if not(
+                                (edge0Base.node0 == args.outerNode0Id and edge0Base.node1 == args.outerNode1Id)
+                                or (edge0Base.node1 == args.outerNode0Id and edge0Base.node0 == args.outerNode1Id)
+                            ) then
+                                isEdgeNodesOK = false
+                                logger.warn('### edge0 nodes are screwed up, edge0Base =') logger.warningDebugPrint(edge0Base)
+                            end
+                            if not(isEdgeNodesOK) then
+                                return false
+                            end
+
+                            local is0To1 = (edge0Base.node0 == args.outerNode0Id and edge0Base.node1 == args.outerNode1Id)
+                            logger.print('is0To1 =', is0To1)
+                            local pos0XYZ = is0To1 and outerBaseNode0.position or outerBaseNode1.position
+                            local pos1XYZ = is0To1 and outerBaseNode1.position or outerBaseNode0.position
+                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or transfUtils.getVectorMultiplied(edge0Base.tangent1, -1) -- NO!
+                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or transfUtils.getVectorMultiplied(edge0Base.tangent0, -1) -- NO!
+                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or edge0Base.tangent1 -- NO!
+                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or edge0Base.tangent0 -- NO!
+                            local tan0XYZ = edge0Base.tangent0
+                            local tan1XYZ = edge0Base.tangent1
+
+                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ)
+                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes
                         end
-                        logger.print('edgeIdsBetweenNodes =') logger.debugPrint(edgeIdsBetweenNodes)
-                        local outerBaseNode0 = api.engine.getComponent(args.outerNode0Id, api.type.ComponentType.BASE_NODE)
-                        local innerBaseNode0 = api.engine.getComponent(args.innerNode0Id, api.type.ComponentType.BASE_NODE)
-                        local innerBaseNode1 = api.engine.getComponent(args.innerNode1Id, api.type.ComponentType.BASE_NODE)
-                        local outerBaseNode1 = api.engine.getComponent(args.outerNode1Id, api.type.ComponentType.BASE_NODE)
-                        local edge0Base = api.engine.getComponent(edgeIdsBetweenNodes[1], api.type.ComponentType.BASE_EDGE)
-                        local edge1Base = api.engine.getComponent(edgeIdsBetweenNodes[2], api.type.ComponentType.BASE_EDGE)
-                        local edge2Base = api.engine.getComponent(edgeIdsBetweenNodes[3], api.type.ComponentType.BASE_EDGE)
-                        if outerBaseNode0 == nil or innerBaseNode0 == nil or innerBaseNode1 == nil or outerBaseNode1 == nil
-                        or edge0Base == nil or edge1Base == nil or edge2Base == nil then
-                            logger.warn('some edges or nodes cannot be read')
+                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved = _getEdgeData()
+                        if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then _setStateReady() return end
+
+                        local _innerX0To1 = constants.innerEdgeX / constants.outerEdgeX / 2
+                        logger.print('_innerX0To1  =', _innerX0To1)
+                        local nodeBetween0 = edgeUtils.getNodeBetween(
+                            pos0XYZ,
+                            pos1XYZ,
+                            tan0XYZ,
+                            tan1XYZ,
+                            _innerX0To1,
+                            logger
+                        )
+                        -- logger.print('first inner nodeBetween =') logger.debugPrint(nodeBetween0)
+
+                        local nodeBetween1 = edgeUtils.getNodeBetween(
+                            pos0XYZ,
+                            pos1XYZ,
+                            tan0XYZ,
+                            tan1XYZ,
+                            (1 - _innerX0To1),
+                            logger
+                        )
+                        -- logger.print('second inner nodeBetween =') logger.debugPrint(nodeBetween1)
+
+                        if nodeBetween0 == nil or nodeBetween1 == nil then
+                            logger.warn('some edges cannot be split')
                             _setStateReady()
                             return
                         end
-                        args.dataForCon = {
-                            outerNode0Pos = transfUtils.xYZ2OneTwoThree(outerBaseNode0.position),
-                            innerNode0Pos = transfUtils.xYZ2OneTwoThree(innerBaseNode0.position),
-                            innerNode1Pos = transfUtils.xYZ2OneTwoThree(innerBaseNode1.position),
-                            outerNode1Pos = transfUtils.xYZ2OneTwoThree(outerBaseNode1.position),
-                            edge0Tan0 = transfUtils.xYZ2OneTwoThree(edge0Base.tangent0),
-                            edge0Tan1 = transfUtils.xYZ2OneTwoThree(edge0Base.tangent1),
-                            edge1Tan0 = transfUtils.xYZ2OneTwoThree(edge1Base.tangent0),
-                            edge1Tan1 = transfUtils.xYZ2OneTwoThree(edge1Base.tangent1),
-                            edge2Tan0 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent0),
-                            edge2Tan1 = transfUtils.xYZ2OneTwoThree(edge2Base.tangent1),
+                        local isNodeBetweenOrientatedLikeMyEdge0 = edgeUtils.isXYZSame(nodeBetween0.refPosition0, pos0XYZ)
+                        local distance00 = isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance0 or nodeBetween0.refDistance1
+                        local distance01 = isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance1 or nodeBetween0.refDistance0
+                        local tanSign0 = isNodeBetweenOrientatedLikeMyEdge0 and 1 or -1
+
+                        local isNodeBetweenOrientatedLikeMyEdge1 = edgeUtils.isXYZSame(nodeBetween1.refPosition1, pos1XYZ)
+                        local distance10 = isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance0 or nodeBetween1.refDistance1
+                        local distance11 = isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance1 or nodeBetween1.refDistance0
+                        local tanSign1 = isNodeBetweenOrientatedLikeMyEdge1 and 1 or -1
+
+                        logger.print('isNodeBetweenOrientatedLikeMyEdge0 =', isNodeBetweenOrientatedLikeMyEdge0, 'isNodeBetweenOrientatedLikeMyEdge1 =', isNodeBetweenOrientatedLikeMyEdge1)
+
+                        args.edgeData4Con = {
+                            outerNode0Pos = transfUtils.xYZ2OneTwoThree(pos0XYZ),
+                            innerNode0Pos = transfUtils.xYZ2OneTwoThree(nodeBetween0.position),
+                            innerNode1Pos = transfUtils.xYZ2OneTwoThree(nodeBetween1.position),
+                            outerNode1Pos = transfUtils.xYZ2OneTwoThree(pos1XYZ),
+                            edge0Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan0XYZ), _innerX0To1),
+                            edge0Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance00 * tanSign0),
+                            edge1Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance01 * tanSign0),
+                            edge1Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance10 * tanSign1),
+                            edge2Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance11 * tanSign1),
+                            edge2Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan1XYZ), _innerX0To1),
                         }
-                        local isEdgeNodesOK = true
-                        if not(
-                            (edge0Base.node0 == args.outerNode0Id and edge0Base.node1 == args.innerNode0Id)
-                            or (edge0Base.node1 == args.outerNode0Id and edge0Base.node0 == args.innerNode0Id)
-                        ) then
-                            isEdgeNodesOK = false
-                            logger.warn('### edge0 nodes are screwed up, edge0Base =') logger.warningDebugPrint(edge0Base)
-                        end
-                        if not(
-                            (edge1Base.node0 == args.innerNode0Id and edge1Base.node1 == args.innerNode1Id)
-                            or (edge1Base.node1 == args.innerNode0Id and edge1Base.node0 == args.innerNode1Id)
-                        ) then
-                            isEdgeNodesOK = false
-                            logger.warn('### edge1 nodes are screwed up, edge1Base =') logger.warningDebugPrint(edge1Base)
-                        end
-                        if not(
-                            (edge2Base.node0 == args.innerNode1Id and edge2Base.node1 == args.outerNode1Id)
-                            or (edge2Base.node1 == args.innerNode1Id and edge2Base.node0 == args.outerNode1Id)
-                        ) then
-                            isEdgeNodesOK = false
-                            logger.warn('### edge2 nodes are screwed up, edge2Base =') logger.warningDebugPrint(edge2Base)
-                        end
-                        if not(isEdgeNodesOK) then
-                            _setStateReady()
-                            return
-                        end
 
-                        if edge0Base.node0 ~= args.outerNode0Id then
-                            logger.print('reversing edge0')
-                            args.dataForCon.edge0Tan0, args.dataForCon.edge0Tan1 = transfUtils.getVectorMultiplied(args.dataForCon.edge0Tan1, -1), transfUtils.getVectorMultiplied(args.dataForCon.edge0Tan0, -1)
-                        end
-                        if edge1Base.node0 ~= args.innerNode0Id then
-                            logger.print('reversing edge1')
-                            args.dataForCon.edge1Tan0, args.dataForCon.edge1Tan1 = transfUtils.getVectorMultiplied(args.dataForCon.edge1Tan1, -1), transfUtils.getVectorMultiplied(args.dataForCon.edge1Tan0, -1)
-                        end
-                        if edge2Base.node0 ~= args.innerNode1Id then
-                            logger.print('reversing edge2')
-                            args.dataForCon.edge2Tan0, args.dataForCon.edge2Tan1 = transfUtils.getVectorMultiplied(args.dataForCon.edge2Tan1, -1), transfUtils.getVectorMultiplied(args.dataForCon.edge2Tan0, -1)
-                        end
-
-                        _actions.removeEdges(edgeIdsBetweenNodes, _eventProperties.edgesRemoved.eventName, args)
+                        _actions.removeEdges(edgeIdsToBeRemoved, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
-                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.groundBridgeTunnel012, args.bridgeOrTunnelType, args.tramTrackType, args.hasBus, args.dataForCon)
+                        _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.groundBridgeTunnel012, args.bridgeOrTunnelType, args.tramTrackType, args.hasBus, args.edgeData4Con)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.upgradeCon(args.conId, args.conParams)
                         _actions.buildSnappyRoads(args.conParams, args.conId)

@@ -1,0 +1,65 @@
+local constants = require('lollo_bus_stop.constants')
+local mdlHelpers = require('lollo_bus_stop.mdlHelpers')
+
+function data()
+	local xFactor = 3
+	local yShift = -0.25
+
+	return {
+		boundingInfo = mdlHelpers.getVoidBoundingInfo(),
+		collider = mdlHelpers.getVoidCollider(),
+		lods = {
+			{
+				node = {
+					children = { },
+					transf = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, },
+				},
+				static = false,
+				visibleFrom = 0,
+				visibleTo = 900,
+			},
+		},
+		metadata = {
+			transportNetworkProvider = {
+				-- UG TODO LOLLO TODO in tunnels and on bridges, these lanes won't link.
+				-- This is a serious blocker for the whole mod.
+				laneLists = {
+					-- { -- with this, passengers look inwards
+					--     linkable = true, -- this is vital coz pavements are not split like the middle of the road. Sigh.
+					--     nodes = {
+					--         {{ -xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- edge 0 -- node 0
+					--         {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, -yShift, 0, }, 1}, -- node 1
+	
+					--         {{ 0, 0, 0 }, { xFactor * constants.outerEdgeX, yShift, 0 }, 1}, -- edge 1 -- node 2
+					--         {{ xFactor * constants.outerEdgeX, yShift, 0 }, { xFactor * constants.outerEdgeX, yShift, -0 }, 1}, -- node 3
+					--     },
+					--     speedLimit = 20,
+					--     transportModes = { 'PERSON' },
+					-- },
+					{ -- with this, passengers look outwards
+						linkable = true, -- this is vital coz pavements are not split like the middle of the road. Sigh.
+						nodes = {
+							{{ xFactor * constants.outerEdgeX, yShift, 0 }, { -xFactor * constants.outerEdgeX, -yShift, -0 }, 1}, -- node 0
+							{{ 0, 0, 0 }, { -xFactor * constants.outerEdgeX, -yShift, 0 }, 1}, -- edge 0 -- node 1
+	
+							{{ 0, 0, 0 }, { -xFactor * constants.outerEdgeX, yShift, 0, }, 1}, -- node 2
+							{{ -xFactor * constants.outerEdgeX, yShift, 0 }, { -xFactor * constants.outerEdgeX, yShift, 0, }, 1}, -- edge 1 -- node 3
+						},
+						speedLimit = 20,
+						transportModes = { 'PERSON' },
+					},
+				},
+				runways = { },
+				terminals = {
+					{
+						-- order = 999,
+						personEdges = { 0, 1 },
+						personNodes = { 1 },
+						-- vehicleNode = 2,
+					},
+				},
+			},
+		},
+		version = 1,
+	}
+end

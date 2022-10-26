@@ -75,7 +75,6 @@ function data()
 			-- streetTerminal = {
 			-- 	cargo = false,
 			-- },
-			transportNetworkProvider = mdlHelpers.getTransportNetworkProvider4WaitingArea(),
 		},
 		version = 1,
 	}

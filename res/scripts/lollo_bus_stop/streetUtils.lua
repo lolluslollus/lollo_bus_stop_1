@@ -16,6 +16,7 @@ local _tunnelDataBuffer = {
 }
 local _texts = {
     noBridge = _('NoBridge'),
+    noTunnel = _('NoTunnel'),
 }
 local helper = {}
 -- --------------- global street data ------------------------
@@ -681,7 +682,7 @@ helper.getGlobalBridgeData = function(carrierId)
     if not(carrierId) then carrierId = api.type.enum.Carrier.ROAD end
     _initLolloBridgeDataWithApi(carrierId)
 
-    return arrayUtils.sort(_bridgeDataBuffer.data, 'name')
+    return arrayUtils.sort(arrayUtils.cloneDeepOmittingFields(_bridgeDataBuffer.data), 'name')
 end
 
 -- In postRunFn, api.res.streetTypeRep.getAll() only returns street types, which are available in the present game.
@@ -689,7 +690,9 @@ end
 -- So, only call this function in postRunFn to avoid inconsistencies.
 helper.getGlobalBridgeDataPlusNoBridge = function(carrierId)
     local results = helper.getGlobalBridgeData(carrierId)
-    table.insert(results, 1, {name = _texts.noBridge, icon = 'ui/bridges/no_bridge.tga'})
+    if arrayUtils.findIndex(results, 'name', _texts.noBridge) < 0 then
+        table.insert(results, 1, {name = _texts.noBridge, icon = 'ui/bridges/no_bridge.tga'})
+    end
     return results
 end
 
@@ -700,7 +703,7 @@ helper.getGlobalTunnelData = function(carrierId)
     if not(carrierId) then carrierId = api.type.enum.Carrier.ROAD end
     _initLolloTunnelDataWithApi(carrierId)
 
-    return arrayUtils.sort(_bridgeDataBuffer.data, 'name')
+    return arrayUtils.sort(arrayUtils.cloneDeepOmittingFields(_tunnelDataBuffer.data), 'name')
 end
 
 -- In postRunFn, api.res.streetTypeRep.getAll() only returns street types, which are available in the present game.
@@ -708,7 +711,9 @@ end
 -- So, only call this function in postRunFn to avoid inconsistencies.
 helper.getGlobalTunnelDataPlusNoTunnel = function(carrierId)
     local results = helper.getGlobalTunnelData(carrierId)
-    table.insert(results, 1, {name = _texts.noBridge, icon = 'ui/tunnels/no_tunnel.tga'})
+    if arrayUtils.findIndex(results, 'name', _texts.noTunnel) < 0 then
+        table.insert(results, 1, {name = _texts.noTunnel, icon = 'ui/tunnels/no_tunnel.tga'})
+    end
     return results
 end
 

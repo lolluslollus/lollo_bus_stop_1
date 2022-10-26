@@ -39,7 +39,6 @@ local helpers = {
                 -- },
                 { -- with this, passengers look outwards
                     linkable = true, -- this is vital coz pavements are not split like the middle of the road. Sigh.
-                    -- LOLLO TODO double-check this
                     nodes = {
                         {{ xFactor * constants.outerEdgeX, yShift, 0 }, { -xFactor * constants.outerEdgeX, -yShift, -0 }, 1}, -- node 0
                         {{ 0, 0, 0 }, { -xFactor * constants.outerEdgeX, -yShift, 0 }, 1}, -- edge 0 -- node 1

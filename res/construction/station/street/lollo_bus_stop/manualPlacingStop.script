@@ -9,6 +9,7 @@ function data()
 	return {
 		updateFn = function(params, two)
 			logger.print('manualPlacingStop.updateFn.script() starting, params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
+			logger.print('manualPlacingStop.updateFn.script() starting, two =') logger.debugPrint(two)
 			-- no api, no game, and I cannot pass the api as a param
 
 			local function _getEdgeType()
@@ -29,9 +30,6 @@ function data()
 				return nil
 			end
 
-			local function _getInverseTan(tan)
-				return {-tan[1], -tan[2], -tan[3]}
-			end
 			local getSnapNodes = function()
 				if params.lolloBusStop_direction == 0 then
 					if params.lolloBusStop_snapNodes == 0 then return {}
@@ -60,6 +58,7 @@ function data()
 					paramsMetadataIndexed['lolloBusStop_driveOnLeft'].defaultIndex,
 					paramsMetadataIndexed['lolloBusStop_tramTrack'].defaultIndex,
 					paramsMetadataIndexed['lolloBusStop_streetType'].defaultIndex,
+					paramsMetadataIndexed['lolloBusStop_groundBridgeTunnel012'].defaultIndex,
 					paramsMetadataIndexed['lolloBusStop_bridgeOrTunnelType'].defaultIndex,
 					paramsMetadataIndexed['lolloBusStop_model'].defaultIndex
 				})
@@ -100,9 +99,10 @@ function data()
 
 			local _pitchAngle = pitchHelpers.getPitchAngle(params)
 			logger.print('manualPlacingStop.updateFn.script _pitchAngle =') logger.debugPrint(_pitchAngle)
-			
+			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
+			logger.print('manualPlacingStop.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
 			local _selectedStreetData = two.globalStreetData[params.lolloBusStop_streetType + 1] or two.globalStreetData[1]
-			local _selectedModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
+			local _selectedKioskModel = two.globalBusStopModelData[params.lolloBusStop_model + 1] or two.globalBusStopModelData[1]
 			local _vehicleEdgeYOffset = params.lolloBusStop_driveOnLeft == 0
 				and -_selectedStreetData.streetWidth * 0.5 +_selectedStreetData.rightLaneWidth * 0.5
 				or _selectedStreetData.streetWidth * 0.5 -_selectedStreetData.rightLaneWidth * 0.5
@@ -179,55 +179,91 @@ function data()
 				} },
             }
 
-			local _pitchTransf = pitchHelpers.getIdTransfPitched(_pitchAngle)
-			logger.print('manualPlacingStop.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)
-			-- _pitchTransf = constants.idTransf
-			local _modelYOffset = _selectedStreetData.streetWidth * 0.5 + _selectedStreetData.sidewalkWidth * 0.5
-			local modelTransfLeft = transfUtilsUG.mul(_pitchTransf, {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_modelYOffset, _selectedStreetData.sidewalkHeight, 1})
-			local modelTransfRight = transfUtilsUG.mul(_pitchTransf, {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _modelYOffset, _selectedStreetData.sidewalkHeight, 1})
-			if params.lolloBusStop_driveOnLeft == 1 then
-				modelTransfLeft, modelTransfRight = modelTransfRight, modelTransfLeft
-			end
-			result.models[#result.models+1] = {
-				id = _selectedModel.fileName,
-				-- tag = 'stationTag',
-				transf = params.lolloBusStop_direction == 0
-					and modelTransfLeft
-					or modelTransfRight
-			}
-			if _isBothSides then
+			local addPassengerLanes = function()
+				local _YOffset = _selectedStreetData.streetWidth * 0.5 + _selectedStreetData.sidewalkWidth * 0.5
+				local transfLeft = transfUtilsUG.mul(
+					_pitchTransf,
+					{-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_YOffset, _selectedStreetData.sidewalkHeight, 1}
+				)
+				local transfRight = transfUtilsUG.mul(
+					_pitchTransf,
+					{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _YOffset, _selectedStreetData.sidewalkHeight, 1}
+				)
+				if params.lolloBusStop_driveOnLeft == 1 then
+					transfLeft, transfRight = transfRight, transfLeft
+				end
 				result.models[#result.models+1] = {
-					id = _selectedModel.fileName,
+					id = 'lollo_bus_stop/person_edge_linkable.mdl',
 					-- tag = 'stationTag',
 					transf = params.lolloBusStop_direction == 0
-						and modelTransfRight
-						or modelTransfLeft
+						and transfLeft
+						or transfRight
 				}
+				if _isBothSides then
+					result.models[#result.models+1] = {
+						id = 'lollo_bus_stop/person_edge_linkable.mdl',
+						-- tag = 'stationTag',
+						transf = params.lolloBusStop_direction == 0
+							and transfRight
+							or transfLeft
+					}
+				end
 			end
-			local vehicleEdgeTransfLeft = transfUtilsUG.mul(
-				_pitchTransf,
-				{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}
-			)
-			local vehicleEdgeTransfRight = transfUtilsUG.mul(
-				_pitchTransf,
-				{-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1}
-			)
-			result.models[#result.models+1] = {
-				id = 'lollo_bus_stop/vehicle_edge_left.mdl',
-				-- tag = 'stationTag',
-				transf = params.lolloBusStop_direction == 0
-					and vehicleEdgeTransfLeft
-					or vehicleEdgeTransfRight
-			}
-			if _isBothSides then
+			addPassengerLanes()
+
+			local addVehicleLane = function()
+				local transfLeft = transfUtilsUG.mul(
+					_pitchTransf,
+					{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _vehicleEdgeYOffset, 0, 1}
+				)
+				local transfRight = transfUtilsUG.mul(
+					_pitchTransf,
+					{-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_vehicleEdgeYOffset, 0, 1}
+				)
 				result.models[#result.models+1] = {
-					id = 'lollo_bus_stop/vehicle_edge_left.mdl',
+					id = 'lollo_bus_stop/vehicle_edge.mdl',
 					-- tag = 'stationTag',
 					transf = params.lolloBusStop_direction == 0
-						and vehicleEdgeTransfRight
-						or vehicleEdgeTransfLeft
+						and transfLeft
+						or transfRight
 				}
+				if _isBothSides then
+					result.models[#result.models+1] = {
+						id = 'lollo_bus_stop/vehicle_edge.mdl',
+						-- tag = 'stationTag',
+						transf = params.lolloBusStop_direction == 0
+							and transfRight
+							or transfLeft
+					}
+				end
 			end
+			addVehicleLane()
+
+			local addKiosk = function()
+				local _YOffset = _selectedStreetData.streetWidth * 0.5 + _selectedStreetData.sidewalkWidth * 0.5
+				local transfLeft = {-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, -_YOffset, _selectedStreetData.sidewalkHeight, 1}
+				local transfRight = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, _YOffset, _selectedStreetData.sidewalkHeight, 1}
+				if params.lolloBusStop_driveOnLeft == 1 then
+					transfLeft, transfRight = transfRight, transfLeft
+				end
+				result.models[#result.models+1] = {
+					id = _selectedKioskModel.fileName,
+					-- tag = 'stationTag',
+					transf = params.lolloBusStop_direction == 0
+						and transfLeft
+						or transfRight
+				}
+				if _isBothSides then
+					result.models[#result.models+1] = {
+						id = _selectedKioskModel.fileName,
+						-- tag = 'stationTag',
+						transf = params.lolloBusStop_direction == 0
+							and transfRight
+							or transfLeft
+					}
+				end
+			end
+			addKiosk()
 
             -- join terminals together, similar to result.terminateConstructionHook that fires with modular stations
 			local addStationsAndTerminalGroups = function()
@@ -311,7 +347,7 @@ function data()
 			end
             addStationsAndTerminalGroups()
 
-			-- logger.print('manualPlacingStop.updateFn.script result = ') logger.debugPrint(result)
+			logger.print('manualPlacingStop.updateFn.script result = ') logger.debugPrint(result)
 			logger.print('manualPlacingStop.updateFn.script() ending')
 			return result
 		end,

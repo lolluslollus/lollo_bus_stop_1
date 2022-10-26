@@ -112,6 +112,7 @@ function data()
 ]]
 
             local globalBridgeData = streetUtils.getGlobalBridgeDataPlusNoBridge()
+            logger.print('postRunFn got globalBridgeData =') logger.debugPrint(globalBridgeData)
             --[[
                 LOLLO NOTE UG TODO
                 In postRunFn, api.res.streetTypeRep.getAll() only returns street types,

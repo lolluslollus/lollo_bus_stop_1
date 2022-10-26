@@ -188,17 +188,21 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
         including those from inactive mods.
         This is why we read the data from the table that we set in postRunFn, and not from the api.
     ]]
-    if not(globalBridgeData) then globalBridgeData = arrayUtils.cloneDeepOmittingFields(
-        api.res.constructionRep.get(
-            api.res.constructionRep.find(
-                constants.manualPlacingConFileName
-            )
-        ).updateScript.params.globalBridgeData,
-        nil,
-        true
-    )
+    logger.print('getManualPlacingParamsMetadata got globalBridgeData =') logger.debugPrint(globalBridgeData)
+    if not(globalBridgeData) then
+        logger.warn('getManualPlacingParamsMetadata got no globalBridgeData')
+        globalBridgeData = arrayUtils.cloneDeepOmittingFields(
+            api.res.constructionRep.get(
+                api.res.constructionRep.find(
+                    constants.manualPlacingConFileName
+                )
+            ).updateScript.params.globalBridgeData,
+            nil,
+            true
+        )
     end
     if not(globalStreetData) then
+        logger.warn('getManualPlacingParamsMetadata got no globalStreetData')
         globalStreetData = arrayUtils.cloneDeepOmittingFields(
             api.res.constructionRep.get(
                 api.res.constructionRep.find(
@@ -210,7 +214,10 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
         )
         -- logger.print('getParamsMetadata: the api found ' .. #api.res.streetTypeRep.getAll() .. ' street types')
     end
-    if not(modelData) then modelData = funcs.getGeldedBusStopModels() end
+    if not(modelData) then
+        logger.warn('getManualPlacingParamsMetadata got no modelData')
+        modelData = funcs.getGeldedBusStopModels()
+    end
 
     local metadata_sorted = {
         {
@@ -224,6 +231,11 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
                 end
             ),
             uiType = 'COMBOBOX',
+        },
+        {
+            key = 'lolloBusStop_groundBridgeTunnel012',
+            name = _('groundBridgeTunnel012'),
+            values = {_('ground'), _('bridge'), _('tunnel')},
         },
         {
             key = 'lolloBusStop_bridgeOrTunnelType',
@@ -312,8 +324,8 @@ funcs.getManualPlacingParamsMetadata = function(globalBridgeData, globalStreetDa
     for _, record in pairs(metadata_sorted) do
         metadata_indexed[record.key] = record
     end
-    -- logger.print('metadata_sorted =') logger.debugPrint(metadata_sorted)
-    -- logger.print('metadata_indexed =') logger.debugPrint(metadata_indexed)
+    logger.print('metadata_sorted =') logger.debugPrint(metadata_sorted)
+    logger.print('metadata_indexed =') logger.debugPrint(metadata_indexed)
     return metadata_sorted, metadata_indexed
 end
 

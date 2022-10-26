@@ -19,30 +19,19 @@ function data()
 		metadata = {
 			transportNetworkProvider = {
 				laneLists = {
-					-- in the middle of the road
+					-- in the middle of the road, along a lane
 					{
 						linkable = false,
 						nodes = {
-							{{ -constants.innerEdgeX, 0, 0 }, { constants.innerEdgeX, 0, constants.vehicleNodeZ, }, 3}, -- edge 0 -- node 0
-							{{ 0, 0, constants.vehicleNodeZ }, { constants.innerEdgeX, 0, constants.vehicleNodeZ, }, 3}, -- node 1
+							{{ -constants.innerEdgeX, 0, 0 }, { constants.innerEdgeX, 0, 0, }, 3}, -- edge 0 -- node 0
+							{{ 0, 0, 0 }, { constants.innerEdgeX, 0, 0, }, 3}, -- node 1
 
-							{{ 0, 0, constants.vehicleNodeZ }, { constants.innerEdgeX, 0, -constants.vehicleNodeZ }, 3}, -- edge 1 -- node 2
-							{{ constants.innerEdgeX, 0, 0 }, { constants.innerEdgeX, 0, -constants.vehicleNodeZ }, 3}, -- node 3
+							{{ 0, 0, 0 }, { constants.innerEdgeX, 0, 0 }, 3}, -- edge 1 -- node 2
+							{{ constants.innerEdgeX, 0, 0 }, { constants.innerEdgeX, 0, 0 }, 3}, -- node 3
 						},
 						speedLimit = 30,
 						transportModes = { 'BUS', 'ELECTRIC_TRAM', 'TRAM', 'TRUCK' },
 					},
-					-- anywhere out of the way, we only need it to avoid crashes
-					-- {
-					-- 	linkable = false,
-					-- 	nodes = {
-					-- 		{{ -0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3}, -- edge 2
-					-- 		{{ 0.1, 0, constants.cargoNodeZ, },{ 0.2, 0, 0, }, 3},
-					-- 	},
-					-- 	speedLimit = 30,
-					-- 	-- transportModes = { 'CARGO', 'PERSON' },
-					-- 	transportModes = { 'PERSON' },
-					-- },
 				},
 				runways = { },
 				terminals = {

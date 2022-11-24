@@ -4,6 +4,7 @@ local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local logger = require('lollo_bus_stop.logger')
 local stringUtils = require('lollo_bus_stop.stringUtils')
 
+local _extraHeight = 200
 local _extraHeight4Title = 100
 local _extraHeight4Param = 40
 local _conConfigLayoutIdPrefix = 'lollo_bus_stop_con_config_layout_'
@@ -122,23 +123,6 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadataSort
     return layout
 end
 
--- guiHelpers.showConstructionConfig = function(paramsMetadata, onParamValueChanged)
---     local layout = _getConstructionConfigLayout(paramsMetadata, onParamValueChanged)
---     local window = api.gui.util.getById(_conConfigWindowId)
---     if window == nil then
---         window = api.gui.comp.Window.new(_texts.conConfigWindowTitle, layout)
---         window:setId(_conConfigWindowId)
---     else
---         window:setContent(layout)
---         window:setVisible(true, false)
---     end
-
---     -- window:setHighlighted(true)
---     local position = api.gui.util.getMouseScreenPos()
---     window:setPosition(position.x + _windowXShift, position.y + _windowYShift)
---     window:addHideOnCloseHandler()
--- end
-
 guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChanged, conParamsMetadata, conParams)
     local conWindowId = 'temp.view.entity_' .. stationGroupId
     print('conWindowId = \'' .. tostring(conWindowId) .. '\'')
@@ -171,14 +155,16 @@ guiHelpers.addConConfigToWindow = function(stationGroupId, handleParamValueChang
 
     local newLayout = _getConstructionConfigLayout(stationGroupId, conParamsMetadata, conParams, handleParamValueChanged, true)
     windowLayout:addItem(newLayout)
-    windowLayout:setGravity(0, 0) -- center top left
+    -- windowLayout:setGravity(0, 0) -- left top
+    windowLayout:setGravity(0, -1) -- left grow
+    -- windowLayout:setGravity(0, 1) -- left bottom
 
     local rect = window:getContentRect() -- this is mostly 0, 0 at this point
     local minSize = window:calcMinimumSize()
     -- logger.print('rect =') logger.debugPrint(rect)
     logger.print('minSize =') logger.debugPrint(minSize)
 
-    local extraHeight = _extraHeight4Title + arrayUtils.getCount(conParamsMetadata) * _extraHeight4Param
+    local extraHeight = _extraHeight + _extraHeight4Title + arrayUtils.getCount(conParamsMetadata) * _extraHeight4Param
     local size = api.gui.util.Size.new(math.max(rect.w, minSize.w), math.max(rect.h, minSize.h) + extraHeight)
     window:setSize(size)
     window:setResizable(true)

@@ -1276,12 +1276,12 @@ local _actions = {
                             elseif not(successEventArgs.outerNode1Id) then
                                 successEventArgs.outerNode1Id = newlyBuiltNodeId
                                 successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                            elseif not(successEventArgs.innerNode0Id) then
-                                successEventArgs.innerNode0Id = newlyBuiltNodeId
-                                successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                            elseif not(successEventArgs.innerNode1Id) then
-                                successEventArgs.innerNode1Id = newlyBuiltNodeId
-                                successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            -- elseif not(successEventArgs.innerNode0Id) then
+                            --     successEventArgs.innerNode0Id = newlyBuiltNodeId
+                            --     successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            -- elseif not(successEventArgs.innerNode1Id) then
+                            --     successEventArgs.innerNode1Id = newlyBuiltNodeId
+                            --     successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
                             end
                             api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                 string.sub(debug.getinfo(1, 'S').source, 1),

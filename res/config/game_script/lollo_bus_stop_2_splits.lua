@@ -1276,12 +1276,12 @@ local _actions = {
                             elseif not(successEventArgs.outerNode1Id) then
                                 successEventArgs.outerNode1Id = newlyBuiltNodeId
                                 successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                            elseif not(successEventArgs.innerNode0Id) then
-                                successEventArgs.innerNode0Id = newlyBuiltNodeId
-                                successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
-                            elseif not(successEventArgs.innerNode1Id) then
-                                successEventArgs.innerNode1Id = newlyBuiltNodeId
-                                successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            -- elseif not(successEventArgs.innerNode0Id) then
+                            --     successEventArgs.innerNode0Id = newlyBuiltNodeId
+                            --     successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            -- elseif not(successEventArgs.innerNode1Id) then
+                            --     successEventArgs.innerNode1Id = newlyBuiltNodeId
+                            --     successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
                             end
                             api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                 string.sub(debug.getinfo(1, 'S').source, 1),
@@ -1820,13 +1820,14 @@ function data()
                         _actions.splitEdge(edgeIdToBeSplit, nodeBetween, _eventProperties.secondOuterSplitDone.eventName, args)
                     elseif name == _eventProperties.secondOuterSplitDone.eventName then
                         local _getEdgeData = function()
+                            logger.print('_getEdgeData starting')
                             local edgeIdsBetweenNodes = _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.outerNode1Id)
+                            logger.print('edgeIdsBetweenNodes =') logger.debugPrint(edgeIdsBetweenNodes)
                             if #edgeIdsBetweenNodes ~= 1 then
                                 logger.warn('no edges or too many edges found between outerNode0Id and outerNode1Id')
                                 return false
                             end
 
-                            logger.print('edgeIdsBetweenNodes =') logger.debugPrint(edgeIdsBetweenNodes)
                             local outerBaseNode0 = api.engine.getComponent(args.outerNode0Id, api.type.ComponentType.BASE_NODE)
                             local outerBaseNode1 = api.engine.getComponent(args.outerNode1Id, api.type.ComponentType.BASE_NODE)
                             local edge0Base = api.engine.getComponent(edgeIdsBetweenNodes[1], api.type.ComponentType.BASE_EDGE)
@@ -1848,43 +1849,30 @@ function data()
                             end
 
                             local is0To1 = (edge0Base.node0 == args.outerNode0Id and edge0Base.node1 == args.outerNode1Id)
-                            logger.print('is0To1 =', is0To1)
                             local pos0XYZ = is0To1 and outerBaseNode0.position or outerBaseNode1.position
                             local pos1XYZ = is0To1 and outerBaseNode1.position or outerBaseNode0.position
                             -- local tan0XYZ = is0To1 and edge0Base.tangent0 or transfUtils.getVectorMultiplied(edge0Base.tangent1, -1) -- NO!
                             -- local tan1XYZ = is0To1 and edge0Base.tangent1 or transfUtils.getVectorMultiplied(edge0Base.tangent0, -1) -- NO!
                             -- local tan0XYZ = is0To1 and edge0Base.tangent0 or edge0Base.tangent1 -- NO!
                             -- local tan1XYZ = is0To1 and edge0Base.tangent1 or edge0Base.tangent0 -- NO!
-                            local tan0XYZ = edge0Base.tangent0
-                            local tan1XYZ = edge0Base.tangent1
+                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or transfUtils.getVectorMultiplied(edge0Base.tangent1, -1) -- NO
+                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or transfUtils.getVectorMultiplied(edge0Base.tangent0, -1) -- NO
+                            local tan0XYZ = edge0Base.tangent0 -- works
+                            local tan1XYZ = edge0Base.tangent1 -- works
 
-                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ)
-                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes
+                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1 =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(is0To1)
+                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1
                         end
-                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved = _getEdgeData()
+                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, is0To1 = _getEdgeData()
                         if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then _setStateReady() return end
 
+                        -- between the two cuts, I am going to place three edges, not one: calculate their positions and tangents
                         local _innerX0To1 = constants.innerEdgeX / constants.outerEdgeX / 2
                         logger.print('_innerX0To1  =', _innerX0To1)
-                        local nodeBetween0 = edgeUtils.getNodeBetween(
-                            pos0XYZ,
-                            pos1XYZ,
-                            tan0XYZ,
-                            tan1XYZ,
-                            _innerX0To1,
-                            logger
-                        )
-                        -- logger.print('first inner nodeBetween =') logger.debugPrint(nodeBetween0)
-
-                        local nodeBetween1 = edgeUtils.getNodeBetween(
-                            pos0XYZ,
-                            pos1XYZ,
-                            tan0XYZ,
-                            tan1XYZ,
-                            (1 - _innerX0To1),
-                            logger
-                        )
-                        -- logger.print('second inner nodeBetween =') logger.debugPrint(nodeBetween1)
+                        local nodeBetween0 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, _innerX0To1)
+                        logger.print('nodeBetween0 would be =') logger.debugPrint(nodeBetween0)
+                        local nodeBetween1 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, (1 - _innerX0To1))
+                        logger.print('nodeBetween1 would be =') logger.debugPrint(nodeBetween1)
 
                         if nodeBetween0 == nil or nodeBetween1 == nil then
                             logger.warn('some edges cannot be split')
@@ -1893,13 +1881,14 @@ function data()
                         end
                         local isNodeBetweenOrientatedLikeMyEdge0 = edgeUtils.isXYZSame(nodeBetween0.refPosition0, pos0XYZ)
                         local distance00 = isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance0 or nodeBetween0.refDistance1
-                        local distance01 = isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance1 or nodeBetween0.refDistance0
                         local tanSign0 = isNodeBetweenOrientatedLikeMyEdge0 and 1 or -1
 
                         local isNodeBetweenOrientatedLikeMyEdge1 = edgeUtils.isXYZSame(nodeBetween1.refPosition1, pos1XYZ)
-                        local distance10 = isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance0 or nodeBetween1.refDistance1
                         local distance11 = isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance1 or nodeBetween1.refDistance0
                         local tanSign1 = isNodeBetweenOrientatedLikeMyEdge1 and 1 or -1
+
+                        local distance01 = (isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance1 or nodeBetween0.refDistance0) - distance11
+                        local distance10 = (isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance0 or nodeBetween1.refDistance1) - distance00
 
                         logger.print('isNodeBetweenOrientatedLikeMyEdge0 =', isNodeBetweenOrientatedLikeMyEdge0, 'isNodeBetweenOrientatedLikeMyEdge1 =', isNodeBetweenOrientatedLikeMyEdge1)
 

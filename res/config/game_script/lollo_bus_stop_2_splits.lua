@@ -136,7 +136,7 @@ local _utils = {
         logger.print('endNodeIdsUnsorted =') logger.debugPrint(endNodeIdsUnsorted)
         return endNodeIdsUnsorted
     end,
-    -- this is not so good, it can crash even with xpcall and it does not always foresee all accidents UG TODO must make a proper upfront estimator
+    -- this is not so good, it can crash even with xpcall and it does not always foresee all accidents
     getIsProposalOK = function(proposal, context)
         logger.print('getIsProposalOK starting with state =') logger.debugPrint(state)
         if not(proposal) then logger.err('getIsProposalOK got no proposal') return false end
@@ -147,6 +147,7 @@ local _utils = {
         xpcall(
             function()
                 -- this tries to build the construction, it calls con.updateFn()
+                -- UG TODO this should never crash, but it crashes in the construction thread, and it is uncatchable here.
                 local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
                 -- logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
 
@@ -1311,7 +1312,7 @@ local _actions = {
         xpcall(
             function()
                 collectgarbage() -- this is a stab in the dark to try and avoid crashes in the following
-                -- UG TODO there is no such thing in the new api,
+                -- UG TODO there is no such thing as game.interface.upgradeConstruction() in the new api,
                 -- nor an upgrade event, both would be useful
                 local paramsNoSeed = arrayUtils.cloneDeepOmittingFields(conParams, {'seed'})
                 logger.print('paramsNoSeed =') logger.debugPrint(paramsNoSeed)
@@ -1375,7 +1376,7 @@ local _actions = {
         -- context.gatherBuildings = true -- default is false
         -- context.gatherFields = true -- default is true
         context.player = api.engine.util.getPlayer()
-        -- UG TODO sometimes, the game fails in the following; UG does not handle the failure graacefully and the game crashes with "an error just occurred" and no useful info.
+        -- Sometimes, the game fails in the following; UG does not handle the failure graacefully and the game crashes with "an error just occurred" and no useful info.
         if not(_utils.getIsProposalOK(proposal, context)) then
             logger.warn('updateConstruction made a dangerous proposal')
             -- LOLLO TODO give feedback

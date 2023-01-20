@@ -1332,7 +1332,7 @@ local _actions = {
         )
     end,
     updateConstruction = function(oldConId, paramKey, newParamValueIndexBase0)
-        logger.print('updateConstruction starting, conId =', oldConId or 'NIL')
+        logger.print('updateConstruction starting, conId =', oldConId or 'NIL', 'paramKey =', paramKey or 'NIL', 'newParamValueIndexBase0 =', newParamValueIndexBase0 or 'NIL')
 
         if not(edgeUtils.isValidAndExistingId(oldConId)) then
             logger.warn('updateConstruction received an invalid conId')
@@ -1352,7 +1352,11 @@ local _actions = {
         newParams[paramKey] = newParamValueIndexBase0
         -- deal with bridges
         if paramKey == 'lolloBusStop_bridgeOrTunnelType' then
-            newParams['lolloBusStop_groundBridgeTunnel012'] = 1 -- bridge
+            if newParamValueIndexBase0 == 0 then
+                newParams['lolloBusStop_groundBridgeTunnel012'] = 0 -- no bridge
+            else
+                newParams['lolloBusStop_groundBridgeTunnel012'] = 1 -- bridge
+            end
         end
         newParams.seed = newParams.seed + 1
         -- clone your own variable, it's safer than cloning newCon.params, which is userdata

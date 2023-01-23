@@ -123,10 +123,14 @@ function data()
 								params.lolloBusStop_innerNode0Pos, params.lolloBusStop_edge0Tan1
 							},  -- node 1
                             {
-								params.lolloBusStop_innerNode0Pos, params.lolloBusStop_edge1Tan0
+								{params.lolloBusStop_innerNode0Pos[1],
+								params.lolloBusStop_innerNode0Pos[2],
+								params.lolloBusStop_innerNode0Pos[3]+10}, params.lolloBusStop_edge1Tan0
 							},  -- node 2
                             {
-								params.lolloBusStop_innerNode1Pos, params.lolloBusStop_edge1Tan1
+								{params.lolloBusStop_innerNode1Pos[1],
+								params.lolloBusStop_innerNode1Pos[2],
+								params.lolloBusStop_innerNode1Pos[3]+10}, params.lolloBusStop_edge1Tan1
 							},  -- node 3
                             {
 								params.lolloBusStop_innerNode1Pos, params.lolloBusStop_edge2Tan0
@@ -142,10 +146,14 @@ function data()
 								params.lolloBusStop_innerNode1Pos, _getInverseTan(params.lolloBusStop_edge2Tan0)
 							},  -- node 1
                             {
-								params.lolloBusStop_innerNode1Pos, _getInverseTan(params.lolloBusStop_edge1Tan1)
+								{params.lolloBusStop_innerNode1Pos[1],
+								params.lolloBusStop_innerNode1Pos[2],
+								params.lolloBusStop_innerNode1Pos[3]+10}, _getInverseTan(params.lolloBusStop_edge1Tan1)
 							},  -- node 2
                             {
-								params.lolloBusStop_innerNode0Pos, _getInverseTan(params.lolloBusStop_edge1Tan0)
+								{params.lolloBusStop_innerNode0Pos[1],
+								params.lolloBusStop_innerNode0Pos[2],
+								params.lolloBusStop_innerNode0Pos[3]+10}, _getInverseTan(params.lolloBusStop_edge1Tan0)
 							},  -- node 3
                             {
 								params.lolloBusStop_innerNode0Pos, _getInverseTan(params.lolloBusStop_edge0Tan1)

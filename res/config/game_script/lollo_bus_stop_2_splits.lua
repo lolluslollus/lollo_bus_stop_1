@@ -436,8 +436,9 @@ local _actions = {
         end
 
         local conTransf_lua = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2) --, logger)
-        local _inverseConTransf = transfUtils.getInverseTransf(conTransf_lua)
-        logger.print('_inverseConTransf =') logger.debugPrint(_inverseConTransf)
+        local inverseConTransf_lua = transfUtils.getInverseTransf(conTransf_lua)
+        logger.print('conTransf_lua =') logger.debugPrint(conTransf_lua)
+        logger.print('inverseConTransf_lua =') logger.debugPrint(inverseConTransf_lua)
 
         local newCon = api.type.SimpleProposal.ConstructionEntity.new()
         -- newCon.fileName = constants.manualPlacingConFileName
@@ -540,16 +541,16 @@ local _actions = {
             lolloBusStop_streetType = streetTypeIndexBase0,
             lolloBusStop_tramTrack = tramTrackType,
             seed = math.abs(math.ceil(conTransf_lua[13] * 100)),
-            lolloBusStop_edge0Tan0 = _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf),
-            lolloBusStop_edge0Tan1 = _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf),
-            lolloBusStop_edge1Tan0 = _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf),
-            lolloBusStop_edge1Tan1 = _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf),
-            lolloBusStop_edge2Tan0 = _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf),
-            lolloBusStop_edge2Tan1 = _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf),
-            lolloBusStop_innerNode0Pos = _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf),
-            lolloBusStop_innerNode1Pos = _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf),
-            lolloBusStop_outerNode0Pos = _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf),
-            lolloBusStop_outerNode1Pos = _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf),
+            lolloBusStop_edge0Tan0 = _utils.getTanTransformed(edgeData4Con.edge0Tan0, inverseConTransf_lua),
+            lolloBusStop_edge0Tan1 = _utils.getTanTransformed(edgeData4Con.edge0Tan1, inverseConTransf_lua),
+            lolloBusStop_edge1Tan0 = _utils.getTanTransformed(edgeData4Con.edge1Tan0, inverseConTransf_lua),
+            lolloBusStop_edge1Tan1 = _utils.getTanTransformed(edgeData4Con.edge1Tan1, inverseConTransf_lua),
+            lolloBusStop_edge2Tan0 = _utils.getTanTransformed(edgeData4Con.edge2Tan0, inverseConTransf_lua),
+            lolloBusStop_edge2Tan1 = _utils.getTanTransformed(edgeData4Con.edge2Tan1, inverseConTransf_lua),
+            lolloBusStop_innerNode0Pos = _utils.getPosTransformed(edgeData4Con.innerNode0Pos, inverseConTransf_lua),
+            lolloBusStop_innerNode1Pos = _utils.getPosTransformed(edgeData4Con.innerNode1Pos, inverseConTransf_lua),
+            lolloBusStop_outerNode0Pos = _utils.getPosTransformed(edgeData4Con.outerNode0Pos, inverseConTransf_lua),
+            lolloBusStop_outerNode1Pos = _utils.getPosTransformed(edgeData4Con.outerNode1Pos, inverseConTransf_lua),
             -- lolloBusStop_pitch = pitchHelpers.getDefaultPitchParamValue(),
             -- lolloBusStop_pitchAngle = pitchHelpers.getDefaultPitchParamValue(),
             lolloBusStop_pitchAngle = _pitchAngle,
@@ -557,42 +558,42 @@ local _actions = {
         logger.print('lolloBusStop_model =', newParams.lolloBusStop_model or 'NIL')
         -- these work but we don't need them anymore, since we moved to parameterless con
         --[[
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Y', _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Z', _utils.getTanTransformed(edgeData4Con.edge0Tan0, _inverseConTransf)[3], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1X', _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Y', _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Z', _utils.getTanTransformed(edgeData4Con.edge0Tan1, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0X', _utils.getTanTransformed(edgeData4Con.edge0Tan0, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Y', _utils.getTanTransformed(edgeData4Con.edge0Tan0, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan0Z', _utils.getTanTransformed(edgeData4Con.edge0Tan0, inverseConTransf_lua)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1X', _utils.getTanTransformed(edgeData4Con.edge0Tan1, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Y', _utils.getTanTransformed(edgeData4Con.edge0Tan1, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge0Tan1Z', _utils.getTanTransformed(edgeData4Con.edge0Tan1, inverseConTransf_lua)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0X', _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Y', _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Z', _utils.getTanTransformed(edgeData4Con.edge1Tan0, _inverseConTransf)[3], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1X', _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Y', _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Z', _utils.getTanTransformed(edgeData4Con.edge1Tan1, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0X', _utils.getTanTransformed(edgeData4Con.edge1Tan0, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Y', _utils.getTanTransformed(edgeData4Con.edge1Tan0, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan0Z', _utils.getTanTransformed(edgeData4Con.edge1Tan0, inverseConTransf_lua)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1X', _utils.getTanTransformed(edgeData4Con.edge1Tan1, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Y', _utils.getTanTransformed(edgeData4Con.edge1Tan1, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge1Tan1Z', _utils.getTanTransformed(edgeData4Con.edge1Tan1, inverseConTransf_lua)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0X', _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Y', _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Z', _utils.getTanTransformed(edgeData4Con.edge2Tan0, _inverseConTransf)[3], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1X', _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Y', _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Z', _utils.getTanTransformed(edgeData4Con.edge2Tan1, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0X', _utils.getTanTransformed(edgeData4Con.edge2Tan0, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Y', _utils.getTanTransformed(edgeData4Con.edge2Tan0, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan0Z', _utils.getTanTransformed(edgeData4Con.edge2Tan0, inverseConTransf_lua)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1X', _utils.getTanTransformed(edgeData4Con.edge2Tan1, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Y', _utils.getTanTransformed(edgeData4Con.edge2Tan1, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'edge2Tan1Z', _utils.getTanTransformed(edgeData4Con.edge2Tan1, inverseConTransf_lua)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosX', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosY', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosZ', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosX', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosY', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode0PosZ', _utils.getPosTransformed(edgeData4Con.innerNode0Pos, inverseConTransf_lua)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosX', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosY', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosZ', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosX', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosY', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'innerNode1PosZ', _utils.getPosTransformed(edgeData4Con.innerNode1Pos, inverseConTransf_lua)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosX', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosY', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosZ', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosX', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosY', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode0PosZ', _utils.getPosTransformed(edgeData4Con.outerNode0Pos, inverseConTransf_lua)[3], 'lolloBusStop_')
 
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosX', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf)[1], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosY', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf)[2], 'lolloBusStop_')
-        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZ', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, _inverseConTransf)[3], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosX', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, inverseConTransf_lua)[1], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosY', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, inverseConTransf_lua)[2], 'lolloBusStop_')
+        moduleHelpers.setIntParamsFromFloat(newParams, 'outerNode1PosZ', _utils.getPosTransformed(edgeData4Con.outerNode1Pos, inverseConTransf_lua)[3], 'lolloBusStop_')
 
         moduleHelpers.setIntParamsFromFloat(newParams, 'sidewalkHeight', _sidewalkHeight, 'lolloBusStop_')
         moduleHelpers.setIntParamsFromFloat(newParams, 'pitchAngle', _pitchAngle, 'lolloBusStop_')
@@ -1916,8 +1917,6 @@ function data()
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.upgradeCon(args.conId, args.conParams)
                         _actions.buildSnappyRoads(args.conParams, args.conId)
-                    elseif name == _eventProperties.snappyConBuilt.eventName then
-                        -- _actions.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.snappyRoadsBuilt.eventName then
                         _setStateReady()
                     elseif name == _eventProperties.setStateWorking.eventName then

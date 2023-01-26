@@ -621,12 +621,12 @@ local _actions = {
         context.player = api.engine.util.getPlayer()
         -- context = nil
 
-        if not(_utils.getIsProposalOK(proposal, context)) then
-            logger.warn('buildConstruction made a dangerous proposal')
-            -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
-            _setStateReady()
-            return
-        end
+        -- if not(_utils.getIsProposalOK(proposal, context)) then
+        --     logger.warn('buildConstruction made a dangerous proposal')
+        --     -- LOLLO TODO at this point, the con was not built but the splits are already in place: fix the road
+        --     _setStateReady()
+        --     return
+        -- end
         api.cmd.sendCommand(
             -- let's try without force and see if the random crashes go away. Not a good idea
             -- coz it fails to build very often, because of collisions
@@ -1273,9 +1273,66 @@ local _actions = {
                             end
 
                             if not(successEventArgs.outerNode0Id) then
+                                logger.print('first split done, result =') logger.debugPrint(result)
+                                for _, segment in pairs(result.proposal.proposal.addedSegments) do
+                                    local comp = segment.comp
+                                    logger.print('segment.comp =') logger.debugPrint(segment.comp)
+                                    if comp.node0 == oldBaseEdge.node0 then
+                                        logger.print('comp.node0 == oldBaseEdge.node0')
+                                        logger.print('LOLLO TODO ONE')
+                                        local node11 = api.engine.getComponent(newlyBuiltNodeId, api.type.ComponentType.BASE_NODE)
+                                        local position0 = api.engine.getComponent(comp.node0, api.type.ComponentType.BASE_NODE).position
+                                        successEventArgs.firstSegmentPos0 = transfUtils.getVectorMultiplied(position0, 1)
+                                        successEventArgs.firstSegmentPos1 = transfUtils.getVectorMultiplied(node11.position, 1)
+                                        successEventArgs.firstSegmentTan0 = transfUtils.getVectorMultiplied(comp.tangent0, 1)
+                                        successEventArgs.firstSegmentTan1 = transfUtils.getVectorMultiplied(comp.tangent1, 1)
+                                    elseif comp.node0 == oldBaseEdge.node1 then
+                                        logger.print('LOLLO TODO TWO')
+                                        successEventArgs.secondSegmentPos0 = transfUtils.getVectorMultiplied(newNodeBetween.comp.position, 1)
+                                        successEventArgs.secondSegmentPos1 = transfUtils.getVectorMultiplied(comp.node1.position, 1)
+                                        successEventArgs.secondSegmentTan0 = transfUtils.getVectorMultiplied(comp.tangent0, 1)
+                                        successEventArgs.secondSegmentTan1 = transfUtils.getVectorMultiplied(comp.tangent1, 1)
+                                        -- break
+                                    elseif comp.node1 == oldBaseEdge.node0 then
+                                        logger.print('LOLLO TODO THREE')
+                                        successEventArgs.secondSegmentPos0 = transfUtils.getVectorMultiplied(newNodeBetween.comp.position, 1)
+                                        successEventArgs.secondSegmentPos1 = transfUtils.getVectorMultiplied(comp.node0.position, 1)
+                                        successEventArgs.secondSegmentTan0 = transfUtils.getVectorMultiplied(comp.tangent0, 1)
+                                        successEventArgs.secondSegmentTan1 = transfUtils.getVectorMultiplied(comp.tangent1, 1)
+                                        -- break
+                                    elseif comp.node1 == oldBaseEdge.node1 then
+                                        logger.print('comp.node1 == oldBaseEdge.node1')
+                                        logger.print('LOLLO TODO FOUR')
+                                        local node11 = api.engine.getComponent(newlyBuiltNodeId, api.type.ComponentType.BASE_NODE)
+                                        local position1 = api.engine.getComponent(comp.node1, api.type.ComponentType.BASE_NODE).position
+                                        successEventArgs.firstSegmentPos0 = transfUtils.getVectorMultiplied(node11.position, 1)
+                                        successEventArgs.firstSegmentPos1 = transfUtils.getVectorMultiplied(position1, 1)
+                                        successEventArgs.firstSegmentTan0 = transfUtils.getVectorMultiplied(comp.tangent0, -1)
+                                        successEventArgs.firstSegmentTan1 = transfUtils.getVectorMultiplied(comp.tangent1, -1)
+                                        -- break
+                                    else
+                                        logger.print('LOLLO TODO FIVE')
+                                        logger.print('else')
+                                    end
+                                end
                                 successEventArgs.outerNode0Id = newlyBuiltNodeId
                                 successEventArgs.outerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
                             elseif not(successEventArgs.outerNode1Id) then
+                                logger.print('second split done, result =') logger.debugPrint(result)
+                                for _, segment in pairs(result.proposal.proposal.addedSegments) do
+                                    local comp = segment.comp
+                                    if comp.node0 == successEventArgs.outerNode0Id then
+                                        successEventArgs.midSegmentTan0 = transfUtils.getVectorMultiplied(comp.tangent0, 1)
+                                        successEventArgs.midSegmentTan1 = transfUtils.getVectorMultiplied(comp.tangent1, 1)
+                                        -- break
+                                    elseif comp.node1 == successEventArgs.outerNode0Id then
+                                        successEventArgs.midSegmentTan0 = transfUtils.getVectorMultiplied(comp.tangent0, -1)
+                                        successEventArgs.midSegmentTan1 = transfUtils.getVectorMultiplied(comp.tangent1, -1)
+                                        -- break
+                                    else
+
+                                    end
+                                end
                                 successEventArgs.outerNode1Id = newlyBuiltNodeId
                                 successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
                             -- elseif not(successEventArgs.innerNode0Id) then
@@ -1825,6 +1882,7 @@ function data()
                         logger.print('final second outer nodeBetween =') logger.debugPrint(nodeBetween)
                         _actions.splitEdge(edgeIdToBeSplit, nodeBetween, _eventProperties.secondOuterSplitDone.eventName, args)
                     elseif name == _eventProperties.secondOuterSplitDone.eventName then
+                        -- if true then return end -- LOLLO TODO remove after testing
                         local _getEdgeData = function()
                             logger.print('_getEdgeData starting')
                             local edgeIdsBetweenNodes = _utils.getEdgeIdsLinkingNodes(args.outerNode0Id, args.outerNode1Id)
@@ -1872,7 +1930,7 @@ function data()
                         local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, is0To1 = _getEdgeData()
                         if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then _setStateReady() return end
 
-                        -- between the two cuts, I am going to place three edges, not one: calculate their positions and tangents
+                        -- around the two cuts, I am going to place three edges, not one: calculate their positions and tangents
                         local _innerX0To1 = constants.innerEdgeX / constants.outerEdgeX / 2
                         logger.print('_innerX0To1  =', _innerX0To1)
                         local nodeBetween0 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, _innerX0To1)

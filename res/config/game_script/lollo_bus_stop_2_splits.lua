@@ -1801,7 +1801,6 @@ function data()
                         )
                     elseif name == _eventProperties.firstOuterSplitDone.eventName then
                         -- find out which edge needs splitting
-                        logger.print('args.outerNode0EdgeIds =') logger.debugPrint(args.outerNode0EdgeIds)
                         if #args.outerNode0EdgeIds == 0 then
                             logger.warn('cannot find an edge for the second split')
                             _setStateReady()
@@ -1836,41 +1835,41 @@ function data()
 
                             local outerBaseNode0 = api.engine.getComponent(args.outerNode0Id, api.type.ComponentType.BASE_NODE)
                             local outerBaseNode1 = api.engine.getComponent(args.outerNode1Id, api.type.ComponentType.BASE_NODE)
-                            local edge0Base = api.engine.getComponent(edgeIdsBetweenNodes[1], api.type.ComponentType.BASE_EDGE)
-                            if outerBaseNode0 == nil or outerBaseNode1 == nil or edge0Base == nil then
+                            local baseEdge = api.engine.getComponent(edgeIdsBetweenNodes[1], api.type.ComponentType.BASE_EDGE)
+                            if outerBaseNode0 == nil or outerBaseNode1 == nil or baseEdge == nil then
                                 logger.warn('some edges or nodes cannot be read')
                                 return false
                             end
 
-                            local isEdgeNodesOK = true
                             if not(
-                                (edge0Base.node0 == args.outerNode0Id and edge0Base.node1 == args.outerNode1Id)
-                                or (edge0Base.node1 == args.outerNode0Id and edge0Base.node0 == args.outerNode1Id)
+                                (baseEdge.node0 == args.outerNode0Id and baseEdge.node1 == args.outerNode1Id)
+                                or (baseEdge.node1 == args.outerNode0Id and baseEdge.node0 == args.outerNode1Id)
                             ) then
-                                isEdgeNodesOK = false
-                                logger.warn('### edge0 nodes are screwed up, edge0Base =') logger.warningDebugPrint(edge0Base)
-                            end
-                            if not(isEdgeNodesOK) then
+                                logger.warn('### edge0 nodes are screwed up, baseEdge =') logger.warningDebugPrint(baseEdge)
                                 return false
                             end
 
-                            local is0To1 = (edge0Base.node0 == args.outerNode0Id and edge0Base.node1 == args.outerNode1Id)
+                            local is0To1 = (baseEdge.node0 == args.outerNode0Id and baseEdge.node1 == args.outerNode1Id)
                             local pos0XYZ = is0To1 and outerBaseNode0.position or outerBaseNode1.position
                             local pos1XYZ = is0To1 and outerBaseNode1.position or outerBaseNode0.position
-                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or transfUtils.getVectorMultiplied(edge0Base.tangent1, -1) -- NO!
-                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or transfUtils.getVectorMultiplied(edge0Base.tangent0, -1) -- NO!
-                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or edge0Base.tangent1 -- NO!
-                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or edge0Base.tangent0 -- NO!
-                            -- local tan0XYZ = is0To1 and edge0Base.tangent0 or transfUtils.getVectorMultiplied(edge0Base.tangent1, -1) -- NO
-                            -- local tan1XYZ = is0To1 and edge0Base.tangent1 or transfUtils.getVectorMultiplied(edge0Base.tangent0, -1) -- NO
-                            local tan0XYZ = edge0Base.tangent0 -- works
-                            local tan1XYZ = edge0Base.tangent1 -- works
+                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO!
+                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO!
+                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or baseEdge.tangent1 -- NO!
+                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or baseEdge.tangent0 -- NO!
+                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO
+                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO
+                            local tan0XYZ = baseEdge.tangent0 -- works
+                            local tan1XYZ = baseEdge.tangent1 -- works
 
                             logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1 =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(is0To1)
                             return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1
                         end
                         local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, is0To1 = _getEdgeData()
-                        if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then _setStateReady() return end
+                        if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then
+                            logger.warn('cannot get edge data')
+                            _setStateReady()
+                            return
+                        end
 
                         -- between the two cuts, I am going to place three edges, not one: calculate their positions and tangents
                         local _innerX0To1 = constants.innerEdgeX / constants.outerEdgeX / 2

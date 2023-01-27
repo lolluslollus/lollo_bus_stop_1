@@ -1967,8 +1967,6 @@ function data()
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.upgradeCon(args.conId, args.conParams)
                         _actions.buildSnappyRoads(args.conParams, args.conId)
-                    elseif name == _eventProperties.snappyConBuilt.eventName then
-                        -- _actions.upgradeCon(args.conId, args.conParams)
                     elseif name == _eventProperties.snappyRoadsBuilt.eventName then
                         _setStateReady()
                     elseif name == _eventProperties.setStateWorking.eventName then

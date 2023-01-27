@@ -16,7 +16,6 @@ return {
         secondOuterSplitDone = { conName = nil, eventName = 'secondOuterSplitDone' },
         firstInnerSplitDone = { conName = nil, eventName = 'firstInnerSplitDone'},
         secondInnerSplitDone = { conName = nil, eventName = 'secondInnerSplitDone' },
-        snappyConBuilt = { conName = nil, eventName = 'snappyConBuilt'},
         snappyRoadsBuilt = { conName = nil, eventName = 'snappyRoadsBuilt'},
         initialEdgeObjectPlaced = { conName = nil, eventName = 'initialEdgeObjectPlaced' },
         setStateWorking = { conName = nil, eventName = 'setStateWorking' },

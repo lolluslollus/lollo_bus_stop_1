@@ -1849,22 +1849,22 @@ function data()
                                 return false
                             end
 
-                            local is0To1 = (baseEdge.node0 == args.outerNode0Id and baseEdge.node1 == args.outerNode1Id)
-                            local pos0XYZ = is0To1 and outerBaseNode0.position or outerBaseNode1.position
-                            local pos1XYZ = is0To1 and outerBaseNode1.position or outerBaseNode0.position
-                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO!
-                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO!
-                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or baseEdge.tangent1 -- NO!
-                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or baseEdge.tangent0 -- NO!
-                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO
-                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO
+                            local isEdge0To1 = (baseEdge.node0 == args.outerNode0Id and baseEdge.node1 == args.outerNode1Id)
+                            local pos0XYZ = isEdge0To1 and outerBaseNode0.position or outerBaseNode1.position
+                            local pos1XYZ = isEdge0To1 and outerBaseNode1.position or outerBaseNode0.position
+                            -- local tan0XYZ = isEdge0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO!
+                            -- local tan1XYZ = isEdge0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO!
+                            -- local tan0XYZ = isEdge0To1 and baseEdge.tangent0 or baseEdge.tangent1 -- NO!
+                            -- local tan1XYZ = isEdge0To1 and baseEdge.tangent1 or baseEdge.tangent0 -- NO!
+                            -- local tan0XYZ = isEdge0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO
+                            -- local tan1XYZ = isEdge0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO
                             local tan0XYZ = baseEdge.tangent0 -- works
                             local tan1XYZ = baseEdge.tangent1 -- works
 
-                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1 =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(is0To1)
-                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1
+                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1 =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(isEdge0To1)
+                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1
                         end
-                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, is0To1 = _getEdgeData()
+                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, isEdge0To1 = _getEdgeData()
                         if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then
                             logger.warn('cannot get edge data')
                             _setStateReady()

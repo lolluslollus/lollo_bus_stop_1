@@ -23,4 +23,21 @@ local distancePos00 = transfUtils.getVectorLength({
 local distanceTan00 = transfUtils.getVectorLength(edgeData4Con.edge0Tan0)
 local distanceTan01 = transfUtils.getVectorLength(edgeData4Con.edge0Tan1)
 
+-- around the crashy node
+local lengthLeft = transfUtils.getVectorNormalised(
+    {
+        x = -35.061904907227,
+        y = -59.77730178833,
+        z = -7.408109664917,
+    },
+    1
+)
+local lengthRight = transfUtils.getVectorNormalised(
+    {
+        x = -41.540504455566,
+        y = -70.822715759277,
+        z = -8.7769508361816,
+    },
+    1
+)
 local dummy = 123

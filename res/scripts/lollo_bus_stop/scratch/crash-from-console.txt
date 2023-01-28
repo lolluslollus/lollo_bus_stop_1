@@ -1,12 +1,23 @@
- go to the test game and type:
+-- go to the test game and type:
 
- >> edgeId = 25754
- >> edgeIdTyped = api.type.EdgeId.new()
- >> edgeIdTyped.entity = edgeId
- >> edgeIdTyped.index = 1
- >> edgeIdDirTyped = api.type.EdgeIdDir.new(edgeIdTyped, true)
- >> port0 = api.engine.transport.getEndPort(edgeIdDirTyped)
- >> port1 = api.engine.transport.getStartPort(edgeIdDirTyped)
-
- With beta 35050, this used to crash the game, 35128 does not - but was it really this? I am not sure.
- At any rate, the crash is still there.
+edgeLeftId = 25754
+edgeRightId = 23455
+edgeLeftIdTyped = api.type.EdgeId.new()
+edgeRightIdTyped = api.type.EdgeId.new()
+edgeLeftIdTyped.entity = edgeLeftId
+edgeRightIdTyped.entity = edgeRightId
+edgeLeftIdDirTyped = api.type.EdgeIdDir.new(edgeLeftIdTyped, true)
+edgeRightIdDirTyped = api.type.EdgeIdDir.new(edgeRightIdTyped, true)
+portLeft0 = api.engine.transport.getEndPort(edgeLeftIdDirTyped)
+portLeft1 = api.engine.transport.getStartPort(edgeLeftIdDirTyped)
+portRight0 = api.engine.transport.getEndPort(edgeRightIdDirTyped)
+portRight1 = api.engine.transport.getStartPort(edgeRightIdDirTyped)
+-- With beta 35050, this used to crash the game, 35128 does not - but was it really this? I am not sure.
+-- At any rate, the crash is still there, so let's try with false:
+edgeLeftIdDirTyped = api.type.EdgeIdDir.new(edgeLeftIdTyped, false)
+edgeRightIdDirTyped = api.type.EdgeIdDir.new(edgeRightIdTyped, false)
+portLeft0 = api.engine.transport.getEndPort(edgeLeftIdDirTyped)
+portLeft1 = api.engine.transport.getStartPort(edgeLeftIdDirTyped)
+portRight0 = api.engine.transport.getEndPort(edgeRightIdDirTyped)
+portRight1 = api.engine.transport.getStartPort(edgeRightIdDirTyped)
+-- no more crashes, but the mod still crashes.

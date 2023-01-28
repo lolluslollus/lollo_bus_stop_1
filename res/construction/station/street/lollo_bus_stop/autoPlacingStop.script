@@ -100,14 +100,35 @@ function data()
 			local _streetFileName = _selectedStreetData.fileName
             local _tramTrackType = _getTramTrackType()
 			local _isBothSides = params.lolloBusStop_bothSides == 1 and _selectedStreetData.laneCount > 3 -- and not(_selectedStreetData.isOneWay)
-
+-- LOLLO TEST CODE BEGIN
+			-- local _adjustZTan = function()
+			-- 	local zPos0 = params.lolloBusStop_outerNode0Pos[3]
+			-- 	local zPos3 = params.lolloBusStop_outerNode1Pos[3]
+			-- 	local zPos1 = zPos0 + (zPos3 - zPos0) * ((constants.outerEdgeX - constants.innerEdgeX) / constants.outerEdgeX / 2)
+			-- 	local zPos2 = zPos0 + (zPos3 - zPos0) * ((-constants.innerEdgeX + 2*constants.outerEdgeX) / constants.outerEdgeX / 2)
+			-- 	local zTan0 = zPos1-zPos0
+			-- 	local zTan1 = zPos2-zPos1
+			-- 	local zTan2 = zPos3-zPos2
+			-- 	params.lolloBusStop_innerNode0Pos[3] = zPos1
+			-- 	params.lolloBusStop_innerNode1Pos[3] = zPos2
+			-- 	params.lolloBusStop_edge0Tan0[3] = zTan0
+			-- 	params.lolloBusStop_edge0Tan1[3] = zTan0
+			-- 	params.lolloBusStop_edge1Tan0[3] = zTan1
+			-- 	params.lolloBusStop_edge1Tan1[3] = zTan1
+			-- 	params.lolloBusStop_edge2Tan0[3] = zTan2
+			-- 	params.lolloBusStop_edge2Tan1[3] = zTan2
+			-- 	-- logger.print('adjusted params =') logger.debugPrint(arrayUtils.cloneDeepOmittingFields(params, {'state'}))
+			-- end
+			-- _adjustZTan()
+-- LOLLO TEST CODE END
             local result = {
                 colliders = {},
                 cost = 1000,
                 edgeLists = {
                     {
                         type = 'STREET',
-						alignTerrain = params.lolloBusStop_groundBridgeTunnel012 == 0,
+						-- alignTerrain = params.lolloBusStop_groundBridgeTunnel012 == 0,
+						alignTerrain = false,
                         params = {
                             hasBus = true, -- UG TODO broken
                             type = _streetFileName,
@@ -294,7 +315,7 @@ function data()
 				}
 			end
 -- LOLLO TEST CODE BEGIN
-			addTestIcons()
+			if logger.getIsExtendedLog() then addTestIcons() end
 -- LOLLO TEST CODE END
 			local addKiosk = function()
 				local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)

@@ -1849,9 +1849,6 @@ function data()
                                 return false
                             end
 
-                            -- logger.print('outerBaseNode0.position =') logger.debugPrint(outerBaseNode0.position)
-                            -- logger.print('outerBaseNode1.position =') logger.debugPrint(outerBaseNode1.position)
-                            -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
                             local isEdge0To1 = (baseEdge.node0 == args.outerNode0Id and baseEdge.node1 == args.outerNode1Id)
                             local pos0XYZ = outerBaseNode0.position
                             local pos1XYZ = outerBaseNode1.position
@@ -1868,7 +1865,7 @@ function data()
                             return
                         end
 
-                        -- between the two cuts, I am going to place three edges, not one: calculate their positions and tangents
+                        -- between the two outer nodes, I am going to place three edges: calculate their positions and tangents
                         local _outerXLength = 2 * constants.outerEdgeX
                         local _innerX0To1 = constants.innerEdgeX / _outerXLength
                         logger.print('_innerX0To1  =', _innerX0To1, ', _outerXLength =', _outerXLength)

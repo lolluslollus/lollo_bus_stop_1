@@ -1867,7 +1867,7 @@ function data()
 
                         -- between the two outer nodes, I am going to place three edges: calculate their positions and tangents
                         local _outerXLength = 2 * constants.outerEdgeX
-                        local _innerX0To1 = constants.innerEdgeX / _outerXLength
+                        local _innerX0To1 = (constants.outerEdgeX - constants.innerEdgeX) / _outerXLength
                         logger.print('_innerX0To1  =', _innerX0To1, ', _outerXLength =', _outerXLength)
                         local nodeBetween0 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, _innerX0To1)
                         logger.print('nodeBetween0 would be =') logger.debugPrint(nodeBetween0)

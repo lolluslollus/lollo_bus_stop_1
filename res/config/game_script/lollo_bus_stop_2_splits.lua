@@ -1849,31 +1849,26 @@ function data()
                                 return false
                             end
 
-                            local is0To1 = (baseEdge.node0 == args.outerNode0Id and baseEdge.node1 == args.outerNode1Id)
-                            local pos0XYZ = is0To1 and outerBaseNode0.position or outerBaseNode1.position
-                            local pos1XYZ = is0To1 and outerBaseNode1.position or outerBaseNode0.position
-                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO!
-                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO!
-                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or baseEdge.tangent1 -- NO!
-                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or baseEdge.tangent0 -- NO!
-                            -- local tan0XYZ = is0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1) -- NO
-                            -- local tan1XYZ = is0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1) -- NO
-                            local tan0XYZ = baseEdge.tangent0 -- works
-                            local tan1XYZ = baseEdge.tangent1 -- works
+                            local isEdge0To1 = (baseEdge.node0 == args.outerNode0Id and baseEdge.node1 == args.outerNode1Id)
+                            local pos0XYZ = outerBaseNode0.position
+                            local pos1XYZ = outerBaseNode1.position
+                            local tan0XYZ = isEdge0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1)
+                            local tan1XYZ = isEdge0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1)
 
-                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1 =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(is0To1)
-                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, is0To1
+                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1 =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(isEdge0To1)
+                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1
                         end
-                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, is0To1 = _getEdgeData()
+                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, isEdge0To1 = _getEdgeData()
                         if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then
                             logger.warn('cannot get edge data')
                             _setStateReady()
                             return
                         end
 
-                        -- between the two cuts, I am going to place three edges, not one: calculate their positions and tangents
-                        local _innerX0To1 = constants.innerEdgeX / constants.outerEdgeX / 2
-                        logger.print('_innerX0To1  =', _innerX0To1)
+                        -- between the two outer nodes, I am going to place three edges: calculate their positions and tangents
+                        local _outerXLength = 2 * constants.outerEdgeX
+                        local _innerX0To1 = constants.innerEdgeX / _outerXLength
+                        logger.print('_innerX0To1  =', _innerX0To1, ', _outerXLength =', _outerXLength)
                         local nodeBetween0 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, _innerX0To1)
                         logger.print('nodeBetween0 would be =') logger.debugPrint(nodeBetween0)
                         local nodeBetween1 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, (1 - _innerX0To1))
@@ -1885,17 +1880,21 @@ function data()
                             return
                         end
                         local isNodeBetweenOrientatedLikeMyEdge0 = edgeUtils.isXYZSame(nodeBetween0.refPosition0, pos0XYZ)
-                        local distance00 = isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance0 or nodeBetween0.refDistance1
+                        -- local distance00 = isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance0 or nodeBetween0.refDistance1
                         local tanSign0 = isNodeBetweenOrientatedLikeMyEdge0 and 1 or -1
 
                         local isNodeBetweenOrientatedLikeMyEdge1 = edgeUtils.isXYZSame(nodeBetween1.refPosition1, pos1XYZ)
-                        local distance11 = isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance1 or nodeBetween1.refDistance0
+                        -- local distance11 = isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance1 or nodeBetween1.refDistance0
                         local tanSign1 = isNodeBetweenOrientatedLikeMyEdge1 and 1 or -1
 
-                        local distance01 = (isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance1 or nodeBetween0.refDistance0) - distance11
-                        local distance10 = (isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance0 or nodeBetween1.refDistance1) - distance00
+                        -- local distance01 = (isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance1 or nodeBetween0.refDistance0) - distance11
+                        -- local distance10 = (isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance0 or nodeBetween1.refDistance1) - distance00
 
-                        logger.print('isNodeBetweenOrientatedLikeMyEdge0 =', isNodeBetweenOrientatedLikeMyEdge0, 'isNodeBetweenOrientatedLikeMyEdge1 =', isNodeBetweenOrientatedLikeMyEdge1)
+                        -- logger.print('distance01 =', distance01, ', distance10 =', distance10)
+
+                        if not(isNodeBetweenOrientatedLikeMyEdge0) or not(isNodeBetweenOrientatedLikeMyEdge1) then
+                            logger.warn('isNodeBetweenOrientatedLikeMyEdge0 =', isNodeBetweenOrientatedLikeMyEdge0, ', isNodeBetweenOrientatedLikeMyEdge1 =', isNodeBetweenOrientatedLikeMyEdge1, ', tanSign0 =', tanSign0, ', tanSign1 =', tanSign1)
+                        end
 
                         args.edgeData4Con = {
                             outerNode0Pos = transfUtils.xYZ2OneTwoThree(pos0XYZ),
@@ -1903,10 +1902,14 @@ function data()
                             innerNode1Pos = transfUtils.xYZ2OneTwoThree(nodeBetween1.position),
                             outerNode1Pos = transfUtils.xYZ2OneTwoThree(pos1XYZ),
                             edge0Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan0XYZ), _innerX0To1),
-                            edge0Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance00 * tanSign0),
-                            edge1Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance01 * tanSign0),
-                            edge1Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance10 * tanSign1),
-                            edge2Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance11 * tanSign1),
+                            -- edge0Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance00 * tanSign0),
+                            edge0Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), _innerX0To1 * _outerXLength * tanSign0),
+                            -- edge1Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), distance01 * tanSign0),
+                            edge1Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween0.tangent), (1 - 2*_innerX0To1) * _outerXLength * tanSign0),
+                            -- edge1Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance10 * tanSign1),
+                            edge1Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), (1 - 2*_innerX0To1) * _outerXLength * tanSign1),
+                            -- edge2Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), distance11 * tanSign1),
+                            edge2Tan0 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(nodeBetween1.tangent), _innerX0To1 * _outerXLength * tanSign1),
                             edge2Tan1 = transfUtils.getVectorMultiplied(transfUtils.xYZ2OneTwoThree(tan1XYZ), _innerX0To1),
                         }
 

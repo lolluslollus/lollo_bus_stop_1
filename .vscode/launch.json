@@ -7,7 +7,7 @@
         {
             "type": "lua",
             "request": "launch",
-            "name": "Debug",
+            "name": "Debug1",
             "program": "${workspaceFolder}/res/scripts/lollo_bus_stop/scratch/scratch.lua"
         },
         {
@@ -15,6 +15,12 @@
             "request": "launch",
             "name": "Debug2",
             "program": "${workspaceFolder}/res/scripts/lollo_bus_stop/scratch/scratch2.lua"
-        }
+        },
+        {
+            "type": "lua",
+            "request": "launch",
+            "name": "Debug3",
+            "program": "${workspaceFolder}/res/scripts/lollo_bus_stop/scratch/scratch3.lua"
+        },
     ]
 }

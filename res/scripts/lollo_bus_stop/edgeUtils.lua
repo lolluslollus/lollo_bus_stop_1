@@ -292,6 +292,7 @@ helper.getNodeBetween = function(position0, position1, tangent0, tangent1, shift
             y = tangent1.y,
             z = tangent1.z,
         },
+        refLength = length,
         -- length0 = length * shift0To1,
         -- length1 = length * (1 - shift0To1),
         position = {

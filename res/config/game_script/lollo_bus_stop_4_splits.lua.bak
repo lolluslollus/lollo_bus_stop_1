@@ -1533,8 +1533,8 @@ function data()
                                 local yShift = -(streetTypeProps.streetWidth + streetTypeProps.sidewalkWidth) / 2
                                 logger.print('baseEdge.objects[1][2] =', baseEdge.objects[1][2])
                                 -- if baseEdge.objects[1][2] == 1 then yShift = -yShift end -- NO!
-                                local edgeObjectTransf_y0 = transfUtils.getTransfYShiftedBy(edgeObjectTransf, yShift)
-                                local edgeObjectTransf_yz0 = transfUtils.getTransfZShiftedBy(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
+                                local edgeObjectTransf_y0 = transfUtils.getTransf_YShifted(edgeObjectTransf, yShift)
+                                local edgeObjectTransf_yz0 = transfUtils.getTransf_ZShifted(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
                                 logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                                 logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
                                 logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
@@ -1765,10 +1765,10 @@ function data()
                             return
                         end
 
-                        local outerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
-                        local outerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
-                        local innerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.innerEdgeX)
-                        local innerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.innerEdgeX)
+                        local outerTransf0 = transfUtils.getTransf_XShifted(args.edgeObjectTransf, constants.outerEdgeX)
+                        local outerTransf1 = transfUtils.getTransf_XShifted(args.edgeObjectTransf, -constants.outerEdgeX)
+                        local innerTransf0 = transfUtils.getTransf_XShifted(args.edgeObjectTransf, constants.innerEdgeX)
+                        local innerTransf1 = transfUtils.getTransf_XShifted(args.edgeObjectTransf, -constants.innerEdgeX)
                         -- these are identical to the ones above, except they only have the position
                         local outerPos0 = transfUtils.getVec123Transformed({constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
                         local outerPos1 = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)

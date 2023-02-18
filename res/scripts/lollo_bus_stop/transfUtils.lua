@@ -311,7 +311,7 @@ utils.getPositionRaisedBy = function(position, raiseBy)
     end
 end
 
-utils.getTransfXShiftedBy = function(transf, shift)
+utils.getTransf_XShifted = function(transf, shift)
     -- faster than calling mul()
     if transf == nil or type(shift) ~= 'number' then return transf end
 
@@ -326,7 +326,7 @@ utils.getTransfXShiftedBy = function(transf, shift)
     }
 end
 
-utils.getTransfYShiftedBy = function(transf, shift)
+utils.getTransf_YShifted = function(transf, shift)
     -- faster than calling mul()
     if transf == nil or type(shift) ~= 'number' then return transf end
 
@@ -341,7 +341,7 @@ utils.getTransfYShiftedBy = function(transf, shift)
     }
 end
 
-utils.getTransfZShiftedBy = function(transf, shift)
+utils.getTransf_ZShifted = function(transf, shift)
     -- faster than calling mul()
     if transf == nil or type(shift) ~= 'number' then return transf end
 

@@ -17,6 +17,10 @@ local transfUtilsUG = require('transf')
 -- LOLLO NOTE you can only update the state from the worker thread
 -- We don't actually use this, as it can make trouble with uncatchable errors,
 -- such as the obnoxious "an error has occurred" that can happen on evaluating or plopping a construction.
+
+-- LOLLO NOTE api.engine.util.proposal.makeProposalData(simpleProposal, context) returns the proposal data,
+-- which has the same format as the result of api.cmd.make.buildProposal
+
 local state = { isWorking = false }
 
 local _eventId = constants.eventId
@@ -144,12 +148,30 @@ local _utils = {
 
         local isErrorsOtherThanCollision = false
         local isWarnings = false
+
+        -- test code BEGIN
+        -- LOLLO TODO see if this crashes
+        api.cmd.sendCommand(
+            api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
+            function(result, success)
+                if success then
+                    logger.print('getIsProposalOK succeeded, result =') logger.debugPrint(result)
+                else
+                    logger.warn('getIsProposalOK failed, result =') logger.debugPrint(result)
+                end
+            end
+        )
+        if true then return true end
+        -- test code END
+
+
         xpcall(
             function()
                 -- this tries to build the construction, it calls con.updateFn()
                 -- UG TODO this should never crash, but it crashes in the construction thread, and it is uncatchable here.
                 local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
                 -- logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
+
 
                 if proposalData.errorState ~= nil then
                     if proposalData.errorState.critical == true then
@@ -1533,8 +1555,8 @@ function data()
                                 local yShift = -(streetTypeProps.streetWidth + streetTypeProps.sidewalkWidth) / 2
                                 logger.print('baseEdge.objects[1][2] =', baseEdge.objects[1][2])
                                 -- if baseEdge.objects[1][2] == 1 then yShift = -yShift end -- NO!
-                                local edgeObjectTransf_y0 = transfUtils.getTransfYShiftedBy(edgeObjectTransf, yShift)
-                                local edgeObjectTransf_yz0 = transfUtils.getTransfZShiftedBy(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
+                                local edgeObjectTransf_y0 = transfUtils.getTransf_YShifted(edgeObjectTransf, yShift)
+                                local edgeObjectTransf_yz0 = transfUtils.getTransf_ZShifted(edgeObjectTransf_y0, -streetTypeProps.sidewalkHeight)
                                 logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                                 logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
                                 logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
@@ -1765,8 +1787,8 @@ function data()
                             return
                         end
 
-                        local outerTransf0 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, constants.outerEdgeX)
-                        local outerTransf1 = transfUtils.getTransfXShiftedBy(args.edgeObjectTransf, -constants.outerEdgeX)
+                        local outerTransf0 = transfUtils.getTransf_XShifted(args.edgeObjectTransf, constants.outerEdgeX)
+                        local outerTransf1 = transfUtils.getTransf_XShifted(args.edgeObjectTransf, -constants.outerEdgeX)
                         -- these are identical to the ones above, except they only have the position
                         local outerPos0 = transfUtils.getVec123Transformed({constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)
                         local outerPos1 = transfUtils.getVec123Transformed({-constants.outerEdgeX, 0, 0}, args.edgeObjectTransf)

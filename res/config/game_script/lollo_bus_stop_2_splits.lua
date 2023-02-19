@@ -1530,6 +1530,8 @@ function data()
                                     return false
                                 end
                                 -- LOLLO TODO try forbidding building too close to another station (only this type? Or also the stock type?)
+                                -- it might fix the crash when building too close to another station.
+                                -- The easiest thing is to introduce a collider in the ploppable model.
                                 -- it won't fix the uncatchable error but it might be useful.
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
                                 -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
@@ -1873,6 +1875,7 @@ function data()
                             _setStateReady()
                             return
                         end
+                        -- LOLLO TODO introduce new check: if my edge neighbours are frozen, abort.
 
                         -- between the two outer nodes, I am going to place three edges: calculate their positions and tangents
                         local _outerXLength = 2 * constants.outerEdgeX
@@ -1924,7 +1927,6 @@ function data()
 
                         _actions.removeEdges(edgeIdsToBeRemoved, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
-                        -- if true then return end -- LOLLO TODO remove this after testing
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.groundBridgeTunnel012, args.bridgeOrTunnelType, args.tramTrackType, args.hasBus, args.edgeData4Con)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.upgradeCon(args.conId, args.conParams)

@@ -158,7 +158,7 @@ helper.sign = function(num1)
     return -1
 end
 
-helper.getEdgeLength = function(edgeId)
+helper.getEdgeLength = function(edgeId, isExtendedLog)
     if not(helper.isValidAndExistingId(edgeId)) then return nil end
 
     local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
@@ -187,8 +187,16 @@ helper.getEdgeLength = function(edgeId)
             lengthB = totalLength / edgeCount
         end
     end
-    if not(transfUtils.isNumVeryClose(lengthA, lengthB, 3)) then
-        print('edgeUtils.getEdgeLength WARNING: edgeId', edgeId, 'has two different lengths:', lengthA, lengthB)
+    if isExtendedLog then
+        if (transfUtils.isNumVeryClose(lengthA, lengthB, 3)) then
+            print('edgeUtils.getEdgeLength found edgeId length to be', lengthB)
+        else
+            print('edgeUtils.getEdgeLength WARNING: edgeId', edgeId, 'has two different lengths:', lengthA, lengthB)
+            local pos0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position
+            local pos1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position
+            local lengthC = transfUtils.getPositionsDistance(pos0, pos1)
+            print('the straight distance is', lengthC or 'NIL')
+        end
     end
 
     return lengthB or lengthA
@@ -341,9 +349,7 @@ helper.getNodeBetweenByPercentageShift = function(edgeId, shift0To1, isExtendedL
     local baseNode1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
     if baseNode0 == nil or baseNode1 == nil then return nil end
 
-    -- if helper.getEdgeLength(edgeId) <= 0 then return nil end
-
-    local edgeLength = helper.getEdgeLength(edgeId)
+    local edgeLength = helper.getEdgeLength(edgeId, isExtendedLog)
 
     return helper.getNodeBetween(baseNode0.position, baseNode1.position, baseEdge.tangent0, baseEdge.tangent1, shift0To1, edgeLength, isExtendedLog)
 end
@@ -371,7 +377,7 @@ helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
         y = (position[2] or position.y) - baseNode1.position.y,
         z = (position[3] or position.z) - baseNode1.position.z,
     })
-    local edgeLength = helper.getEdgeLength(edgeId)
+    local edgeLength = helper.getEdgeLength(edgeId, isExtendedLog)
 
     if isExtendedLog then
         print('getNodeBetweenByPosition firing')

@@ -978,7 +978,7 @@ local _actions = {
                     logger.warn('removeEdges failed, result = ') logger.warningDebugPrint(result)
                     _setStateReady()
                 else
-                    logger.print('removeEdges succeeded, result =') --logger.debugPrint(result)
+                    logger.print('removeEdges succeeded, result =') --logger.debugPrint(result) -- does not help me detect much
                     if not(successEventName) then _setStateReady() return end
 
                     xpcall(
@@ -1500,7 +1500,8 @@ function data()
                             if _guiData.ploppablePassengersModelId
                             and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiData.ploppablePassengersModelId
                             then
-                                -- logger.print('args =') logger.debugPrint(args)
+                                -- logger.print('args =') logger.debugPrint(args) -- useless to find the relative position of the bus stop in its edge
+                                -- LOLLO TODO there is still a crash when I place a station opposite to another and too close.
                                 local edgeObjectId = args.proposal.proposal.edgeObjectsToAdd[1].resultEntity
                                 logger.print('edgeObjectId =') logger.debugPrint(edgeObjectId)
                                 local edgeId = args.proposal.proposal.edgeObjectsToAdd[1].segmentEntity
@@ -1522,7 +1523,7 @@ function data()
                                 --     return false
                                 -- end
 
-                                local edgeLength = edgeUtils.getEdgeLength(edgeId)
+                                local edgeLength = edgeUtils.getEdgeLength(edgeId, logger.getIsExtendedLog())
                                 if edgeLength < constants.minInitialEdgeLength then
                                     guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
                                     _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
@@ -1764,7 +1765,7 @@ function data()
                             return
                         end
 
-                        local length = edgeUtils.getEdgeLength(args.edgeId)
+                        local length = edgeUtils.getEdgeLength(args.edgeId, logger.getIsExtendedLog())
                         if length < constants.minInitialEdgeLength then
                             logger.warn('edge too short')
                             _setStateReady()
@@ -1861,7 +1862,7 @@ function data()
                             local tan0XYZ = isEdge0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1)
                             local tan1XYZ = isEdge0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1)
 
-                            local edgeLength = edgeUtils.getEdgeLength(edgeIdsBetweenNodes[1])
+                            local edgeLength = edgeUtils.getEdgeLength(edgeIdsBetweenNodes[1], logger.getIsExtendedLog())
 
                             logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1, edgeLength =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(isEdge0To1) logger.debugPrint(edgeLength)
                             return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1, edgeLength
@@ -1923,6 +1924,7 @@ function data()
 
                         _actions.removeEdges(edgeIdsToBeRemoved, _eventProperties.edgesRemoved.eventName, args)
                     elseif name == _eventProperties.edgesRemoved.eventName then
+                        -- if true then return end -- LOLLO TODO remove this after testing
                         _actions.buildConstruction(args.outerNode0Id, args.outerNode1Id, args.streetType, args.groundBridgeTunnel012, args.bridgeOrTunnelType, args.tramTrackType, args.hasBus, args.edgeData4Con)
                     elseif name == _eventProperties.conBuilt.eventName then
                         -- _actions.upgradeCon(args.conId, args.conParams)

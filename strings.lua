@@ -30,6 +30,7 @@ function data()
 			["EdgeTooShort"] = "Road segment too short",
 			["GoBack"] = "Go back",
 			["GoThere"] = "Go there",
+			["StopTooCloseToFrozenEdge"] = "Too close to a construction",
 			["WarningWindowTitle"] = "Warning",
 		},
 	}

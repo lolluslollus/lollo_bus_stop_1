@@ -5,7 +5,8 @@ return {
     innerEdgeX = 0.5,
     innerEdgeXManualCon = 0.5,
     minInitialEdgeLength = 2.5, -- must be >= 2 * outerEdgeX
-    minSplit2FrozenEdgeDistance = 2.5, -- 
+    minPlop2FrozenEdgeDistance = 5.0, -- more than the following, for good margin
+    minSplit2FrozenEdgeDistance = 2.5,
 
     eventId = '__lolloBusStopEvent__',
     eventProperties = {

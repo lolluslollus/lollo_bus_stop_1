@@ -33,6 +33,11 @@ local _guiData = {
     ploppablePassengersModelId = false,
 }
 
+local _guiTexts = {
+    edgeTooShort = '',
+    stopTooCloseToFrozenEdge = '',
+}
+
 -- works as a semaphore for all functions that check state.isWorking before doing something
 -- it sets the state in the worker thread and then fires a given event with the given args
 -- It is redundant, see note above.
@@ -1522,6 +1527,7 @@ function data()
                                 logger.print('edgeObjectId =') logger.debugPrint(edgeObjectId)
                                 local edgeId = args.proposal.proposal.edgeObjectsToAdd[1].segmentEntity
                                 logger.print('edgeId =') logger.debugPrint(edgeId)
+                                -- this is centred on the pavement
                                 local edgeObjectTransf = edgeUtils.getObjectTransf(edgeObjectId)
                                 logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                                 if not(edgeUtils.isValidAndExistingId(edgeId))
@@ -1541,15 +1547,14 @@ function data()
 
                                 local edgeLength = edgeUtils.getEdgeLength(edgeId, logger.getIsExtendedLog())
                                 if edgeLength < constants.minInitialEdgeLength then
-                                    guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
+                                    guiHelpers.showWarningWindowWithGoto(_guiTexts.edgeTooShort)
                                     _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
                                     return false
                                 end
-                                -- LOLLO TODO try forbidding building too close to another station (only this type? Or also the stock type?)
-                                -- The sooner we can tell the user, the better.
-                                -- Colliders in the ploppable model don't work.
+
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
                                 -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
+
                                 local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)
                                 -- logger.print('baseEdgeStreet =') logger.debugPrint(baseEdgeStreet)
                                 local streetTypeProps = api.res.streetTypeRep.get(baseEdgeStreet.streetType)
@@ -1562,6 +1567,34 @@ function data()
                                 logger.print('edgeObjectTransf =') logger.debugPrint(edgeObjectTransf)
                                 logger.print('edgeObjectTransf_y0 =') logger.debugPrint(edgeObjectTransf_y0)
                                 logger.print('edgeObjectTransf_yz0 =') logger.debugPrint(edgeObjectTransf_yz0)
+
+                                -- Check that the bus stop is not too close to a frozen edge.
+                                -- Colliders in the ploppable model don't work and they wouldn't be enough anyway.
+                                local nodes = {
+                                    {
+                                        nodeId = baseEdge.node0,
+                                        position = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position,
+                                    },
+                                    {
+                                        nodeId = baseEdge.node1,
+                                        position = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position,
+                                    },
+                                }
+                                for _, node in pairs(nodes) do
+                                    logger.print('node.position =') logger.debugPrint(node.position)
+                                    local distance2Stop = transfUtils.getPositionsDistance(node.position, transfUtils.transf2Position(edgeObjectTransf_y0))
+                                    logger.print('distance2Stop =', distance2Stop)
+                                    if distance2Stop < constants.minPlop2FrozenEdgeDistance then
+                                        for _, connectedEdgeId in pairs(edgeUtils.getConnectedEdgeIds({node.nodeId})) do
+                                            if edgeUtils.isEdgeFrozen(connectedEdgeId) then
+                                                guiHelpers.showWarningWindowWithGoto(_guiTexts.stopTooCloseToFrozenEdge)
+                                                _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
+                                                return false
+                                            end
+                                        end
+                                    end
+                                end
+
                                 _setStateWorking(
                                     true,
                                     _eventProperties.initialEdgeObjectPlaced.eventName,
@@ -1749,6 +1782,9 @@ function data()
             -- logger.print('guiInit starting')
             _guiData.ploppablePassengersModelId = api.res.modelRep.find('station/bus/lollo_bus_stop/initialStation.mdl')
             _guiData.conParamsMetadataSorted = moduleHelpers.getAutoPlacingParamsMetadata()
+            -- init texts
+            _guiTexts.edgeTooShort = _('EdgeTooShort')
+            _guiTexts.stopTooCloseToFrozenEdge = _('StopTooCloseToFrozenEdge')
             -- logger.print('guiInit ending')
         end,
         -- guiUpdate = function()

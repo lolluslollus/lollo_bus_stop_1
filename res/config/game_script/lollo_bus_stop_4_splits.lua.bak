@@ -1523,7 +1523,6 @@ function data()
                                     return false
                                 end
                                 -- LOLLO TODO try forbidding building too close to another station (only this type? Or also the stock type?)
-                                -- it won't fix the uncatchable error but it might be useful.
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
                                 -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
                                 local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)

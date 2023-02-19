@@ -152,7 +152,7 @@ local _utils = {
         xpcall(
             function()
                 -- this tries to build the construction, it calls con.updateFn()
-                -- UG TODO this should never crash, but it crashes in the construction thread, and it is uncatchable here.
+                -- UG TODO this should never crash, but it can crash in the construction thread, and it is uncatchable here.
                 local proposalData = api.engine.util.proposal.makeProposalData(proposal, context)
                 -- logger.print('getIsProposalOK proposalData =') logger.debugPrint(proposalData)
 
@@ -1105,19 +1105,19 @@ local _actions = {
         )
     end,
     splitEdge = function(wholeEdgeId, nodeBetween, successEventName, successEventArgs)
-        logger.print('splitEdge starting')
+        logger.print('_splitEdge starting')
         if not(edgeUtils.isValidAndExistingId(wholeEdgeId)) then
-            logger.warn('splitEdge received an invalid wholeEdgeId')
+            logger.warn('_splitEdge received an invalid wholeEdgeId')
             _setStateReady()
             return
         end
         if edgeUtils.isEdgeFrozen(wholeEdgeId) then
-            logger.warn('splitEdge received a frozen wholeEdgeId')
+            logger.warn('_splitEdge received a frozen wholeEdgeId')
             _setStateReady()
             return
         end
         if type(nodeBetween) ~= 'table' then
-            logger.warn('splitEdge received an invalid nodeBetween')
+            logger.warn('_splitEdge received an invalid nodeBetween')
             _setStateReady()
             return
         end
@@ -1126,35 +1126,47 @@ local _actions = {
         local oldBaseEdgeStreet = api.engine.getComponent(wholeEdgeId, api.type.ComponentType.BASE_EDGE_STREET)
         -- save a crash when a modded road underwent a breaking change, so it has no oldEdgeStreet
         if oldBaseEdge == nil or oldBaseEdgeStreet == nil then
-            logger.warn('splitEdge cannot find oldBaseEdge or oldBaseEdgeStreet')
+            logger.warn('_splitEdge cannot find oldBaseEdge or oldBaseEdgeStreet')
             _setStateReady()
             return
         end
 
         if not(edgeUtils.isValidAndExistingId(oldBaseEdge.node0)) or not(edgeUtils.isValidAndExistingId(oldBaseEdge.node1)) then
-            logger.warn('splitEdge found invalid baseEdge nodes')
+            logger.warn('_splitEdge found invalid baseEdge nodes')
             _setStateReady()
             return
         end
         local node0 = api.engine.getComponent(oldBaseEdge.node0, api.type.ComponentType.BASE_NODE)
         local node1 = api.engine.getComponent(oldBaseEdge.node1, api.type.ComponentType.BASE_NODE)
         if node0 == nil or node1 == nil then
-            logger.warn('splitEdge cannot find baseEdge nodes')
+            logger.warn('_splitEdge cannot find baseEdge nodes')
             _setStateReady()
             return
         end
 
         if not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)) and not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node1.position)) then
-            logger.warn('splitEdge cannot find the nodes')
+            logger.warn('_splitEdge cannot find the nodes')
         end
         local isNodeBetweenOrientatedLikeMyEdge = edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)
         local distance0 = isNodeBetweenOrientatedLikeMyEdge and nodeBetween.refDistance0 or nodeBetween.refDistance1
         local distance1 = isNodeBetweenOrientatedLikeMyEdge and nodeBetween.refDistance1 or nodeBetween.refDistance0
         local tanSign = isNodeBetweenOrientatedLikeMyEdge and 1 or -1
-        if distance0 < constants.minSplit2EndDistance or distance1 < constants.minSplit2EndDistance then
-            logger.warn('splitEdge cannot split so close to the end')
-            _setStateReady()
-            return
+
+        for _, edgeId in pairs(edgeUtils.getConnectedEdgeIds({oldBaseEdge.node0})) do
+            if edgeUtils.isEdgeFrozen(edgeId) and distance0 < constants.minSplit2FrozenEdgeDistance then
+                logger.warn('_splitEdge cannot split so close to an edge, which is frozen in another construction')
+                _setStateReady()
+                -- LOLLO TODO give feedback
+                return
+            end
+        end
+        for _, edgeId in pairs(edgeUtils.getConnectedEdgeIds({oldBaseEdge.node1})) do
+            if edgeUtils.isEdgeFrozen(edgeId) and distance1 < constants.minSplit2FrozenEdgeDistance then
+                logger.warn('_splitEdge cannot split so close to an edge, which is frozen in another construction')
+                _setStateReady()
+                -- LOLLO TODO give feedback
+                return
+            end
         end
 
         local oldTan0Length = isNodeBetweenOrientatedLikeMyEdge and edgeUtils.getVectorLength(oldBaseEdge.tangent0) or edgeUtils.getVectorLength(oldBaseEdge.tangent1)
@@ -1215,7 +1227,7 @@ local _actions = {
                 local edgeObjPosition = edgeUtils.getObjectPosition(edgeObj[1])
                 -- logger.print('edge object position =') logger.debugPrint(edgeObjPosition)
                 if type(edgeObjPosition) ~= 'table' then
-                    logger.warn('splitEdge found type(edgeObjPosition) ~= table')
+                    logger.warn('_splitEdge found type(edgeObjPosition) ~= table')
                     _setStateReady()
                     return
                 end -- change nothing and leave
@@ -1241,7 +1253,7 @@ local _actions = {
                 else
                     -- print('don\'t change anything and leave')
                     -- print('LOLLO error, assignment.assignToSide =', assignment.assignToSide)
-                    logger.warn('splitEdge cannot find the side to assign to the edge object')
+                    logger.warn('_splitEdge cannot find the side to assign to the edge object')
                     _setStateReady()
                     return -- change nothing and leave
                 end
@@ -1267,18 +1279,18 @@ local _actions = {
             api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
             function(result, success)
                 if not(success) then
-                    logger.warn('splitEdge failed, proposal = ') logger.warningDebugPrint(proposal)
-                    logger.warn('splitEdge failed, result = ') logger.warningDebugPrint(result)
+                    logger.warn('_splitEdge failed, proposal = ') logger.warningDebugPrint(proposal)
+                    logger.warn('_splitEdge failed, result = ') logger.warningDebugPrint(result)
                     _setStateReady()
                 else
-                    logger.print('splitEdge succeeded, result =') -- logger.debugPrint(result)
+                    logger.print('_splitEdge succeeded, result =') -- logger.debugPrint(result)
                     if not(successEventName) then _setStateReady() return end
 
                     xpcall(
                         function ()
                             local newlyBuiltNodeId = _utils.getNewlyBuiltNodeId(result)
                             if not(edgeUtils.isValidAndExistingId(newlyBuiltNodeId)) then
-                                logger.warn('splitEdge failed to find newlyBuiltNodeId')
+                                logger.warn('_splitEdge failed to find newlyBuiltNodeId')
                                 _setStateReady()
                                 return
                             end
@@ -1506,7 +1518,6 @@ function data()
                             and args.proposal.proposal.edgeObjectsToAdd[1].modelInstance.modelId == _guiData.ploppablePassengersModelId
                             then
                                 -- logger.print('args =') logger.debugPrint(args) -- useless to find the relative position of the bus stop in its edge
-                                -- LOLLO TODO there is still a crash when I place a station opposite to another and too close.
                                 local edgeObjectId = args.proposal.proposal.edgeObjectsToAdd[1].resultEntity
                                 logger.print('edgeObjectId =') logger.debugPrint(edgeObjectId)
                                 local edgeId = args.proposal.proposal.edgeObjectsToAdd[1].segmentEntity
@@ -1535,9 +1546,8 @@ function data()
                                     return false
                                 end
                                 -- LOLLO TODO try forbidding building too close to another station (only this type? Or also the stock type?)
-                                -- it might fix the crash when building too close to another station.
-                                -- The easiest thing is to introduce a collider in the ploppable model.
-                                -- it won't fix the uncatchable error but it might be useful.
+                                -- The sooner we can tell the user, the better.
+                                -- Colliders in the ploppable model don't work.
                                 local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
                                 -- logger.print('baseEdge =') logger.debugPrint(baseEdge)
                                 local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)
@@ -1880,7 +1890,6 @@ function data()
                             _setStateReady()
                             return
                         end
-                        -- LOLLO TODO introduce new check: if my edge neighbours are frozen, abort.
 
                         -- between the two outer nodes, I am going to place three edges: calculate their positions and tangents
                         local _outerXLength = 2 * constants.outerEdgeX

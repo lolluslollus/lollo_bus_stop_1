@@ -1151,6 +1151,11 @@ local _actions = {
         local distance0 = isNodeBetweenOrientatedLikeMyEdge and nodeBetween.refDistance0 or nodeBetween.refDistance1
         local distance1 = isNodeBetweenOrientatedLikeMyEdge and nodeBetween.refDistance1 or nodeBetween.refDistance0
         local tanSign = isNodeBetweenOrientatedLikeMyEdge and 1 or -1
+        if distance0 < constants.minSplit2EndDistance or distance1 < constants.minSplit2EndDistance then
+            logger.warn('splitEdge cannot split so close to the end')
+            _setStateReady()
+            return
+        end
 
         local oldTan0Length = isNodeBetweenOrientatedLikeMyEdge and edgeUtils.getVectorLength(oldBaseEdge.tangent0) or edgeUtils.getVectorLength(oldBaseEdge.tangent1)
         local oldTan1Length = isNodeBetweenOrientatedLikeMyEdge and edgeUtils.getVectorLength(oldBaseEdge.tangent1) or edgeUtils.getVectorLength(oldBaseEdge.tangent0)

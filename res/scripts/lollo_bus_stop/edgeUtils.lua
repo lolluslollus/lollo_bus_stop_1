@@ -8,7 +8,7 @@ local transfUtilsUG = require('transf')
 local helper = {}
 
 helper.isValidId = function(id)
-    return type(id) == 'number' and id > 0
+    return type(id) == 'number' and id >= 0
 end
 
 helper.isValidAndExistingId = function(id)
@@ -165,35 +165,49 @@ helper.getEdgeLength = function(edgeId)
     if baseEdge == nil then return nil end
 
     -- these should be identical, but they are not really so, so we average them
-    return (helper.getVectorLength(baseEdge.tangent0) + helper.getVectorLength(baseEdge.tangent1)) * 0.5
-
-    -- this returns funny results
+    -- return (helper.getVectorLength(baseEdge.tangent0) + helper.getVectorLength(baseEdge.tangent1)) * 0.5
+    local lengthA = (helper.getVectorLength(baseEdge.tangent0) + helper.getVectorLength(baseEdge.tangent1)) * 0.5
+    -- this returns funny results but it is correct with humps, so we test both for a while LOLLO TODO
     -- local tn = api.engine.getComponent(edgeId, api.type.ComponentType.TRANSPORT_NETWORK)
     -- if tn == nil or tn.edges == nil or tn.edges[1] == nil or tn.edges[1].geometry == nil then return nil end
-
     -- return tn.edges[1].geometry.length
-end
 
-helper.getNodeBetween = function(position0, position1, tangent0, tangent1, shift0To1, isExtendedLog) --, length)
-    -- these should be identical, but they are not really so, so we average them
-    local length0 = helper.getVectorLength({
-        x = tangent0.x,
-        y = tangent0.y,
-        z = tangent0.z,
-    })
-    local length1 = helper.getVectorLength({
-        x = tangent1.x,
-        y = tangent1.y,
-        z = tangent1.z,
-    })
-    local length = (length0 + length1) * 0.5
-    if type(length) ~= 'number' or length <= 0 then return nil end
+    local lengthB
+    local tn = api.engine.getComponent(edgeId, api.type.ComponentType.TRANSPORT_NETWORK)
+    if (tn ~= nil and tn.edges ~= nil) then
+        local edgeCount = #tn.edges
 
-    if isExtendedLog then
-        print('getNodeBetween: ', 'length0 =', length0 or 'NIL', 'length1 =', length1 or 'NIL', 'length =', length or 'NIL')
+        if edgeCount == 1 then -- faster when dealing with tracks
+            lengthB = tn.edges[1].geometry.length
+        elseif edgeCount > 1 then
+            local totalLength = 0
+            for i = 1, edgeCount, 1 do
+                totalLength = totalLength + tn.edges[i].geometry.length
+            end
+            lengthB = totalLength / edgeCount
+        end
+    end
+    if not(transfUtils.isNumVeryClose(lengthA, lengthB, 3)) then
+        print('edgeUtils.getEdgeLength WARNING: edgeId', edgeId, 'has two different lengths:', lengthA, lengthB)
     end
 
-    -- print('getNodeBetween starting, shift0To1 =', shift0To1, 'length =', length)
+    return lengthB or lengthA
+end
+
+local _getNodeBetween = function(position0, position1, tangent0, tangent1, shift0To1, edgeLength, isExtendedLog) --, length)
+    local length = edgeLength
+    if type(length) ~= 'number' or length <= 0 then
+        print('edgeUtils._getNodeBetween WARNING: edge length is not a positive number, returning')
+        return nil
+    end
+
+    if isExtendedLog then
+        print('getNodeBetween starting, shift0To1 =', shift0To1, 'length =', length)
+        print('position0, position1 =') debugPrint(position0) debugPrint(position1)
+        print('tangent0, tangent1 =') debugPrint(tangent0) debugPrint(tangent1)
+        print('getNodeBetween: ', 'length =', length or 'NIL')
+    end
+
     -- print('baseEdge =') debugPrint(baseEdge)
     -- print('baseNode0 =') debugPrint(baseNode0)
     -- print('baseNode1 =') debugPrint(baseNode1)
@@ -311,7 +325,11 @@ helper.getNodeBetween = function(position0, position1, tangent0, tangent1, shift
     return result
 end
 
-helper.getNodeBetweenByPercentageShift = function(edgeId, shift0To1)
+helper.getNodeBetween = function(position0, position1, tangent0, tangent1, shift0To1, edgeLength, isExtendedLog)
+    return _getNodeBetween(position0, position1, tangent0, tangent1, shift0To1, edgeLength, isExtendedLog)
+end
+
+helper.getNodeBetweenByPercentageShift = function(edgeId, shift0To1, isExtendedLog)
     if not(helper.isValidAndExistingId(edgeId)) then return nil end
 
     if type(shift0To1) ~= 'number' or shift0To1 < 0 or shift0To1 > 1 then shift0To1 = 0.5 end
@@ -325,7 +343,9 @@ helper.getNodeBetweenByPercentageShift = function(edgeId, shift0To1)
 
     -- if helper.getEdgeLength(edgeId) <= 0 then return nil end
 
-    return helper.getNodeBetween(baseNode0.position, baseNode1.position, baseEdge.tangent0, baseEdge.tangent1, shift0To1)
+    local edgeLength = helper.getEdgeLength(edgeId)
+
+    return helper.getNodeBetween(baseNode0.position, baseNode1.position, baseEdge.tangent0, baseEdge.tangent1, shift0To1, edgeLength, isExtendedLog)
 end
 
 helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
@@ -351,6 +371,7 @@ helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
         y = (position[2] or position.y) - baseNode1.position.y,
         z = (position[3] or position.z) - baseNode1.position.z,
     })
+    local edgeLength = helper.getEdgeLength(edgeId)
 
     if isExtendedLog then
         print('getNodeBetweenByPosition firing')
@@ -358,13 +379,19 @@ helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
         print('baseNode1.position =') debugPrint(baseNode1.position)
         print('baseEdge.tangent0 =') debugPrint(baseEdge.tangent0)
         print('baseEdge.tangent1 =') debugPrint(baseEdge.tangent1)
-        print('length0 =', length0)
-        print('length1 =', length1)
+        print('length0 =', length0 or 'NIL')
+        print('length1 =', length1 or 'NIL')
         print('length0 / (length0 + length1) =', length0 / (length0 + length1))
+        print('edgeLength =', edgeLength or 'NIL')
         print('getNodeBetween about to fire')
     end
 
-    return helper.getNodeBetween(baseNode0.position, baseNode1.position, baseEdge.tangent0, baseEdge.tangent1, length0 / (length0 + length1), isExtendedLog)
+    if edgeLength == nil or length0 == nil or length1 == nil then return nil end
+
+    local lengthAdjustment = edgeLength / (length0 + length1)
+    length0, length1 = length0 * lengthAdjustment, length1 * lengthAdjustment
+
+    return helper.getNodeBetween(baseNode0.position, baseNode1.position, baseEdge.tangent0, baseEdge.tangent1, length0 / (length0 + length1), edgeLength, isExtendedLog)
 end
 
 helper.getNodeBetweenOLD = function(position0, tangent0, position1, tangent1, betweenPosition)

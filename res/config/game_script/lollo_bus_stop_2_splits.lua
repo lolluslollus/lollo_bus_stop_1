@@ -149,22 +149,6 @@ local _utils = {
         local isErrorsOtherThanCollision = false
         local isWarnings = false
 
-        -- test code BEGIN
-        -- LOLLO TODO see if this crashes
-        api.cmd.sendCommand(
-            api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
-            function(result, success)
-                if success then
-                    logger.print('getIsProposalOK succeeded, result =') logger.debugPrint(result)
-                else
-                    logger.warn('getIsProposalOK failed, result =') logger.debugPrint(result)
-                end
-            end
-        )
-        if true then return true end
-        -- test code END
-
-
         xpcall(
             function()
                 -- this tries to build the construction, it calls con.updateFn()
@@ -1877,10 +1861,12 @@ function data()
                             local tan0XYZ = isEdge0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1)
                             local tan1XYZ = isEdge0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1)
 
-                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1 =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(isEdge0To1)
-                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1
+                            local edgeLength = edgeUtils.getEdgeLength(edgeIdsBetweenNodes[1])
+
+                            logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1, edgeLength =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(isEdge0To1) logger.debugPrint(edgeLength)
+                            return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1, edgeLength
                         end
-                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, isEdge0To1 = _getEdgeData()
+                        local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, isEdge0To1, edgeLength = _getEdgeData()
                         if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then
                             logger.warn('cannot get edge data')
                             _setStateReady()
@@ -1891,9 +1877,9 @@ function data()
                         local _outerXLength = 2 * constants.outerEdgeX
                         local _innerX0To1 = (constants.outerEdgeX - constants.innerEdgeX) / _outerXLength
                         logger.print('_innerX0To1  =', _innerX0To1, ', _outerXLength =', _outerXLength)
-                        local nodeBetween0 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, _innerX0To1)
+                        local nodeBetween0 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, _innerX0To1, edgeLength)
                         logger.print('nodeBetween0 would be =') logger.debugPrint(nodeBetween0)
-                        local nodeBetween1 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, (1 - _innerX0To1))
+                        local nodeBetween1 = edgeUtils.getNodeBetween(pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, (1 - _innerX0To1), edgeLength)
                         logger.print('nodeBetween1 would be =') logger.debugPrint(nodeBetween1)
 
                         if nodeBetween0 == nil or nodeBetween1 == nil then

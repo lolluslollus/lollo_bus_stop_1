@@ -1586,10 +1586,9 @@ function data()
                 -- LOLLO NOTE
                 -- Here, the station has been bulldozed.
                 -- Its data has been lost already, except something about an expiring station group.
-                -- I could try some hack to rebuild the road after bulldozing the station, but a bit of manuality will do fine
                 xpcall(
                     function()
-                        logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =') --logger.debugPrint(args)
+                        logger.print('guiHandleEvent caught id =', id, 'name =', name, 'args =')
                         if not(_guiData.conIdAboutToBeBulldozed) then return end
 
                         if args == nil
@@ -1601,6 +1600,7 @@ function data()
                             return
                         end
 
+                        logger.debugPrint(args)
                         _guiData.conIdAboutToBeBulldozed = false
                         logger.print('you have bulldozed the construction with id') logger.debugPrint(args.proposal.toRemove[1])
                         -- local gameTimeSec = api.engine.getComponent(api.engine.util.getWorld(), api.type.ComponentType.GAME_TIME).gameTime -- number
@@ -1656,7 +1656,7 @@ function data()
                                 elseif segmentProps.comp.node1 == node1Id then
                                     tan1 = transfUtils.getVectorMultiplied(segmentProps.comp.tangent1, 1)
                                 end
-
+                                -- I cannot read the edge length from the api output
                                 totalLength = totalLength + (transfUtils.getVectorLength(segmentProps.comp.tangent0) + transfUtils.getVectorLength(segmentProps.comp.tangent1)) / 2
 
                                 removedSegments[#removedSegments+1] = segmentProps

@@ -159,47 +159,64 @@ helper.sign = function(num1)
 end
 
 helper.getEdgeLength = function(edgeId, isExtendedLog)
+    -- LOLLO NOTE
+    -- The player can snap together two road or rail segments ("edges") at awkward angles.
+    -- The bit between the segment ends looks OK but it is no proper edge:
+    -- it cannot be bulldozed and it has no edgeId.
+    -- If it is a road, the stitches at its ends cannot be crossed by pedestrians.
+    -- If you try to split one of those bits, you get a catchable error.
+    -- The edges involved are coerced into a different geometry,
+    -- which can twist the tangents at both ends and the positions at the snapped ends.
+    -- TRANSPORT_NETWORK returns a better length with humps and other dirty setups,
+    -- better than the baseEdge.tangent calc.
+    -- We test both for a while LOLLO TODO
+    -- If there are no forceful snaps, the positions and tangents from TRANSPORT_NETWORK
+    -- are consistent with baseEdge.
+
     if not(helper.isValidAndExistingId(edgeId)) then return nil end
 
-    local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-    if baseEdge == nil then return nil end
-
-    -- these should be identical, but they are not really so, so we average them
-    -- return (helper.getVectorLength(baseEdge.tangent0) + helper.getVectorLength(baseEdge.tangent1)) * 0.5
-    local lengthA = (helper.getVectorLength(baseEdge.tangent0) + helper.getVectorLength(baseEdge.tangent1)) * 0.5
-    -- this returns funny results but it is correct with humps, so we test both for a while LOLLO TODO
-    -- local tn = api.engine.getComponent(edgeId, api.type.ComponentType.TRANSPORT_NETWORK)
-    -- if tn == nil or tn.edges == nil or tn.edges[1] == nil or tn.edges[1].geometry == nil then return nil end
-    -- return tn.edges[1].geometry.length
-
-    local lengthB
+    local TNLength
     local tn = api.engine.getComponent(edgeId, api.type.ComponentType.TRANSPORT_NETWORK)
     if (tn ~= nil and tn.edges ~= nil) then
         local edgeCount = #tn.edges
 
         if edgeCount == 1 then -- faster when dealing with tracks
-            lengthB = tn.edges[1].geometry.length
+            TNLength = tn.edges[1].geometry.length
         elseif edgeCount > 1 then
             local totalLength = 0
             for i = 1, edgeCount, 1 do
                 totalLength = totalLength + tn.edges[i].geometry.length
             end
-            lengthB = totalLength / edgeCount
+            TNLength = totalLength / edgeCount
         end
     end
-    if isExtendedLog then
-        if (transfUtils.isNumVeryClose(lengthA, lengthB, 3)) then
-            print('edgeUtils.getEdgeLength found edgeId length to be', lengthB)
-        else
-            print('edgeUtils.getEdgeLength WARNING: edgeId', edgeId, 'has two different lengths:', lengthA, lengthB)
-            local pos0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position
-            local pos1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position
-            local lengthC = transfUtils.getPositionsDistance(pos0, pos1)
-            print('the straight distance is', lengthC or 'NIL')
+    if not(isExtendedLog) and TNLength ~= nil then return TNLength end
+
+    local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+    if baseEdge == nil then
+        if isExtendedLog then
+            print('WARNING: edgeUtils.getEdgeLength found no baseEdge, length =', TNLength or 'NIL')
         end
+        return TNLength
     end
 
-    return lengthB or lengthA
+    -- these should be identical, but they are not really so, so we average them
+    local BELength = (helper.getVectorLength(baseEdge.tangent0) + helper.getVectorLength(baseEdge.tangent1)) * 0.5
+    if (transfUtils.isNumVeryClose(BELength, TNLength, 3)) then
+        if isExtendedLog then
+            print('edgeUtils.getEdgeLength found length =', TNLength or 'NIL')
+        end
+        return TNLength
+    end
+
+    if isExtendedLog then
+        print('edgeUtils.getEdgeLength: edgeId', edgeId, 'has two different lengths: baseEdge says', BELength, 'and TN says', TNLength)
+        local pos0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position
+        local pos1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position
+        local straightLength = transfUtils.getPositionsDistance(pos0, pos1)
+        print('the straight distance is', straightLength or 'NIL')
+    end
+    return TNLength or BELength
 end
 
 local _getNodeBetween = function(position0, position1, tangent0, tangent1, shift0To1, edgeLength, isExtendedLog) --, length)

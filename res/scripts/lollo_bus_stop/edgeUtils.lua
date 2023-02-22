@@ -185,98 +185,149 @@ helper.getEdgeLengthUG = function(edgeId, isExtendedLog)
     return len
 end
 ]]
-helper.getEdgeLength = function(edgeId, isExtendedLog)
-    -- LOLLO NOTE
-    -- The player can snap together two road or rail segments ("edges") at awkward angles.
-    -- The bit between the segment ends looks OK but it is no proper edge:
-    -- it cannot be bulldozed and it has no edgeId.
-    -- If it is a road, the stitches at its ends cannot be crossed by pedestrians.
-    -- If you try to split one of those bits, you get a catchable error.
-    -- The edges involved are coerced into a different geometry,
-    -- which can twist the tangents at both ends and the positions at the snapped ends.
-    -- TRANSPORT_NETWORK returns a better length with humps and other dirty setups,
-    -- better than the baseEdge.tangent calc.
-    -- However, it is worse with bends, which are more common.
-    -- We test both for a while LOLLO TODO
-    -- If there are no forceful snaps, the positions and tangents from TRANSPORT_NETWORK
-    -- are consistent with baseEdge.
+--[[
+    LOLLO NOTE
+    Dealing with a street, there is an edge each lane; tracks only have one lane.
+    There can also be multiple edges if the street has a waypoint, a bus stop, or the likes.
+    Street segments can only have one waypoint, or streetside stop, in each direction.
+    Tracks can have many traffic lights in one segment instead.
 
-    if not(helper.isValidAndExistingId(edgeId)) then
-        print('ERROR: edgeUtils.getEdgeLength got an invalid edgeId =', edgeId or 'NIL')
-        return nil
-    end
+    The player can snap together two road or rail segments ("edges") at awkward angles,
+    or place a 2-lane road after a 4.lane one.
+    The bit between the segment ends looks OK but it is no proper edge:
+    it cannot be bulldozed and it has no edgeId;
+    if it is a road, the stitches at its ends cannot be crossed by pedestrians.
+    If you try to split one of those bits, you get a catchable error.
+    The edges involved are coerced into a different geometry,
+    which can twist the tangents at both ends and the positions at the snapped ends.
+    In these cases, TRANSPORT_NETWORK returns a shorter length.
 
-    local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-    if baseEdge == nil or baseEdge.node0 == nil or baseEdge.node1 == nil then
-        print('ERROR: edgeUtils.getEdgeLength found no proper baseEdge, edgeId =', edgeId)
-        return nil
-    end
+    In general TRANSPORT_NETWORK returns a better length with humps and certain other dirty setups,
+    better than the baseEdge.tangent calc.
+    However, it is worse with bends, which are more common.
+    We test both for a while LOLLO TODO
+    If there are no forceful snaps, the positions and tangents from TRANSPORT_NETWORK
+    are consistent with baseEdge and we can simply take the bigger one.
 
-    local tn = api.engine.getComponent(edgeId, api.type.ComponentType.TRANSPORT_NETWORK)
-    if tn == nil or tn.edges == nil or tn.edges[1] == nil then
-        print('ERROR: edgeUtils.getEdgeLength found no tn, edgeId =', edgeId)
-        return nil
-    end
+    To be precise, this looks like a good estimator but I wouldn't bet the farm on it.
+    The crux is, these tans are not always perfect (eg humps with tracks).
+    The game algo to get the length, which delivers the same as the TRANSPORT_NETWORK, is not absolutely reliable. either.
+    I'd still look for a better algo, based on the normalised tans;
+    but we'd need to know more if we don't know the tans accurately,
+    for example a third point. So for the moment there is no better way to solve this.
+]]
+local _getSplitId = function(entityA, entityB)
+    return entityA .. '-' .. entityB
+end
 
+---@param edgeId integer
+---@param isExtendedLog boolean
+---@param baseEdge table
+---@param tn table
+---@return number|nil "edge length"
+---@return boolean "can use the result"
+---@return boolean "the result is accurate"
+local _getEdgeLength_Street = function(edgeId, isExtendedLog, baseEdge, tn)
+    local node0Id, node1Id = baseEdge.node0, baseEdge.node1
     local tan0 = baseEdge.tangent0
     local tan1 = baseEdge.tangent1
     local resultWithBaseEdge = (transfUtils.getVectorLength_FAST(tan0) + transfUtils.getVectorLength_FAST(tan1)) * 0.5 -- they should be equal but they are not, so we average them
 
-    local pos0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position
-    local pos1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position
-    local geometry0 = tn.edges[1].geometry
-    local geometry1 = tn.edges[#tn.edges].geometry
-    if not(helper.isXYZSame_onlyXY(pos0, geometry0.params.pos[1]))
-    or not(helper.isXYZSame_onlyXY(pos1, geometry1.params.pos[2]))
-    -- or not(helper.isXYZSame_onlyXY(tan0, geometry.params.tangent[1]))
-    -- or not(helper.isXYZSame_onlyXY(tan1, geometry.params.tangent[2]))
+    local pos0 = api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE).position
+    local pos1 = api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE).position
+    -- group data by splits, sorted in the direction node0Id -> node1Id
+    local dataBySplit = {}
+    for i = 1, #tn.edges, 1 do
+        local entity0 = tn.edges[i].conns[1].entity
+        local entity1 = tn.edges[i].conns[2].entity
+        local isReverse = entity0 ~= node0Id and entity1 ~= node1Id
+        local currentSplitId = isReverse and _getSplitId(entity1, entity0) or _getSplitId(entity0, entity1)
+        if not(dataBySplit[currentSplitId]) then
+            dataBySplit[currentSplitId] = {count = 0, length = 0}
+        end
+
+        dataBySplit[currentSplitId].count = dataBySplit[currentSplitId].count + 1
+        dataBySplit[currentSplitId].length = dataBySplit[currentSplitId].length + tn.edges[i].geometry.length
+        if isReverse then
+            dataBySplit[currentSplitId].entity0 = entity1
+            dataBySplit[currentSplitId].entity1 = entity0
+            dataBySplit[currentSplitId].pos0= tn.edges[i].geometry.params.pos[2]
+            dataBySplit[currentSplitId].pos1 = tn.edges[i].geometry.params.pos[1]
+        else
+            dataBySplit[currentSplitId].entity0 = entity0
+            dataBySplit[currentSplitId].entity1 = entity1
+            dataBySplit[currentSplitId].pos0 = tn.edges[i].geometry.params.pos[1]
+            dataBySplit[currentSplitId].pos1 = tn.edges[i].geometry.params.pos[2]
+        end
+    end
+    -- if isExtendedLog then
+    --     print('dataBySplit before join') debugPrint(dataBySplit)
+    -- end
+    -- join the splits
+    -- print('node0Id, edgeId, node1Id, getSplit1, getSplit2', node0Id, edgeId, node1Id, _getSplitId(node0Id, edgeId), _getSplitId(edgeId, node1Id))
+    if dataBySplit[_getSplitId(node0Id, edgeId)] ~= nil and dataBySplit[_getSplitId(edgeId, node1Id)] ~= nil then
+        if dataBySplit[_getSplitId(node0Id, edgeId)].count ~= dataBySplit[_getSplitId(edgeId, node1Id)].count then
+            print('ERROR: _getEdgeLength_Street found edge splits with different amounts of lanes, this should never happen')
+            return nil, false, false
+        end
+        local newRecord = {
+            count = dataBySplit[_getSplitId(node0Id, edgeId)].count,
+            length = dataBySplit[_getSplitId(node0Id, edgeId)].length + dataBySplit[_getSplitId(edgeId, node1Id)].length,
+            entity0 = node0Id,
+            entity1 = node1Id,
+            pos0 = dataBySplit[_getSplitId(node0Id, edgeId)].pos0,
+            pos1 = dataBySplit[_getSplitId(edgeId, node1Id)].pos1,
+        }
+
+        if dataBySplit[_getSplitId(node0Id, node1Id)] == nil then
+            dataBySplit[_getSplitId(node0Id, node1Id)] = newRecord
+        else
+            dataBySplit[_getSplitId(node0Id, node1Id)].length =
+                (dataBySplit[_getSplitId(node0Id, node1Id)].length / dataBySplit[_getSplitId(node0Id, node1Id)].count
+                + newRecord.length / newRecord.count) * 0.5
+            dataBySplit[_getSplitId(node0Id, node1Id)].count = 1
+        end
+        dataBySplit[_getSplitId(node0Id, edgeId)] = nil
+        dataBySplit[_getSplitId(edgeId, node1Id)] = nil
+    end
+    -- if isExtendedLog then
+    --     print('dataBySplit after join') debugPrint(dataBySplit)
+    -- end
+    -- put it all together
+    local dataTogether = {length = 0}
+    for _, splitData in pairs(dataBySplit) do
+        if splitData.count ~= 0 then
+            dataTogether.length = dataTogether.length + splitData.length / splitData.count
+        end
+        if splitData.entity0 == node0Id then
+            dataTogether.pos0 = splitData.pos0
+        end
+        if splitData.entity1 == node1Id then
+            dataTogether.pos1 = splitData.pos1
+        end
+    end
+    -- if isExtendedLog then
+    --     print('dataTogether') debugPrint(dataTogether)
+    -- end
+
+    local resultWithTN = dataTogether.length
+
+    if (not(helper.isXYZSame_onlyXY(pos0, dataTogether.pos0)) or not(helper.isXYZSame_onlyXY(pos1, dataTogether.pos1)))
     then
-        if not(transfUtils.isXYVeryClose_FAST(pos0, geometry0.params.pos[1], 4))
-        or not(transfUtils.isXYVeryClose_FAST(pos1, geometry1.params.pos[2], 4))
+        if (not(transfUtils.isXYVeryClose_FAST(pos0, dataTogether.pos0, 4)) or not(transfUtils.isXYVeryClose_FAST(pos1, dataTogether.pos1, 4)))
         then
-            print('ERROR: edgeUtils.getEdgeLength found that tn and baseEdge mismatch, edgeId =', edgeId)
-            print('pos0, pos1 =') debugPrint(pos0) debugPrint(pos1)
-            print('geometry0.params =') debugPrint(geometry0.params)
-            print('geometry1.params =') debugPrint(geometry1.params)
-            return nil
+            if isExtendedLog then
+                print('WARNING: edgeUtils.getEdgeLength found that tn and baseEdge mismatch, edgeId =', edgeId)
+                print('pos0, pos1 =') debugPrint(pos0) debugPrint(pos1)
+                print('data from TN after join') debugPrint(dataBySplit)
+                print('data from TN, final =') debugPrint(dataTogether)
+                print('resultWithBaseEdge =', resultWithBaseEdge, ', resultWithTN =', dataTogether.length)
+            end
+            return math.max(resultWithBaseEdge, resultWithTN), true, false
         else
             if isExtendedLog then
                 print('edgeUtils.getEdgeLength found that tn and baseEdge slightly mismatch, edgeId =', edgeId)
             end
-        end
-    end
-
-    local resultWithTN
-    local edgeCount = #tn.edges
-    if edgeCount == 1 then -- faster when dealing with tracks
-        resultWithTN = tn.edges[1].geometry.length
-    else
-        if isExtendedLog then print('edgeUtils.getEdgeLength found ' .. edgeCount .. ' edges in the TN, edgeId =', edgeId) end
-        if edgeCount > 3 then
-            print('WARNING: edgeUtils.getEdgeLength found a geometry with ' .. edgeCount .. ' consecutive edge groups, edgeId =', edgeId)
-        end
-        local totalLengthsByEntity = {}
-        for i = 1, edgeCount, 1 do
-            local currentEntity12 = tn.edges[i].conns[1].entity .. '-' .. tn.edges[i].conns[2].entity
-            -- LOLLO TODO if there are more than 3 consecutive edges,
-            -- this will fail coz
-            -- edges[1].conns[1].entity = node0Id, edges[1]conns[2].entity = edgeId,
-            -- edges[2].conns[1].entity = edgeId, edges[2].conns[2].entity = node1Id
-            -- and I presume
-            -- edges[n].conns[1].entity = edgeId, edges[n].conns[2].entity = edgeId,
-            -- so I'd have no way of telling apart the middle segments.
-            -- This will result in a lower calculated length,
-            -- and the result will probably be discarded in favour of the tan lengths.
-            -- I haven't come across such case yet.
-            if not(totalLengthsByEntity[currentEntity12]) then
-                totalLengthsByEntity[currentEntity12] = {count = 0, length = 0}
-            end
-            totalLengthsByEntity[currentEntity12].count = totalLengthsByEntity[currentEntity12].count + 1
-            totalLengthsByEntity[currentEntity12].length = totalLengthsByEntity[currentEntity12].length + tn.edges[i].geometry.length
-        end
-        resultWithTN = 0
-        for _, countAndLength in pairs(totalLengthsByEntity) do
-            resultWithTN = resultWithTN + countAndLength.length / countAndLength.count
         end
     end
 
@@ -285,12 +336,105 @@ helper.getEdgeLength = function(edgeId, isExtendedLog)
         debugPrint(pos0) debugPrint(pos1) debugPrint(tan0) debugPrint(tan1)
     end
 
-    return math.max(resultWithBaseEdge, resultWithTN) -- LOLLO TODO this looks like a good estimator but I wouldn't bet the farm on it
-    -- The crux is, these tans are not always perfect.
-    -- The game algo, which is the same as the TRANSPORT_NETWORK, is not very good.
-    -- I'd still look for a better algo, based on the normalised tans;
-    -- but we'd need to know more if we don't know the tans accurately,
-    -- for example a third point.
+    return math.max(resultWithBaseEdge, resultWithTN), true, true
+end
+
+---@param edgeId integer
+---@param isExtendedLog boolean
+---@param baseEdge table
+---@param tn table
+---@return number "edge length"
+---@return boolean "can use the result"
+---@return boolean "the result is accurate"
+local _getEdgeLength_Track = function(edgeId, isExtendedLog, baseEdge, tn)
+    local tan0 = baseEdge.tangent0
+    local tan1 = baseEdge.tangent1
+    local resultWithBaseEdge = (transfUtils.getVectorLength_FAST(tan0) + transfUtils.getVectorLength_FAST(tan1)) * 0.5 -- they should be equal but they are not, so we average them
+
+    local pos0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position
+    local pos1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position
+    local geometry0 = tn.edges[1].geometry
+    local geometry1 = tn.edges[#tn.edges].geometry
+
+    local resultWithTN = 0
+    local edgeCount = #tn.edges
+    if edgeCount == 1 then
+        resultWithTN = tn.edges[1].geometry.length
+    else
+        if isExtendedLog then
+            print('edgeUtils.getEdgeLength found ' .. edgeCount .. ' edges in the TN, edgeId =', edgeId)
+            if edgeCount > 3 then -- this happens if I put several traffic light on the same edge
+                print('edgeUtils.getEdgeLength found a geometry with ' .. edgeCount .. ' consecutive edge groups, edgeId =', edgeId)
+            end
+        end
+        local totalLengthsByEntity = {}
+        for i = 1, edgeCount, 1 do
+            local currentEntity12 = tn.edges[i].conns[1].entity .. '-' .. tn.edges[i].conns[1].index .. '-' .. tn.edges[i].conns[2].entity .. '-' .. tn.edges[i].conns[2].index
+
+            if not(totalLengthsByEntity[currentEntity12]) then
+                totalLengthsByEntity[currentEntity12] = {count = 0, length = 0}
+            end
+            totalLengthsByEntity[currentEntity12].count = totalLengthsByEntity[currentEntity12].count + 1
+            totalLengthsByEntity[currentEntity12].length = totalLengthsByEntity[currentEntity12].length + tn.edges[i].geometry.length
+        end
+        for _, countAndLength in pairs(totalLengthsByEntity) do
+            resultWithTN = resultWithTN + countAndLength.length / countAndLength.count
+        end
+    end
+
+    if not(helper.isXYZSame_onlyXY(pos0, geometry0.params.pos[1])) or not(helper.isXYZSame_onlyXY(pos1, geometry1.params.pos[2]))
+    then
+        if not(transfUtils.isXYVeryClose_FAST(pos0, geometry0.params.pos[1], 4)) or not(transfUtils.isXYVeryClose_FAST(pos1, geometry1.params.pos[2], 4))
+        then
+            if isExtendedLog then
+                print('WARNING: edgeUtils.getEdgeLength found that tn and baseEdge mismatch, edgeId =', edgeId)
+                print('pos0, pos1 =') debugPrint(pos0) debugPrint(pos1)
+                print('geometry0.params =') debugPrint(geometry0.params)
+                print('geometry1.params =') debugPrint(geometry1.params)
+                print('resultWithBaseEdge =', resultWithBaseEdge, ', resultWithTN =', resultWithTN, 'I chose the largest')
+            end
+            return math.max(resultWithBaseEdge, resultWithTN), true, false
+        else
+            if isExtendedLog then
+                print('edgeUtils.getEdgeLength found that tn and baseEdge slightly mismatch, edgeId =', edgeId)
+            end
+        end
+    end
+
+    if isExtendedLog and resultWithTN > resultWithBaseEdge then
+        print('resultWithTN > resultWithBaseEdge, =', resultWithTN, resultWithBaseEdge, '; pos0, pos1, tan0, tan1 =')
+        debugPrint(pos0) debugPrint(pos1) debugPrint(tan0) debugPrint(tan1)
+    end
+
+    return math.max(resultWithBaseEdge, resultWithTN), true, true
+end
+
+---@param edgeId integer
+---@param isExtendedLog? boolean
+---@return number|nil "edge length"
+---@return boolean "can use the result"
+---@return boolean "the result is accurate"
+helper.getEdgeLength = function(edgeId, isExtendedLog)
+    if not(helper.isValidAndExistingId(edgeId)) then
+        print('ERROR: edgeUtils.getEdgeLength got an invalid edgeId =', edgeId or 'NIL')
+        return nil, false, false
+    end
+
+    local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+    if baseEdge == nil or baseEdge.node0 == nil or baseEdge.node1 == nil then
+        print('ERROR: edgeUtils.getEdgeLength found no proper baseEdge, edgeId =', edgeId)
+        return nil, false, false
+    end
+
+    local tn = api.engine.getComponent(edgeId, api.type.ComponentType.TRANSPORT_NETWORK)
+    if tn == nil or tn.edges == nil or tn.edges[1] == nil then
+        print('ERROR: edgeUtils.getEdgeLength found no tn, edgeId =', edgeId)
+        return nil, false, false
+    end
+
+    local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)
+    if not(baseEdgeStreet) then return _getEdgeLength_Track(edgeId, isExtendedLog, baseEdge, tn) end
+    return _getEdgeLength_Street(edgeId, isExtendedLog, baseEdge, tn)
 end
 --#endregion getEdgeLength
 
@@ -531,7 +675,7 @@ helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
         y = (position[2] or position.y) - baseNode1.position.y,
         z = (position[3] or position.z) - baseNode1.position.z,
     })
-    local edgeLength = helper.getEdgeLength(edgeId, isExtendedLog)
+    local edgeLength, isEdgeLengthUsable, isEdgeLengthAccurate = helper.getEdgeLength(edgeId, isExtendedLog)
 
     if isExtendedLog then
         print('getNodeBetweenByPosition firing')
@@ -542,7 +686,7 @@ helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
         print('distance_0_to_split =', distance_0_to_split or 'NIL')
         print('distance_split_to_1 =', distance_split_to_1 or 'NIL')
         print('distance_0_to_split / (distance_0_to_split + distance_split_to_1) =', distance_0_to_split / (distance_0_to_split + distance_split_to_1))
-        print('edgeLength =', edgeLength or 'NIL')
+        print('edgeLength =', edgeLength or 'NIL', 'isEdgeLengthUsable =', isEdgeLengthUsable, 'isEdgeLengthAccurate =', isEdgeLengthAccurate)
         print('getNodeBetween about to fire')
     end
 

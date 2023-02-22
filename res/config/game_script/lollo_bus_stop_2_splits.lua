@@ -1545,7 +1545,12 @@ function data()
                                 --     return false
                                 -- end
 
-                                local edgeLength = edgeUtils.getEdgeLength(edgeId, logger.getIsExtendedLog())
+                                local edgeLength, isUsable, isAccurate = edgeUtils.getEdgeLength(edgeId, logger.getIsExtendedLog())
+                                if edgeLength == nil then
+                                    logger.warn('cannot get edge length')
+                                    return false
+                                end
+
                                 if edgeLength < constants.minInitialEdgeLength then
                                     guiHelpers.showWarningWindowWithGoto(_guiTexts.edgeTooShort)
                                     _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
@@ -1818,8 +1823,8 @@ function data()
                             return
                         end
 
-                        local length = edgeUtils.getEdgeLength(args.edgeId, logger.getIsExtendedLog())
-                        if length < constants.minInitialEdgeLength then
+                        local length, isUsable, isAccurate = edgeUtils.getEdgeLength(args.edgeId, logger.getIsExtendedLog())
+                        if type(length) ~= 'number' or length < constants.minInitialEdgeLength then
                             logger.warn('edge too short')
                             _setStateReady()
                             return
@@ -1915,13 +1920,13 @@ function data()
                             local tan0XYZ = isEdge0To1 and baseEdge.tangent0 or transfUtils.getVectorMultiplied(baseEdge.tangent1, -1)
                             local tan1XYZ = isEdge0To1 and baseEdge.tangent1 or transfUtils.getVectorMultiplied(baseEdge.tangent0, -1)
 
-                            local edgeLength = edgeUtils.getEdgeLength(edgeIdsBetweenNodes[1], logger.getIsExtendedLog())
+                            local edgeLength, isUsable, isAccurate = edgeUtils.getEdgeLength(edgeIdsBetweenNodes[1], logger.getIsExtendedLog())
 
                             logger.print('pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1, edgeLength =') logger.debugPrint(pos0XYZ) logger.debugPrint(pos1XYZ) logger.debugPrint(tan0XYZ) logger.debugPrint(tan1XYZ) logger.debugPrint(edgeIdsBetweenNodes) logger.debugPrint(isEdge0To1) logger.debugPrint(edgeLength)
                             return pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsBetweenNodes, isEdge0To1, edgeLength
                         end
                         local pos0XYZ, pos1XYZ, tan0XYZ, tan1XYZ, edgeIdsToBeRemoved, isEdge0To1, edgeLength = _getEdgeData()
-                        if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) then
+                        if not(pos0XYZ) or not(pos1XYZ) or not(tan0XYZ) or not(tan1XYZ) or not(edgeLength) then
                             logger.warn('cannot get edge data')
                             _setStateReady()
                             return

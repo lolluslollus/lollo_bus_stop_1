@@ -273,6 +273,69 @@ local utils = {
             transf[4] * x + transf[8] * y + transf[12] * z + transf[16],
         }
     end,
+    getTransf_XScaled = function(transf, scale)
+        return {
+            transf[1] * scale, transf[2] * scale, transf[3] * scale, transf[4] * scale,
+            transf[5], transf[6], transf[7], transf[8],
+            transf[9], transf[10], transf[11], transf[12],
+            transf[13], transf[14], transf[15], transf[16]
+        }
+    end,
+    getTransf_YScaled = function(transf, scale)
+        return {
+            transf[1], transf[2], transf[3], transf[4],
+            transf[5] * scale, transf[6] * scale, transf[7] * scale, transf[8] * scale,
+            transf[9], transf[10], transf[11], transf[12],
+            transf[13], transf[14], transf[15], transf[16]
+        }
+    end,
+    getTransf_ZScaled = function(transf, scale)
+        return {
+            transf[1], transf[2], transf[3], transf[4],
+            transf[5], transf[6], transf[7], transf[8],
+            transf[9] * scale, transf[10] * scale, transf[11] * scale, transf[12] * scale,
+            transf[13], transf[14], transf[15], transf[16]
+        }
+    end,
+    getTransf_Scaled = function(transf, scales123)
+        if type(transf) ~= 'table' then return transf end
+        local x, y, z = 1, 1, 1
+        if type(scales123) == 'table' then x, y, z = table.unpack(scales123) end
+
+        return {
+            transf[1] * x, transf[2] * x, transf[3] * x, transf[4] * x,
+            transf[5] * y, transf[6] * y, transf[7] * y, transf[8] * y,
+            transf[9] * z, transf[10] * z, transf[11] * z, transf[12] * z,
+            transf[13], transf[14], transf[15], transf[16]
+        }
+    end,
+    getTransf_XSkewedOnZ = function(transf, skew)
+        local m2 = {
+            1, 0, skew, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        }
+
+        return {
+            transf[1]  + transf[9]  * skew,
+            transf[2]  + transf[10] * skew,
+            transf[3]  + transf[11] * skew,
+            transf[4]  + transf[12] * skew,
+            transf[5],
+            transf[6],
+            transf[7],
+            transf[8],
+            transf[9],
+            transf[10],
+            transf[11],
+            transf[12],
+            transf[13],
+            transf[14],
+            transf[15],
+            transf[16],
+        }
+    end,
 --#endregion faster than mul()
 }
 
@@ -593,9 +656,27 @@ utils.getVectorLength = function(xyz)
     return math.sqrt(x * x + y * y + z * z)
 end
 
+---runs no checks, takes an xyz table
+---@param xyz table
+---@return number
+utils.getVectorLength_FAST = function(xyz)
+    -- if type(xyz) ~= 'table' and type(xyz) ~= 'userdata' then return nil end
+    local x = xyz.x
+    local y = xyz.y
+    local z = xyz.z
+    return math.sqrt(x * x + y * y + z * z)
+end
+
+utils.getVectorLength_onlyXY = function(xy)
+    if type(xy) ~= 'table' and type(xy) ~= 'userdata' then return nil end
+    local x = xy.x or xy[1] or 0.0
+    local y = xy.y or xy[2] or 0.0
+    return math.sqrt(x * x + y * y)
+end
+
 utils.getVectorNormalised = function(xyz, targetLength)
     if type(xyz) ~= 'table' and type(xyz) ~= 'userdata' then return nil end
-    if type(targetLength) == 'number' and targetLength == 0 then return { 0, 0, 0 } end
+    if targetLength == 0 then return { 0, 0, 0 } end
 
     local _oldLength = utils.getVectorLength(xyz)
     if _oldLength == 0 then return { 0, 0, 0 } end
@@ -614,6 +695,25 @@ utils.getVectorNormalised = function(xyz, targetLength)
             xyz[3] * _lengthFactor
         }
     end
+end
+
+---runs no checks, takes and returns an xyz table
+---@param xyz table
+---@param targetLength? number
+---@return table
+utils.getVectorNormalised_FAST = function(xyz, targetLength)
+    -- if type(xyz) ~= 'table' and type(xyz) ~= 'userdata' then return nil end
+    if targetLength == 0 then return { 0, 0, 0 } end
+
+    local _oldLength = utils.getVectorLength_FAST(xyz)
+    if _oldLength == 0 then return { 0, 0, 0 } end
+
+    local _lengthFactor = (type(targetLength) == 'number' and targetLength or 1.0) / _oldLength
+    return {
+        x = xyz.x * _lengthFactor,
+        y = xyz.y * _lengthFactor,
+        z = xyz.z * _lengthFactor
+    }
 end
 
 utils.getVectorMultiplied = function(xyz, factor)
@@ -635,11 +735,35 @@ utils.getVectorMultiplied = function(xyz, factor)
     end
 end
 
+utils.getVectorsDot = function(xyz1, xyz2)
+    -- returns |xyz1| * |xyz2| * cos(angle between xyz1 and xyz2)
+    if type(xyz1) ~= 'table' and type(xyz1) ~= 'userdata' then return nil end
+    if type(xyz2) ~= 'table' and type(xyz2) ~= 'userdata' then return nil end
+
+    local x1 = xyz1.x or xyz1[1] or 0.0
+    local y1 = xyz1.y or xyz1[2] or 0.0
+    local z1 = xyz1.z or xyz1[3] or 0.0
+
+    local x2 = xyz2.x or xyz2[1] or 0.0
+    local y2 = xyz2.y or xyz2[2] or 0.0
+    local z2 = xyz2.z or xyz2[3] or 0.0
+
+    return x1 * x2 + y1 * y2 + z1 * z2
+end
+
 utils.getPositionsDistance = function(pos0, pos1)
     local distance = utils.getVectorLength({
         (pos0.x or pos0[1]) - (pos1.x or pos1[1]),
         (pos0.y or pos0[2]) - (pos1.y or pos1[2]),
         (pos0.z or pos0[3]) - (pos1.z or pos1[3]),
+    })
+    return distance
+end
+
+utils.getPositionsDistance_onlyXY = function(pos0, pos1)
+    local distance = utils.getVectorLength_onlyXY({
+        (pos0.x or pos0[1]) - (pos1.x or pos1[1]),
+        (pos0.y or pos0[2]) - (pos1.y or pos1[2]),
     })
     return distance
 end
@@ -686,8 +810,11 @@ utils.getParallelSidewaysOLD = function(posTanX2, sideShift)
     return result
 end
 
--- the result will be parallel to the original at its ends but stretched or compressed due to the shift.
--- tan changes are ignored for speed.
+---the result will be parallel to the original at its ends but stretched or compressed due to the shift; tan changes are ignored for speed.
+---do not use this for edges
+---@param posTanX2 table
+---@param sideShift number
+---@return table
 utils.getParallelSidewaysCoarse = function(posTanX2, sideShift)
     local _oldPos1 = posTanX2[1][1]
     local _oldPos2 = posTanX2[2][1]
@@ -705,23 +832,35 @@ utils.getParallelSidewaysCoarse = function(posTanX2, sideShift)
     sinZ1, cosZ1 = sinZ1 / _lengthZ1, cosZ1 / _lengthZ1
     local _lengthZ2 = math.sqrt(sinZ2 * sinZ2 + cosZ2 * cosZ2)
     sinZ2, cosZ2 = sinZ2 / _lengthZ2, cosZ2 / _lengthZ2
-
     local _newPos1 = { _oldPos1[1] + sinZ1 * sideShift, _oldPos1[2] + cosZ1 * sideShift, _oldPos1[3] }
     local _newPos2 = { _oldPos2[1] + sinZ2 * sideShift, _oldPos2[2] + cosZ2 * sideShift, _oldPos2[3] }
 
     return {
         {
             _newPos1,
-            posTanX2[1][2],
+            {
+                posTanX2[1][2][1],
+                posTanX2[1][2][2],
+                posTanX2[1][2][3],
+            }
         },
         {
             _newPos2,
-            posTanX2[2][2],
+            {
+                posTanX2[2][2][1],
+                posTanX2[2][2][2],
+                posTanX2[2][2][3],
+            }
         },
     }
 end
 
--- the result will be parallel to the original at its ends but stretched or compressed due to the shift.
+---the result will be parallel to the original at its ends but stretched or compressed due to the shift.
+---@param posTanX2 table
+---@param sideShift number
+---@return table
+---@return number
+---@return number
 utils.getParallelSideways = function(posTanX2, sideShift)
     local _oldPos1 = posTanX2[1][1]
     local _oldPos2 = posTanX2[2][1]
@@ -746,6 +885,7 @@ utils.getParallelSideways = function(posTanX2, sideShift)
     local xRatio = (_oldPos2[1] ~= _oldPos1[1]) and math.abs((_newPos2[1] - _newPos1[1]) / (_oldPos2[1] - _oldPos1[1])) or nil
     local yRatio = (_oldPos2[2] ~= _oldPos1[2]) and math.abs((_newPos2[2] - _newPos1[2]) / (_oldPos2[2] - _oldPos1[2])) or nil
     if not(xRatio) or not(yRatio) then xRatio, yRatio = 1, 1 end -- vertical or horizontal posTanX2
+
     local _newTan1 = { posTanX2[1][2][1] * xRatio, posTanX2[1][2][2] * yRatio, posTanX2[1][2][3] }
     local _newTan2 = { posTanX2[2][2][1] * xRatio, posTanX2[2][2][2] * yRatio, posTanX2[2][2][3] }
 
@@ -1138,6 +1278,28 @@ utils.isNumVeryClose = function(num1, num2, significantFigures)
 
         return _isSameSgnNumVeryClose(num1 + addFactor, num2 + addFactor, significantFigures)
     end
+end
+
+---takes two vectors with x and y
+---@param xy1 table
+---@param xy2 table
+---@param significantFigures integer
+---@return boolean
+utils.isXYVeryClose_FAST = function(xy1, xy2, significantFigures)
+    -- if (type(xy1) ~= 'table' and type(xy1) ~= 'userdata')
+    -- or (type(xy2) ~= 'table' and type(xy2) ~= 'userdata')
+    -- then return false end
+
+    -- local X1 = xy1.x or xy1[1]
+    -- local Y1 = xy1.y or xy1[2]
+    -- local X2 = xy2.x or xy2[1]
+    -- local Y2 = xy2.y or xy2[2]
+
+    -- if type(X1) ~= 'number' or type(Y1) ~= 'number' then return false end
+    -- if type(X2) ~= 'number' or type(Y2) ~= 'number' then return false end
+
+    return utils.isNumVeryClose(xy1.x, xy2.x, significantFigures)
+    and utils.isNumVeryClose(xy1.y, xy2.y, significantFigures)
 end
 
 utils.isXYZVeryClose = function(xyz1, xyz2, significantFigures)

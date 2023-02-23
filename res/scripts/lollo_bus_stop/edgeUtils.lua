@@ -651,7 +651,7 @@ helper.getNodeBetweenByPercentageShift = function(edgeId, shift0To1, isExtendedL
     )
 end
 
-helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
+helper.getNodeBetweenByPosition = function(edgeId, position, isIgnoreZ, isExtendedLog)
     if not(helper.isValidAndExistingId(edgeId)) then return nil end
 
     if position == nil or (position[1] == nil and position.x == nil) or (position[2] == nil and position.y == nil) or (position[3] == nil and position.z == nil)
@@ -667,17 +667,17 @@ helper.getNodeBetweenByPosition = function(edgeId, position, isExtendedLog)
     local distance_0_to_split = transfUtils.getVectorLength_FAST({
         x = (position[1] or position.x) - baseNode0.position.x,
         y = (position[2] or position.y) - baseNode0.position.y,
-        z = (position[3] or position.z) - baseNode0.position.z,
+        z = isIgnoreZ and 0 or ((position[3] or position.z) - baseNode0.position.z),
     })
     local distance_split_to_1 = transfUtils.getVectorLength_FAST({
         x = (position[1] or position.x) - baseNode1.position.x,
         y = (position[2] or position.y) - baseNode1.position.y,
-        z = (position[3] or position.z) - baseNode1.position.z,
+        z = isIgnoreZ and 0 or ((position[3] or position.z) - baseNode1.position.z),
     })
     local edgeLength, isEdgeLengthUsable, isEdgeLengthAccurate = helper.getEdgeLength(edgeId, isExtendedLog)
 
     if isExtendedLog then
-        print('getNodeBetweenByPosition firing')
+        print('getNodeBetweenByPosition firing, isIgnoreZ =', isIgnoreZ or 'false', 'position =') debugPrint(position)
         print('baseNode0.position =') debugPrint(baseNode0.position)
         print('baseNode1.position =') debugPrint(baseNode1.position)
         print('baseEdge.tangent0 =') debugPrint(baseEdge.tangent0)

@@ -313,7 +313,8 @@ local _utils = {
                             x = transf1[13],
                             y = transf1[14],
                             z = transf1[15],
-                        }
+                        },
+                        false
                         -- logger.getIsExtendedLog()
                     )
                     if testNodeBetween == nil then logger.print('testNodeBetween is NIL')
@@ -1846,7 +1847,8 @@ function data()
                                 x = outerTransf0[13],
                                 y = outerTransf0[14],
                                 z = outerTransf0[15],
-                            }
+                            },
+                            false
                         )
                         logger.print('first outer nodeBetween =') logger.debugPrint(nodeBetween)
                         _actions.splitEdge(

@@ -1152,11 +1152,21 @@ local _actions = {
 
         if not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)) and not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node1.position)) then
             logger.warn('_splitEdge cannot find the nodes')
+            _setStateReady()
+            return
         end
-        local isNodeBetweenOrientatedLikeMyEdge = edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)
-        local distance0 = isNodeBetweenOrientatedLikeMyEdge and nodeBetween.refDistance0 or nodeBetween.refDistance1
-        local distance1 = isNodeBetweenOrientatedLikeMyEdge and nodeBetween.refDistance1 or nodeBetween.refDistance0
-        local tanSign = isNodeBetweenOrientatedLikeMyEdge and 1 or -1
+
+        if edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position) then
+            logger.print('nodeBetween is orientated like my edge')
+        else
+            logger.print('nodeBetween is not orientated like my edge')
+            nodeBetween.refDistance0, nodeBetween.refDistance1 = nodeBetween.refDistance1, nodeBetween.refDistance0
+            nodeBetween.refPosition0, nodeBetween.refPosition1 = nodeBetween.refPosition1, nodeBetween.refPosition0
+            nodeBetween.refTangent0, nodeBetween.refTangent1 = nodeBetween.refTangent1, nodeBetween.refTangent0
+            nodeBetween.tangent = transfUtils.getVectorMultiplied(nodeBetween.tangent, -1)
+        end
+        local distance0 = nodeBetween.refDistance0
+        local distance1 = nodeBetween.refDistance1
 
         for _, edgeId in pairs(edgeUtils.getConnectedEdgeIds({oldBaseEdge.node0})) do
             if edgeUtils.isEdgeFrozen(edgeId) and distance0 < constants.minSplit2FrozenEdgeDistance then
@@ -1175,8 +1185,8 @@ local _actions = {
             end
         end
 
-        local oldTan0Length = isNodeBetweenOrientatedLikeMyEdge and edgeUtils.getVectorLength(oldBaseEdge.tangent0) or edgeUtils.getVectorLength(oldBaseEdge.tangent1)
-        local oldTan1Length = isNodeBetweenOrientatedLikeMyEdge and edgeUtils.getVectorLength(oldBaseEdge.tangent1) or edgeUtils.getVectorLength(oldBaseEdge.tangent0)
+        local oldTan0Length = edgeUtils.getVectorLength(oldBaseEdge.tangent0)
+        local oldTan1Length = edgeUtils.getVectorLength(oldBaseEdge.tangent1)
 
         local newNodeBetween = api.type.NodeAndEntity.new()
         newNodeBetween.entity = -3
@@ -1193,9 +1203,9 @@ local _actions = {
             oldBaseEdge.tangent0.z * distance0 / oldTan0Length
         )
         newEdge0.comp.tangent1 = api.type.Vec3f.new(
-            nodeBetween.tangent.x * distance0 * tanSign,
-            nodeBetween.tangent.y * distance0 * tanSign,
-            nodeBetween.tangent.z * distance0 * tanSign
+            nodeBetween.tangent.x * distance0,
+            nodeBetween.tangent.y * distance0,
+            nodeBetween.tangent.z * distance0
         )
         newEdge0.comp.type = oldBaseEdge.type -- respect bridge or tunnel
         newEdge0.comp.typeIndex = oldBaseEdge.typeIndex -- respect bridge or tunnel type
@@ -1209,9 +1219,9 @@ local _actions = {
         newEdge1.comp.node0 = -3
         newEdge1.comp.node1 = oldBaseEdge.node1
         newEdge1.comp.tangent0 = api.type.Vec3f.new(
-            nodeBetween.tangent.x * distance1 * tanSign,
-            nodeBetween.tangent.y * distance1 * tanSign,
-            nodeBetween.tangent.z * distance1 * tanSign
+            nodeBetween.tangent.x * distance1,
+            nodeBetween.tangent.y * distance1,
+            nodeBetween.tangent.z * distance1
         )
         newEdge1.comp.tangent1 = api.type.Vec3f.new(
             oldBaseEdge.tangent1.x * distance1 / oldTan1Length,

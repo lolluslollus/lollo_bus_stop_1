@@ -313,9 +313,8 @@ function data()
 					}
 				}
 			end
--- LOLLO TEST CODE BEGIN
 			if logger.getIsExtendedLog() then addTestIcons() end
--- LOLLO TEST CODE END
+
 			local addKiosk = function()
 				local _pitchTransf = transfUtilsUG.rotY(params.lolloBusStop_pitchAngle)
 				logger.print('autoPlacingStop.updateFn.script _pitchTransf =') logger.debugPrint(_pitchTransf)

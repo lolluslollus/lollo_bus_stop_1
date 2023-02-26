@@ -46,7 +46,7 @@ local _getConstructionConfigLayout = function(stationGroupId, paramsMetadataSort
     local function addParam(paramKey, paramMetadata, paramValue)
         logger.print('addParam starting, paramKey =') logger.debugPrint(paramKey)
         logger.print('paramValue =') logger.debugPrint(paramValue)
-        if not(paramMetadata) or not(paramValue) then return end
+        if not(paramKey) or not(paramMetadata) or not(paramValue) then return end
 
         local paramNameTextBox = api.gui.comp.TextView.new(paramMetadata.name)
         if type(paramMetadata.tooltip) == 'string' and paramMetadata.tooltip:len() > 0 then

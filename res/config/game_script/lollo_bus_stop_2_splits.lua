@@ -864,50 +864,6 @@ local _actions = {
             end
         )
     end,
-    bulldozeConstructionUNUSED = function(constructionId)
-        -- print('constructionId =', constructionId)
-        if type(constructionId) ~= 'number' or constructionId < 0 then
-            logger.warn('bulldozeConstruction got an invalid conId')
-            _setStateReady()
-            return
-        end
-
-        local oldConstruction = api.engine.getComponent(constructionId, api.type.ComponentType.CONSTRUCTION)
-        if not(oldConstruction) or not(oldConstruction.params) then
-            logger.warn('bulldozeConstruction got no con or a broken con')
-            logger.warn('oldConstruction =') logger.warningDebugPrint(oldConstruction)
-            _setStateReady()
-            return
-        end
-
-        local proposal = api.type.SimpleProposal.new()
-        -- LOLLO NOTE there are asymmetries how different tables are handled.
-        -- This one requires this system, UG says they will document it or amend it.
-        proposal.constructionsToRemove = { constructionId }
-        -- proposal.constructionsToRemove[1] = constructionId -- fails to add
-        -- proposal.constructionsToRemove:add(constructionId) -- fails to add
-
-        local context = api.type.Context:new()
-        -- context.checkTerrainAlignment = true -- default is false
-        -- context.cleanupStreetGraph = true
-        -- context.gatherBuildings = true -- default is false
-        -- context.gatherFields = true -- default is true
-        context.player = api.engine.util.getPlayer()
-
-        api.cmd.sendCommand(
-            api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
-            function(result, success)
-                if not(success) then
-                    logger.warn('bulldozeConstruction callback: failed to build')
-                    logger.warn('bulldozeConstruction proposal =') logger.warningDebugPrint(proposal)
-                    logger.warn('bulldozeConstruction result =') logger.warningDebugPrint(result)
-                    _setStateReady()
-                else
-                    logger.print('bulldozeConstruction callback succeeded')
-                end
-            end
-        )
-    end,
     removeEdges = function(oldEdgeIds, successEventName, successEventArgs)
         logger.print('removeEdges starting, oldEdgeIds =') logger.debugPrint(oldEdgeIds)
         -- removes edges even if they have a street type, which has changed or disappeared
@@ -1340,48 +1296,17 @@ local _actions = {
             end
         )
     end,
-    upgradeConUNUSED = function(conId, conParams)
-        logger.print('upgradeCon starting, conId =', (conId or 'NIL'))
-        local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
-        if con == nil then
-            logger.warn('upgradeCon cannot find con')
-            _setStateReady()
-            return
-        end
-
-        xpcall(
-            function()
-                collectgarbage() -- this is a stab in the dark to try and avoid crashes in the following
-                -- UG TODO there is no such thing as game.interface.upgradeConstruction() in the new api,
-                -- nor an upgrade event, both would be useful
-                local paramsNoSeed = arrayUtils.cloneDeepOmittingFields(conParams, {'seed'})
-                logger.print('paramsNoSeed =') logger.debugPrint(paramsNoSeed)
-                logger.print('about to upgrade con, stationConId =', conId, 'con.fileName =', con.fileName)
-                local upgradedConId = game.interface.upgradeConstruction(
-                    conId,
-                    con.fileName,
-                    paramsNoSeed
-                )
-                logger.print('upgradeCon succeeded, conId =', (upgradedConId or 'NIL'))
-            end,
-            function(error)
-                logger.warn('upgradeCon failed')
-                logger.warn(error)
-                _setStateReady()
-            end
-        )
-    end,
     updateConstruction = function(oldConId, paramKey, newParamValueIndexBase0)
-        logger.print('updateConstruction starting, conId =', oldConId or 'NIL', 'paramKey =', paramKey or 'NIL', 'newParamValueIndexBase0 =', newParamValueIndexBase0 or 'NIL')
+        logger.print('_updateConstruction starting, conId =', oldConId or 'NIL', 'paramKey =', paramKey or 'NIL', 'newParamValueIndexBase0 =', newParamValueIndexBase0 or 'NIL')
 
         if not(edgeUtils.isValidAndExistingId(oldConId)) then
-            logger.warn('updateConstruction received an invalid conId')
+            logger.warn('_updateConstruction received an invalid conId')
             _setStateReady()
             return
         end
         local oldCon = api.engine.getComponent(oldConId, api.type.ComponentType.CONSTRUCTION)
-        if oldCon == nil then
-            logger.warn('updateConstruction cannot get the con')
+        if oldCon == nil or oldCon.fileName ~= constants.autoPlacingConFileName then
+            logger.warn('_updateConstruction cannot get the con, or it is not one of mine')
             _setStateReady()
             return
         end
@@ -1422,7 +1347,7 @@ local _actions = {
         context.player = api.engine.util.getPlayer()
         -- Sometimes, the game fails in the following; UG does not handle the failure graacefully and the game crashes with "an error just occurred" and no useful info.
         if not(_utils.getIsProposalOK(proposal, context)) then
-            logger.warn('updateConstruction made a dangerous proposal')
+            logger.warn('_updateConstruction made a dangerous proposal')
             -- LOLLO TODO give feedback
             _setStateReady()
             return
@@ -1431,17 +1356,17 @@ local _actions = {
         api.cmd.sendCommand(
             api.cmd.make.buildProposal(proposal, context, true), -- the 3rd param is "ignore errors"; wrong proposals will be discarded anyway
             function(result, success)
-                logger.print('updateConstruction callback, success =', success)
+                logger.print('_updateConstruction callback, success =', success)
                 -- logger.debugPrint(result)
                 if not(success) then
-                    logger.warn('updateConstruction callback failed')
-                    logger.warn('updateConstruction proposal =') logger.warningDebugPrint(proposal)
-                    logger.warn('updateConstruction result =') logger.warningDebugPrint(result)
+                    logger.warn('_updateConstruction callback failed')
+                    logger.warn('_updateConstruction proposal =') logger.warningDebugPrint(proposal)
+                    logger.warn('_updateConstruction result =') logger.warningDebugPrint(result)
                     _setStateReady()
                     -- LOLLO TODO give feedback
                 else
                     local newConId = result.resultEntities[1]
-                    logger.print('updateConstruction succeeded, stationConId = ', newConId)
+                    logger.print('_updateConstruction succeeded, stationConId = ', newConId)
                     xpcall(
                         function ()
                             api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
@@ -1467,14 +1392,20 @@ local _actions = {
 }
 local _handlers = {
     guiHandleParamValueChanged = function(stationGroupId, paramsMetadata, paramKey, newParamValueIndexBase0)
-        logger.print('guiHandleParamValueChanged firing')
+        logger.print('_guiHandleParamValueChanged firing')
         logger.print('stationGroupId =') logger.debugPrint(stationGroupId)
         logger.print('paramsMetadata =') logger.debugPrint(paramsMetadata)
         logger.print('paramKey =') logger.debugPrint(paramKey)
         logger.print('newParamValueIndexBase0 =') logger.debugPrint(newParamValueIndexBase0)
         local conId = _utils.getConOfStationGroup(stationGroupId)
         if not(edgeUtils.isValidAndExistingId(conId)) then
-            logger.warn('guiHandleParamValueChanged got no con or no valid con')
+            logger.warn('_guiHandleParamValueChanged got no con or no valid con')
+            return
+        end
+
+        local con = api.engine.getComponent(conId, api.type.ComponentType.CONSTRUCTION)
+        if not(con) or con.fileName ~= constants.autoPlacingConFileName then
+            logger.print('_guiHandleParamValueChanged got no con or it is not one of mine')
             return
         end
         -- _utils.guiWaitLockingThread(function() return (state ~= nil and not(state.isWorking)) end)
@@ -1512,7 +1443,7 @@ function data()
 
                         logger.print('selected one of my stations, it has conId =', conId, 'and con.fileName =', con.fileName)
                         if not(_guiData.conParamsMetadataSorted) then
-                            logger.print('_guiConstants.conParams is not available')
+                            logger.warn('_guiConstants.conParams is not available')
                             return
                         end
 

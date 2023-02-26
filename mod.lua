@@ -1,5 +1,6 @@
 function data()
     -- local arrayUtils = require('lollo_bus_stop.arrayUtils')
+    local constants = require('lollo_bus_stop.constants')
     local logger = require('lollo_bus_stop.logger')
     local moduleHelpers = require('lollo_bus_stop.moduleHelpers')
     local streetUtils = require('lollo_bus_stop.streetUtils')
@@ -182,7 +183,7 @@ function data()
             end
             addAutoPlacingCon(
                 'station/street/lollo_bus_stop/stop.con',
-                'station/street/lollo_bus_stop/autoPlacingStop_dynamic.con',
+                constants.autoPlacingConFileName,
                 'construction/station/street/lollo_bus_stop/autoPlacingStop',
                 -1,
                 -1
@@ -239,7 +240,7 @@ function data()
             end
             addManualCon(
                 'station/street/lollo_bus_stop/stop.con',
-                'station/street/lollo_bus_stop/manualPlacingStop_dynamic.con',
+                constants.manualPlacingConFileName,
                 'construction/station/street/lollo_bus_stop/manualPlacingStop',
                 1925,
                 0

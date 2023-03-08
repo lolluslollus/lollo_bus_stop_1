@@ -765,11 +765,11 @@ local _actions = {
                 endNode0Id, endNode1Id = endNode1Id, endNode0Id
                 baseEndNode0, baseEndNode1 = baseEndNode1, baseEndNode0
                 logger.warn('swapping end nodes, newNode0Id after swapping =', endNode0Id, 'newNode1Id =', endNode1Id)
-                local distance00 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode0.position)
-                local distance01 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode1.position)
-                local distance10 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode0.position)
-                local distance11 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode1.position)
-                logger.print('distances after swapping =') logger.debugPrint({distance00, distance01, distance10, distance11})
+                local newDistance00 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode0.position)
+                local newDistance01 = transfUtils.getPositionsDistance(baseNeighbourNode0.position, baseEndNode1.position)
+                local newDistance10 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode0.position)
+                local newDistance11 = transfUtils.getPositionsDistance(baseNeighbourNode1.position, baseEndNode1.position)
+                logger.print('distances after swapping =') logger.debugPrint({newDistance00, newDistance01, newDistance10, newDistance11})
             end
 
             return endNode0Id, endNode1Id, neighbourNode0Id, neighbourNode1Id

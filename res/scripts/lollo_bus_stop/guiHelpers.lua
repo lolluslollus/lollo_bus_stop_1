@@ -179,11 +179,14 @@ local privateFuncs = {
 }
 
 local public = {
-    addConConfigToWindow = function(entityId, handleParamValueChanged, conParamsMetadata, conParams)
+    addConConfigToWindow = function(entityId, handleParamValueChanged, conParamsMetadata, conParams, onBulldozeClicked)
         local conWindowId = 'temp.view.entity_' .. entityId
         logger.print('conWindowId = \'' .. tostring(conWindowId) .. '\'')
         local window = api.gui.util.getById(conWindowId) -- eg temp.view.entity_26372
+        if window == nil then logger.err('cannot get config window by id') return end
         local windowContent = window:getContent()
+        if windowContent == nil then logger.err('cannot get config window content') return end
+--[[
         windowContent:getItem(1):setVisible(false, false) -- hide the "configure' button" without emitting a signal
 
         for i = 0, windowContent:getNumItems() - 1, 1 do
@@ -203,6 +206,31 @@ local public = {
         local newLayout = privateFuncs.getConstructionConfigLayout(entityId, conParamsMetadata, conParams, handleParamValueChanged, true)
         windowContent:addItem(newLayout)
         windowContent:setGravity(0, 0) -- center top left
+]]
+        -- depending on the entity type, I attach my child to the window content (station group) or to its layout (construction)
+        local isParentWindowContentLayout = type(windowContent.getName) == 'function' and windowContent:getName() == 'ConstructionContent'
+        logger.print('isParentWindowContentLayout =', isParentWindowContentLayout)
+        local parentLayout = isParentWindowContentLayout and windowContent:getLayout() or windowContent
+        local configureButtonIndex = isParentWindowContentLayout and 0 or 1
+        parentLayout:getItem(configureButtonIndex):setVisible(false, false) -- hide the "configure' button" without emitting a signal
+
+        for i = 0, parentLayout:getNumItems() - 1, 1 do
+            local item = parentLayout:getItem(i)
+            if item ~= nil and type(item.getId) == 'function' and stringUtils.stringStartsWith(item:getId() or '', privateData.conConfigLayoutIdPrefix) then
+                logger.print('one of my menus is already in the window, about to remove it')
+                parentLayout:removeItem(item)
+                logger.print('about to reset its id')
+                if type(item.setId) == 'function' then item:setId('') else logger.err('cannot set config window id') end
+                logger.print('about to call destroy')
+                -- api.gui.util.destroyLater(item) -- this errors out
+                item:destroy()
+                logger.print('called destroy')
+            end
+        end
+
+        local newLayout = privateFuncs.getConstructionConfigLayout(entityId, conParamsMetadata, conParams, handleParamValueChanged, true, onBulldozeClicked)
+        parentLayout:addItem(newLayout)
+        parentLayout:setGravity(0, 0) -- center top left
 
         local rect = window:getContentRect() -- this is mostly 0, 0 at this point
         local minSize = window:calcMinimumSize()

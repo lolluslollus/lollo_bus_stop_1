@@ -1447,7 +1447,7 @@ function data()
                             return
                         end
 
-                        guiHelpers.addConConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiData.conParamsMetadataSorted, con.params)
+                        guiHelpers.addEntityConfigToWindow(args, _handlers.guiHandleParamValueChanged, _guiData.conParamsMetadataSorted, con.params)
                     end,
                     logger.xpErrorHandler
                 )

@@ -179,7 +179,7 @@ local privateFuncs = {
 }
 
 local public = {
-    addConConfigToWindow = function(entityId, handleParamValueChanged, conParamsMetadata, conParams, onBulldozeClicked)
+    addEntityConfigToWindow = function(entityId, handleParamValueChanged, conParamsMetadata, conParams, onBulldozeClicked)
         local conWindowId = 'temp.view.entity_' .. entityId
         logger.print('conWindowId = \'' .. tostring(conWindowId) .. '\'')
         local window = api.gui.util.getById(conWindowId) -- eg temp.view.entity_26372

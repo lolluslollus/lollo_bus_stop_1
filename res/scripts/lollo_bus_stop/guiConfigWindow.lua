@@ -44,7 +44,7 @@ local privateFuncs = {
 
         local function addParam(paramKey, paramMetadata, paramValue)
             logger.print('addParam starting, paramKey =', paramKey or 'NIL')
-            if not(paramKey) or not(paramMetadata) or not(paramValue) then return end
+            if not(paramKey) or not(paramMetadata) or not(paramMetadata.values) or not(paramValue) then return end
     
             local paramNameTextBox = api.gui.comp.TextView.new(paramMetadata.name)
             if type(paramMetadata.tooltip) == 'string' and paramMetadata.tooltip:len() > 0 then
@@ -148,9 +148,10 @@ local privateFuncs = {
                 end
             end
             -- allow adding new params to old cons that did not have them
-            -- if not(isFound) then
-            --     addParam(paramMetadata.key, paramMetadata, paramMetadata.defaultIndex)
-            -- end
+            if not(isFound) and paramMetadata ~= nil and paramMetadata.key ~= nil then
+                logger.print('new param found, paramMetadata.key =', paramMetadata.key)
+                addParam(paramMetadata.key, paramMetadata, paramMetadata.defaultIndex)
+            end
         end
 --[[
         if type(onBulldozeClicked) == 'function' then
@@ -220,6 +221,9 @@ local public = {
         local size = api.gui.util.Size.new(math.max(rect.w, minSize.w), math.max(rect.h, minSize.h) + extraHeight)
         window:setSize(size)
         window:setResizable(true)
+        
+        -- window:setAttached(false)
+        window:setPinned(false)
     end,
     isShowingWarning = privateData.isShowingWarning,
     ---@param text string

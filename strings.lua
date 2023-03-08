@@ -11,7 +11,7 @@ function data()
 			["autoPlacingBusStopName"] = "High capacity bus / tram stop, auto placing",
 			["manualPlacingBusStopDesc"] = "Use the splitter from the street tuning to carve out a short stretch of road, then plop this in the gap",
 			["manualPlacingBusStopName"] = "High capacity bus / tram stop, manual placing",
-			["conConfigWindowTitle"] = "Configuration",
+			["ConConfigWindowTitle"] = "Configuration",
 			["directionName"] = "Direction",
 			["driveOnLeftName"] = "Drive on Left",
 			["ground"] = "Ground",

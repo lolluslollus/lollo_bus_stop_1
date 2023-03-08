@@ -1494,7 +1494,7 @@ function data()
                                 end
 
                                 if edgeLength < constants.minInitialEdgeLength then
-                                    guiHelpers.showWarningWindowWithGoto(_guiTexts.edgeTooShort)
+                                    guiHelpers.showWarningWithGoto(_guiTexts.edgeTooShort)
                                     _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
                                     return false
                                 end
@@ -1534,7 +1534,7 @@ function data()
                                     if distance2Stop < constants.minPlop2FrozenEdgeDistance then
                                         for _, connectedEdgeId in pairs(edgeUtils.getConnectedEdgeIds({node.nodeId})) do
                                             if edgeUtils.isEdgeFrozen(connectedEdgeId) then
-                                                guiHelpers.showWarningWindowWithGoto(_guiTexts.stopTooCloseToFrozenEdge)
+                                                guiHelpers.showWarningWithGoto(_guiTexts.stopTooCloseToFrozenEdge)
                                                 _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
                                                 return false
                                             end

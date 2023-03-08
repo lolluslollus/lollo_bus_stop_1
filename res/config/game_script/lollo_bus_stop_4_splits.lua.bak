@@ -1519,7 +1519,7 @@ function data()
 
                                 local edgeLength = edgeUtils.getEdgeLength(edgeId)
                                 if edgeLength < constants.minInitialEdgeLength then
-                                    guiHelpers.showWarningWindowWithGoto(_('EdgeTooShort'))
+                                    guiHelpers.showWarningWithGoto(_('EdgeTooShort'))
                                     _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})
                                     return false
                                 end

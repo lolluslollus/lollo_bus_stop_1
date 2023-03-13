@@ -1,4 +1,5 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
+local comparisonUtils = require('lollo_bus_stop.comparisonUtils')
 local quadrangleUtils = require('lollo_bus_stop.quadrangleUtils')
 local transfUtils = require('lollo_bus_stop.transfUtils')
 local transfUtilsUG = require('transf')
@@ -12,22 +13,6 @@ end
 
 helper.isValidAndExistingId = function(id)
     return helper.isValidId(id) and api.engine.entityExists(id)
-end
-
-helper.getVectorLength = function(xyz)
-    return transfUtils.getVectorLength(xyz)
-end
-
-helper.getVectorNormalised = function(xyz, targetLength)
-    return transfUtils.getVectorNormalised(xyz, targetLength)
-end
-
-helper.getPositionsDistance = function(pos0, pos1)
-    return transfUtils.getPositionsDistance(pos0, pos1)
-end
-
-helper.getPositionsMiddle = function(pos0, pos1)
-    return transfUtils.getPositionsMiddle(pos0, pos1)
 end
 
 -- do not use this, it calls the old game.interface, which can freeze the game
@@ -311,9 +296,9 @@ local _getEdgeLength_Street = function(edgeId, baseEdge, tn, isExtendedLog)
 
     local resultWithTN = dataTogether.length
 
-    if (not(helper.isXYZSame_onlyXY(pos0, dataTogether.pos0)) or not(helper.isXYZSame_onlyXY(pos1, dataTogether.pos1)))
+    if (not(comparisonUtils.isXYZsSame_onlyXY(pos0, dataTogether.pos0)) or not(comparisonUtils.isXYZsSame_onlyXY(pos1, dataTogether.pos1)))
     then
-        if (not(transfUtils.isXYVeryClose_FAST(pos0, dataTogether.pos0, 4)) or not(transfUtils.isXYVeryClose_FAST(pos1, dataTogether.pos1, 4)))
+        if (not(comparisonUtils.isXYsVeryClose_FAST(pos0, dataTogether.pos0, 4)) or not(comparisonUtils.isXYsVeryClose_FAST(pos1, dataTogether.pos1, 4)))
         then
             if isExtendedLog then
                 print('WARNING: edgeUtils.getEdgeLength found that tn and baseEdge mismatch, edgeId =', edgeId)
@@ -381,9 +366,9 @@ local _getEdgeLength_Track = function(edgeId, baseEdge, tn, isExtendedLog)
         end
     end
 
-    if not(helper.isXYZSame_onlyXY(pos0, geometry0.params.pos[1])) or not(helper.isXYZSame_onlyXY(pos1, geometry1.params.pos[2]))
+    if not(comparisonUtils.isXYZsSame_onlyXY(pos0, geometry0.params.pos[1])) or not(comparisonUtils.isXYZsSame_onlyXY(pos1, geometry1.params.pos[2]))
     then
-        if not(transfUtils.isXYVeryClose_FAST(pos0, geometry0.params.pos[1], 4)) or not(transfUtils.isXYVeryClose_FAST(pos1, geometry1.params.pos[2], 4))
+        if not(comparisonUtils.isXYsVeryClose_FAST(pos0, geometry0.params.pos[1], 4)) or not(comparisonUtils.isXYsVeryClose_FAST(pos1, geometry1.params.pos[2], 4))
         then
             if isExtendedLog then
                 print('WARNING: edgeUtils.getEdgeLength found that tn and baseEdge mismatch, edgeId =', edgeId)
@@ -538,7 +523,7 @@ local _getNodeBetween = function(pos0, pos1, tan0, tan1, shift0To1, length, isEx
     end
 ]]
 --[[
-    if not(helper.isNumVeryClose(testX, pos1.x, 3)) then
+    if not(comparisonUtils.isNumsVeryClose(testX, pos1.x, 3)) then
         if isExtendedLog then
             print('getNodeBetween WARNING: Xs are not close enough:', testX, pos1.x)
         end
@@ -553,7 +538,7 @@ local _getNodeBetween = function(pos0, pos1, tan0, tan1, shift0To1, length, isEx
     -- local cY = (pos1.y - aY) / length / length - bY / length - dY * length
 
     local testY = aY + bY * length + cY * length * length + dY * length * length * length
-    if not(helper.isNumVeryClose(testY, pos1.y, 3)) then
+    if not(comparisonUtils.isNumsVeryClose(testY, pos1.y, 3)) then
         if isExtendedLog then
             print('getNodeBetween WARNING: Ys are not close enough:', testY, pos1.y)
         end
@@ -568,7 +553,7 @@ local _getNodeBetween = function(pos0, pos1, tan0, tan1, shift0To1, length, isEx
     -- local cZ = (pos1.z - aZ) / length / length - bZ / length - dZ * length
 
     local testZ = aZ + bZ * length + cZ * length * length + dZ * length * length * length
-    if not(helper.isNumVeryClose(testZ, pos1.z, 3)) then
+    if not(comparisonUtils.isNumsVeryClose(testZ, pos1.z, 3)) then
         if isExtendedLog then
             print('getNodeBetween WARNING: Zs are not close enough:', testZ, pos1.z)
         end
@@ -844,51 +829,6 @@ helper.getObjectTransf = function(objectId)
     end
 
     return result
-end
-
-helper.isNumVeryClose = function(num1, num2, significantFigures)
-    return transfUtils.isNumVeryClose(num1, num2, significantFigures)
-end
-
-helper.isXYZVeryClose = function(xyz1, xyz2, significantFigures)
-    return transfUtils.isXYZVeryClose(xyz1, xyz2, significantFigures)
-end
-
-helper.isXYZCloserThan = function(xyz1, xyz2, comp)
-    if (type(xyz1) ~= 'table' and type(xyz1) ~= 'userdata')
-    or (type(xyz2) ~= 'table' and type(xyz2) ~= 'userdata')
-    or (type(comp) ~= 'number')
-    then return false end
-
-    local X1 = xyz1.x or xyz1[1]
-    local Y1 = xyz1.y or xyz1[2]
-    local Z1 = xyz1.z or xyz1[3]
-    local X2 = xyz2.x or xyz2[1]
-    local Y2 = xyz2.y or xyz2[2]
-    local Z2 = xyz2.z or xyz2[3]
-
-    if type(X1) ~= 'number' or type(Y1) ~= 'number' or type(Z1) ~= 'number' then return false end
-    if type(X2) ~= 'number' or type(Y2) ~= 'number' or type(Z2) ~= 'number' then return false end
-
-    return transfUtils.isNumsCloserThan(X1, X2, comp)
-    and transfUtils.isNumsCloserThan(Y1, Y2, comp)
-    and transfUtils.isNumsCloserThan(Z1, Z2, comp)
-end
-
-helper.isXYZSame = function(xyz1, xyz2)
-    if (type(xyz1) ~= 'table' and type(xyz1) ~= 'userdata')
-    or (type(xyz2) ~= 'table' and type(xyz2) ~= 'userdata')
-    then return nil end
-
-    return xyz1.x == xyz2.x and xyz1.y == xyz2.y and xyz1.z == xyz2.z
-end
-
-helper.isXYZSame_onlyXY = function(xy1, xy2)
-    if (type(xy1) ~= 'table' and type(xy1) ~= 'userdata')
-    or (type(xy2) ~= 'table' and type(xy2) ~= 'userdata')
-    then return nil end
-
-    return xy1.x == xy2.x and xy1.y == xy2.y
 end
 
 ---this func has specialised siblings for street and track

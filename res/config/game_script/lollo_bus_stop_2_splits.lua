@@ -1,4 +1,5 @@
 local arrayUtils = require('lollo_bus_stop.arrayUtils')
+local comparisonUtils = require('lollo_bus_stop.comparisonUtils')
 local constants = require('lollo_bus_stop.constants')
 local edgeUtils = require('lollo_bus_stop.edgeUtils')
 local guiHelpers = require('lollo_bus_stop.guiHelpers')
@@ -246,10 +247,10 @@ local _utils = {
                         logger.print('testBaseEdge.tangent0 =') logger.debugPrint(testBaseEdge.tangent0)
                         logger.print('testBaseEdge.tangent1 =') logger.debugPrint(testBaseEdge.tangent1)
 
-                        if (edgeUtils.isXYZSame(testBaseEdge.tangent0, edgeTan0)
-                        and edgeUtils.isXYZSame(testBaseEdge.tangent1, edgeTan1))
-                        or (edgeUtils.isXYZSame(testBaseEdge.tangent0, edgeTan1)
-                        and edgeUtils.isXYZSame(testBaseEdge.tangent1, edgeTan0))
+                        if (comparisonUtils.isXYZsSame(testBaseEdge.tangent0, edgeTan0)
+                        and comparisonUtils.isXYZsSame(testBaseEdge.tangent1, edgeTan1))
+                        or (comparisonUtils.isXYZsSame(testBaseEdge.tangent0, edgeTan1)
+                        and comparisonUtils.isXYZsSame(testBaseEdge.tangent1, edgeTan0))
                         then
                             logger.print('found the edge, it is ' .. tostring(edgeId))
                             return edgeId
@@ -1106,13 +1107,13 @@ local _actions = {
             return
         end
 
-        if not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position)) and not(edgeUtils.isXYZSame(nodeBetween.refPosition0, node1.position)) then
+        if not(comparisonUtils.isXYZsSame(nodeBetween.refPosition0, node0.position)) and not(comparisonUtils.isXYZsSame(nodeBetween.refPosition0, node1.position)) then
             logger.warn('_splitEdge cannot find the nodes')
             _setStateReady()
             return
         end
 
-        if edgeUtils.isXYZSame(nodeBetween.refPosition0, node0.position) then
+        if comparisonUtils.isXYZsSame(nodeBetween.refPosition0, node0.position) then
             logger.print('nodeBetween is orientated like my edge')
         else
             logger.print('nodeBetween is not orientated like my edge')
@@ -1889,11 +1890,11 @@ function data()
                             _setStateReady()
                             return
                         end
-                        local isNodeBetweenOrientatedLikeMyEdge0 = edgeUtils.isXYZSame(nodeBetween0.refPosition0, pos0XYZ)
+                        local isNodeBetweenOrientatedLikeMyEdge0 = comparisonUtils.isXYZsSame(nodeBetween0.refPosition0, pos0XYZ)
                         -- local distance00 = isNodeBetweenOrientatedLikeMyEdge0 and nodeBetween0.refDistance0 or nodeBetween0.refDistance1
                         local tanSign0 = isNodeBetweenOrientatedLikeMyEdge0 and 1 or -1
 
-                        local isNodeBetweenOrientatedLikeMyEdge1 = edgeUtils.isXYZSame(nodeBetween1.refPosition1, pos1XYZ)
+                        local isNodeBetweenOrientatedLikeMyEdge1 = comparisonUtils.isXYZsSame(nodeBetween1.refPosition1, pos1XYZ)
                         -- local distance11 = isNodeBetweenOrientatedLikeMyEdge1 and nodeBetween1.refDistance1 or nodeBetween1.refDistance0
                         local tanSign1 = isNodeBetweenOrientatedLikeMyEdge1 and 1 or -1
 

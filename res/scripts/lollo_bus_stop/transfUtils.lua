@@ -25,6 +25,27 @@ end
 local matrixUtils = require('lollo_bus_stop.matrix')
 
 local utils = {
+    -- copied from UG.transf.mul
+    get4x4MatrixesMultiplied = function(m1, m2)
+        return {
+            m1[1] * m2[1]  + m1[5] * m2[2]  + m1[9]  * m2[3]  + m1[13] * m2[4],
+            m1[2] * m2[1]  + m1[6] * m2[2]  + m1[10] * m2[3]  + m1[14] * m2[4],
+            m1[3] * m2[1]  + m1[7] * m2[2]  + m1[11] * m2[3]  + m1[15] * m2[4],
+            m1[4] * m2[1]  + m1[8] * m2[2]  + m1[12] * m2[3]  + m1[16] * m2[4],
+            m1[1] * m2[5]  + m1[5] * m2[6]  + m1[9]  * m2[7]  + m1[13] * m2[8],
+            m1[2] * m2[5]  + m1[6] * m2[6]  + m1[10] * m2[7]  + m1[14] * m2[8],
+            m1[3] * m2[5]  + m1[7] * m2[6]  + m1[11] * m2[7]  + m1[15] * m2[8],
+            m1[4] * m2[5]  + m1[8] * m2[6]  + m1[12] * m2[7]  + m1[16] * m2[8],
+            m1[1] * m2[9]  + m1[5] * m2[10] + m1[9]  * m2[11] + m1[13] * m2[12],
+            m1[2] * m2[9]  + m1[6] * m2[10] + m1[10] * m2[11] + m1[14] * m2[12],
+            m1[3] * m2[9]  + m1[7] * m2[10] + m1[11] * m2[11] + m1[15] * m2[12],
+            m1[4] * m2[9]  + m1[8] * m2[10] + m1[12] * m2[11] + m1[16] * m2[12],
+            m1[1] * m2[13] + m1[5] * m2[14] + m1[9]  * m2[15] + m1[13] * m2[16],
+            m1[2] * m2[13] + m1[6] * m2[14] + m1[10] * m2[15] + m1[14] * m2[16],
+            m1[3] * m2[13] + m1[7] * m2[14] + m1[11] * m2[15] + m1[15] * m2[16],
+            m1[4] * m2[13] + m1[8] * m2[14] + m1[12] * m2[15] + m1[16] * m2[16],
+        }
+    end,
     --#region faster than mul()
     getTransf_XShifted = function(transf, shift)
         if transf == nil or type(shift) ~= 'number' then return transf end
@@ -309,6 +330,23 @@ local utils = {
             transf[13], transf[14], transf[15], transf[16]
         }
     end,
+    getTransf_Scaled_Shifted = function(transf, scales123, shifts123)
+        if type(transf) ~= 'table' then return transf end
+        local x, y, z = 1, 1, 1
+        if type(scales123) == 'table' then x, y, z = table.unpack(scales123) end
+        local xx, yy, zz = 0, 0, 0
+        if type(shifts123) == 'table' then xx, yy, zz = table.unpack(shifts123) end
+
+        return {
+            transf[1] * x, transf[2] * x, transf[3] * x, transf[4] * x,
+            transf[5] * y, transf[6] * y, transf[7] * y, transf[8] * y,
+            transf[9] * z, transf[10] * z, transf[11] * z, transf[12] * z,
+            transf[1] * xx + transf[5] * yy + transf[9]  * zz + transf[13],
+            transf[2] * xx + transf[6] * yy + transf[10] * zz + transf[14],
+            transf[3] * xx + transf[7] * yy + transf[11] * zz + transf[15],
+            transf[4] * xx + transf[8] * yy + transf[12] * zz + transf[16],
+        }
+    end,
     getTransf_XSkewedOnZ = function(transf, skew)
         local m2 = {
             1, 0, skew, 0,
@@ -338,6 +376,37 @@ local utils = {
     end,
 --#endregion faster than mul()
 }
+
+local _getFacePointTransformed = function(transf, faceXYZW)
+    return {
+        transf[1]*faceXYZW[1] + transf[5]*faceXYZW[2] + transf[ 9]*faceXYZW[3] + transf[13]*faceXYZW[4],
+        transf[2]*faceXYZW[1] + transf[6]*faceXYZW[2] + transf[10]*faceXYZW[3] + transf[14]*faceXYZW[4],
+        transf[3]*faceXYZW[1] + transf[7]*faceXYZW[2] + transf[11]*faceXYZW[3] + transf[15]*faceXYZW[4],
+        transf[4]*faceXYZW[1] + transf[8]*faceXYZW[2] + transf[12]*faceXYZW[3] + transf[16]*faceXYZW[4]
+    }
+end
+local _getFacePointTransformed_FAST = function(transf, faceXYZ1)
+    return {
+        transf[1]*faceXYZ1[1] + transf[5]*faceXYZ1[2] + transf[ 9]*faceXYZ1[3] + transf[13],
+        transf[2]*faceXYZ1[1] + transf[6]*faceXYZ1[2] + transf[10]*faceXYZ1[3] + transf[14],
+        transf[3]*faceXYZ1[1] + transf[7]*faceXYZ1[2] + transf[11]*faceXYZ1[3] + transf[15],
+        transf[4]*faceXYZ1[1] + transf[8]*faceXYZ1[2] + transf[12]*faceXYZ1[3] + transf[16]
+    }
+end
+utils.getFaceTransformed = function(transf, faceXYZW)
+    local results = {}
+    for i = 1, #faceXYZW do
+        results[i] = _getFacePointTransformed(transf, faceXYZW[i])
+    end
+    return results
+end
+utils.getFaceTransformed_FAST = function(transf, faceXYZ1)
+    local results = {}
+    for i = 1, #faceXYZ1 do
+        results[i] = _getFacePointTransformed_FAST(transf, faceXYZ1[i])
+    end
+    return results
+end
 
 local _getMatrix = function(transf)
     return {

@@ -781,8 +781,8 @@ local _actions = {
             return
         end
 
-        local oldEdge0Id = edgeUtils.getConnectedEdgeIds({oldNode0Id})[1]
-        local oldEdge1Id = edgeUtils.getConnectedEdgeIds({oldNode1Id})[1]
+        local oldEdge0Id = edgeUtils.street.getConnectedEdgeIds({oldNode0Id})[1]
+        local oldEdge1Id = edgeUtils.street.getConnectedEdgeIds({oldNode1Id})[1]
         logger.print('oldEdge0Id =', oldEdge0Id)
         logger.print('oldEdge1Id =', oldEdge1Id)
         if edgeUtils.isEdgeFrozen(oldEdge0Id) or edgeUtils.isEdgeFrozen(oldEdge1Id) then
@@ -1124,7 +1124,7 @@ local _actions = {
         local distance0 = nodeBetween.refDistance0
         local distance1 = nodeBetween.refDistance1
 
-        for _, edgeId in pairs(edgeUtils.getConnectedEdgeIds({oldBaseEdge.node0})) do
+        for _, edgeId in pairs(edgeUtils.street.getConnectedEdgeIds({oldBaseEdge.node0})) do
             if edgeUtils.isEdgeFrozen(edgeId) and distance0 < constants.minSplit2FrozenEdgeDistance then
                 logger.warn('_splitEdge cannot split so close to an edge, which is frozen in another construction')
                 _setStateReady()
@@ -1132,7 +1132,7 @@ local _actions = {
                 return
             end
         end
-        for _, edgeId in pairs(edgeUtils.getConnectedEdgeIds({oldBaseEdge.node1})) do
+        for _, edgeId in pairs(edgeUtils.street.getConnectedEdgeIds({oldBaseEdge.node1})) do
             if edgeUtils.isEdgeFrozen(edgeId) and distance1 < constants.minSplit2FrozenEdgeDistance then
                 logger.warn('_splitEdge cannot split so close to an edge, which is frozen in another construction')
                 _setStateReady()
@@ -1141,8 +1141,8 @@ local _actions = {
             end
         end
 
-        local oldTan0Length = edgeUtils.getVectorLength(oldBaseEdge.tangent0)
-        local oldTan1Length = edgeUtils.getVectorLength(oldBaseEdge.tangent1)
+        local oldTan0Length = transfUtils.getVectorLength(oldBaseEdge.tangent0)
+        local oldTan1Length = transfUtils.getVectorLength(oldBaseEdge.tangent1)
 
         local newNodeBetween = api.type.NodeAndEntity.new()
         newNodeBetween.entity = -3
@@ -1269,16 +1269,16 @@ local _actions = {
 
                             if not(successEventArgs.outerNode0Id) then
                                 successEventArgs.outerNode0Id = newlyBuiltNodeId
-                                successEventArgs.outerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                successEventArgs.outerNode0EdgeIds = edgeUtils.street.getConnectedEdgeIds({newlyBuiltNodeId})
                             elseif not(successEventArgs.outerNode1Id) then
                                 successEventArgs.outerNode1Id = newlyBuiltNodeId
-                                successEventArgs.outerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                                successEventArgs.outerNode1EdgeIds = edgeUtils.street.getConnectedEdgeIds({newlyBuiltNodeId})
                             -- elseif not(successEventArgs.innerNode0Id) then
                             --     successEventArgs.innerNode0Id = newlyBuiltNodeId
-                            --     successEventArgs.innerNode0EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            --     successEventArgs.innerNode0EdgeIds = edgeUtils.street.getConnectedEdgeIds({newlyBuiltNodeId})
                             -- elseif not(successEventArgs.innerNode1Id) then
                             --     successEventArgs.innerNode1Id = newlyBuiltNodeId
-                            --     successEventArgs.innerNode1EdgeIds = edgeUtils.getConnectedEdgeIds({newlyBuiltNodeId})
+                            --     successEventArgs.innerNode1EdgeIds = edgeUtils.street.getConnectedEdgeIds({newlyBuiltNodeId})
                             end
                             api.cmd.sendCommand(api.cmd.make.sendScriptEvent(
                                 string.sub(debug.getinfo(1, 'S').source, 1),
@@ -1532,7 +1532,7 @@ function data()
                                     local distance2Stop = transfUtils.getPositionsDistance(node.position, transfUtils.transf2Position(edgeObjectTransf_y0))
                                     logger.print('distance2Stop =', distance2Stop)
                                     if distance2Stop < constants.minPlop2FrozenEdgeDistance then
-                                        for _, connectedEdgeId in pairs(edgeUtils.getConnectedEdgeIds({node.nodeId})) do
+                                        for _, connectedEdgeId in pairs(edgeUtils.street.getConnectedEdgeIds({node.nodeId})) do
                                             if edgeUtils.isEdgeFrozen(connectedEdgeId) then
                                                 guiHelpers.showWarningWithGoto(_guiTexts.stopTooCloseToFrozenEdge)
                                                 _actions.replaceEdgeWithSame(edgeId, edgeObjectId, _eventProperties.setStateWorking.eventName, {isWorking = false})

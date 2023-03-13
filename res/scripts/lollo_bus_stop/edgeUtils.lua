@@ -220,13 +220,13 @@ local _getSplitId = function(entityA, entityB)
 end
 
 ---@param edgeId integer
----@param isExtendedLog boolean
 ---@param baseEdge table
 ---@param tn table
+---@param isExtendedLog? boolean
 ---@return number|nil "edge length"
 ---@return boolean "can use the result"
 ---@return boolean "the result is accurate"
-local _getEdgeLength_Street = function(edgeId, isExtendedLog, baseEdge, tn)
+local _getEdgeLength_Street = function(edgeId, baseEdge, tn, isExtendedLog)
     local node0Id, node1Id = baseEdge.node0, baseEdge.node1
     local tan0 = baseEdge.tangent0
     local tan1 = baseEdge.tangent1
@@ -339,13 +339,13 @@ local _getEdgeLength_Street = function(edgeId, isExtendedLog, baseEdge, tn)
 end
 
 ---@param edgeId integer
----@param isExtendedLog boolean
 ---@param baseEdge table
 ---@param tn table
+---@param isExtendedLog? boolean
 ---@return number "edge length"
 ---@return boolean "can use the result"
 ---@return boolean "the result is accurate"
-local _getEdgeLength_Track = function(edgeId, isExtendedLog, baseEdge, tn)
+local _getEdgeLength_Track = function(edgeId, baseEdge, tn, isExtendedLog)
     local tan0 = baseEdge.tangent0
     local tan1 = baseEdge.tangent1
     local resultWithBaseEdge = (transfUtils.getVectorLength_FAST(tan0) + transfUtils.getVectorLength_FAST(tan1)) * 0.5 -- they should be equal but they are not, so we average them
@@ -432,8 +432,8 @@ helper.getEdgeLength = function(edgeId, isExtendedLog)
     end
 
     local baseEdgeStreet = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET)
-    if not(baseEdgeStreet) then return _getEdgeLength_Track(edgeId, isExtendedLog, baseEdge, tn) end
-    return _getEdgeLength_Street(edgeId, isExtendedLog, baseEdge, tn)
+    if not(baseEdgeStreet) then return _getEdgeLength_Track(edgeId, baseEdge, tn, isExtendedLog) end
+    return _getEdgeLength_Street(edgeId, baseEdge, tn, isExtendedLog)
 end
 --#endregion getEdgeLength
 
@@ -622,6 +622,10 @@ helper.getNodeBetween = function(position0, position1, tangent0, tangent1, shift
         print('ERROR: edgeUtils.getNodeBetween got an edge length that is not a positive number, returning')
         return nil
     end
+    if type(shift0To1) ~= 'number' or shift0To1 < 0 or shift0To1 > 1 then
+        print('WARNING: edgeUtils.getNodeBetween got a shift0To1 that is not a positive number, adjusting to 0.5')
+        shift0To1 = 0.5
+    end
 
     return _getNodeBetween(position0, position1, tangent0, tangent1, shift0To1, edgeLength, isExtendedLog)
 end
@@ -629,7 +633,10 @@ end
 helper.getNodeBetweenByPercentageShift = function(edgeId, shift0To1, isExtendedLog)
     if not(helper.isValidAndExistingId(edgeId)) then return nil end
 
-    if type(shift0To1) ~= 'number' or shift0To1 < 0 or shift0To1 > 1 then shift0To1 = 0.5 end
+    if type(shift0To1) ~= 'number' or shift0To1 < 0 or shift0To1 > 1 then
+        print('WARNING: edgeUtils.getNodeBetweenByPercentageShift got a shift0To1 that is not a positive number, adjusting to 0.5')
+        shift0To1 = 0.5
+    end
 
     local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
     if baseEdge == nil then return nil end
@@ -638,7 +645,17 @@ helper.getNodeBetweenByPercentageShift = function(edgeId, shift0To1, isExtendedL
     local baseNode1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
     if baseNode0 == nil or baseNode1 == nil then return nil end
 
-    local edgeLength = helper.getEdgeLength(edgeId, isExtendedLog)
+    local edgeLength, isEdgeLengthUsable, isEdgeLengthAccurate = helper.getEdgeLength(edgeId, isExtendedLog)
+    if isExtendedLog then
+        print('getNodeBetweenByPercentageShift firing, edgeId =', edgeId or 'NIL', 'shift0To1 =', shift0To1 or 'NIL')
+        print('baseNode0.position =') debugPrint(baseNode0.position)
+        print('baseNode1.position =') debugPrint(baseNode1.position)
+        print('baseEdge.tangent0 =') debugPrint(baseEdge.tangent0)
+        print('baseEdge.tangent1 =') debugPrint(baseEdge.tangent1)
+        print('edgeLength =', edgeLength or 'NIL', 'isEdgeLengthUsable =', isEdgeLengthUsable, 'isEdgeLengthAccurate =', isEdgeLengthAccurate)
+        print('getNodeBetween about to fire')
+    end
+    if not(edgeLength) then return nil end
 
     return helper.getNodeBetween(
         baseNode0.position,
@@ -688,7 +705,6 @@ helper.getNodeBetweenByPosition = function(edgeId, position, isIgnoreZ, isExtend
         print('edgeLength =', edgeLength or 'NIL', 'isEdgeLengthUsable =', isEdgeLengthUsable, 'isEdgeLengthAccurate =', isEdgeLengthAccurate)
         print('getNodeBetween about to fire')
     end
-
     if edgeLength == nil or distance_0_to_split == nil or distance_split_to_1 == nil then return nil end
 
     return helper.getNodeBetween(
@@ -717,6 +733,13 @@ helper.isEdgeFrozen = function(edgeId)
     end
 
     return false
+end
+
+helper.isEdgeInACon = function(edgeId)
+    if not(helper.isValidAndExistingId(edgeId)) then return false end
+
+    local conId = api.engine.system.streetConnectorSystem.getConstructionEntityForEdge(edgeId)
+    return helper.isValidAndExistingId(conId)
 end
 
 helper.getEdgeObjectModelId = function(edgeObjectId)
@@ -768,62 +791,16 @@ helper.getEdgeObjectsIdsWithModelId2 = function(edgeObjectIds, refModelId)
     return results
 end
 
-helper.getNodeIdsBetweenEdgeIds = function(edgeIds, isIncludeExclusiveOuterNodes)
-    if type(edgeIds) ~= 'table' then return {} end
+helper.isNodeStreet = function(nodeId)
+    if not(helper.isValidAndExistingId(nodeId)) then return false end
 
-    local _map = api.engine.system.streetSystem.getNode2SegmentMap()
-    local allNodeIds = {}
-    local sharedNodeIds = {}
-    for _, edgeId in pairs(edgeIds) do
-        local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-        if baseEdge ~= nil then
-            local nEdgesAttached2Node0 = _map[baseEdge.node0]
-            if nEdgesAttached2Node0 == nil then nEdgesAttached2Node0 = 2 else nEdgesAttached2Node0 = #_map[baseEdge.node0] end
-            if (nEdgesAttached2Node0 == 1 and isIncludeExclusiveOuterNodes) or arrayUtils.arrayHasValue(allNodeIds, baseEdge.node0) then
-                arrayUtils.addUnique(sharedNodeIds, baseEdge.node0)
-            end
-            local nEdgesAttached2Node1 = _map[baseEdge.node1]
-            if nEdgesAttached2Node1 == nil then nEdgesAttached2Node1 = 2 else nEdgesAttached2Node1 = #_map[baseEdge.node1] end
-            if (nEdgesAttached2Node1 == 1 and isIncludeExclusiveOuterNodes) or arrayUtils.arrayHasValue(allNodeIds, baseEdge.node1) then
-                arrayUtils.addUnique(sharedNodeIds, baseEdge.node1)
-            end
-            allNodeIds[#allNodeIds+1] = baseEdge.node0
-            allNodeIds[#allNodeIds+1] = baseEdge.node1
-        end
-    end
-
-    return sharedNodeIds
+    return (#api.engine.system.streetSystem.getNode2StreetEdgeMap()[nodeId] > 0)
 end
 
-helper.getNodeIdsBetweenNeighbourEdgeIds = function(edgeIds, isIncludeExclusiveOuterNodes)
-    if type(edgeIds) ~= 'table' then return {} end
+helper.isNodeTrack = function(nodeId)
+    if not(helper.isValidAndExistingId(nodeId)) then return false end
 
-    local nodesBetweenEdges = {} -- nodeId, counter
-    for _, edgeId in pairs(edgeIds) do -- don't use _ here, we call it below to translate the message!
-        local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-        if baseEdge then
-            if nodesBetweenEdges[baseEdge.node0] then
-                nodesBetweenEdges[baseEdge.node0] = nodesBetweenEdges[baseEdge.node0] + 1
-            else
-                nodesBetweenEdges[baseEdge.node0] = 1
-            end
-            if nodesBetweenEdges[baseEdge.node1] then
-                nodesBetweenEdges[baseEdge.node1] = nodesBetweenEdges[baseEdge.node1] + 1
-            else
-                nodesBetweenEdges[baseEdge.node1] = 1
-            end
-        end
-    end
-
-    local results = {}
-    for nodeId, count in pairs(nodesBetweenEdges) do
-        if count > 1 or isIncludeExclusiveOuterNodes then
-            results[#results+1] = nodeId
-        end
-    end
-
-    -- print('getNodeIdsBetweenEdgeIds about to return') debugPrint(results)
-    return results
+    return (#api.engine.system.streetSystem.getNode2TrackEdgeMap()[nodeId] > 0)
 end
 
 helper.getObjectPosition = function(objectId)
@@ -867,58 +844,6 @@ helper.getObjectTransf = function(objectId)
     end
 
     return result
-end
-
-helper.getConnectedEdgeIds = function(nodeIds)
-    -- print('getConnectedEdgeIds starting')
-    if type(nodeIds) ~= 'table' or #nodeIds < 1 then return {} end
-
-    local _map = api.engine.system.streetSystem.getNode2SegmentMap()
-    local results = {}
-
-    for _, nodeId in pairs(nodeIds) do
-        if helper.isValidAndExistingId(nodeId) then
-            local connectedEdgeIdsUserdata = _map[nodeId] -- userdata
-            if connectedEdgeIdsUserdata ~= nil then
-                for _, edgeId in pairs(connectedEdgeIdsUserdata) do -- cannot use connectedEdgeIdsUserdata[index] here
-                    if helper.isValidAndExistingId(edgeId) then
-                        arrayUtils.addUnique(results, edgeId)
-                    end
-                end
-            end
-        end
-    end
-
-    -- print('getConnectedEdgeIds is about to return') debugPrint(results)
-    return results
-end
-
-helper.getEdgeIdsConnectedToEdgeId = function(edgeId)
-    -- print('getEdgeIdsConnectedToEdgeId starting')
-    if not(helper.isValidAndExistingId(edgeId)) then return {} end
-    local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
-    if baseEdge == nil then return {} end
-
-    local nodeIds = { baseEdge.node0, baseEdge.node1 }
-
-    local _map = api.engine.system.streetSystem.getNode2SegmentMap()
-    local results = {}
-
-    for _, nodeId in pairs(nodeIds) do
-        if helper.isValidAndExistingId(nodeId) then
-            local connectedEdgeIdsUserdata = _map[nodeId] -- userdata
-            if connectedEdgeIdsUserdata ~= nil then
-                for _, connectedEdgeId in pairs(connectedEdgeIdsUserdata) do -- cannot use connectedEdgeIdsUserdata[index] here
-                    if connectedEdgeId ~= edgeId and helper.isValidAndExistingId(connectedEdgeId) then
-                        arrayUtils.addUnique(results, connectedEdgeId)
-                    end
-                end
-            end
-        end
-    end
-
-    -- print('getEdgeIdsConnectedToEdgeId is about to return') debugPrint(results)
-    return results
 end
 
 helper.isNumVeryClose = function(num1, num2, significantFigures)
@@ -966,7 +891,87 @@ helper.isXYZSame_onlyXY = function(xy1, xy2)
     return xy1.x == xy2.x and xy1.y == xy2.y
 end
 
+---this func has specialised siblings for street and track
+---@param nodeIds table<integer>
+---@return table<integer>
+helper.getConnectedEdgeIds = function(nodeIds)
+    -- print('getConnectedEdgeIds starting')
+    if type(nodeIds) ~= 'table' or #nodeIds < 1 then return {} end
+
+    local _map = api.engine.system.streetSystem.getNode2SegmentMap()
+    local results = {}
+
+    for _, nodeId in pairs(nodeIds) do
+        if helper.isValidAndExistingId(nodeId) then
+            local connectedEdgeIdsUserdata = _map[nodeId] -- userdata
+            if connectedEdgeIdsUserdata ~= nil then
+                for _, edgeId in pairs(connectedEdgeIdsUserdata) do -- cannot use connectedEdgeIdsUserdata[index] here
+                    if helper.isValidAndExistingId(edgeId) then
+                        arrayUtils.addUnique(results, edgeId)
+                    end
+                end
+            end
+        end
+    end
+
+    -- print('getConnectedEdgeIds is about to return') debugPrint(results)
+    return results
+end
+
+helper.getEdgeIdsConnectedToEdgeId = function(edgeId)
+    -- print('getEdgeIdsConnectedToEdgeId starting')
+    if not(helper.isValidAndExistingId(edgeId)) then return {} end
+    local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+    if baseEdge == nil then return {} end
+
+    local _map = api.engine.system.streetSystem.getNode2SegmentMap()
+    local results = {}
+
+    for _, nodeId in pairs({ baseEdge.node0, baseEdge.node1 }) do
+        if helper.isValidAndExistingId(nodeId) then
+            local connectedEdgeIdsUserdata = _map[nodeId] -- userdata
+            if connectedEdgeIdsUserdata ~= nil then
+                for _, connectedEdgeId in pairs(connectedEdgeIdsUserdata) do -- cannot use connectedEdgeIdsUserdata[index] here
+                    if connectedEdgeId ~= edgeId and helper.isValidAndExistingId(connectedEdgeId) then
+                        arrayUtils.addUnique(results, connectedEdgeId)
+                    end
+                end
+            end
+        end
+    end
+
+    -- print('getEdgeIdsConnectedToEdgeId is about to return') debugPrint(results)
+    return results
+end
+
 helper.street = {
+    ---this func has specialised siblings for generic and track
+    ---@param nodeIds table<integer>
+    ---@return table<integer>
+    getConnectedEdgeIds = function(nodeIds)
+        -- print('getConnectedEdgeIds starting')
+        if type(nodeIds) ~= 'table' or #nodeIds < 1 then return {} end
+
+        local _map = api.engine.system.streetSystem.getNode2StreetEdgeMap()
+        local results = {}
+
+        for _, nodeId in pairs(nodeIds) do
+            if helper.isValidAndExistingId(nodeId) then
+                local connectedEdgeIdsUserdata = _map[nodeId] -- userdata
+                if connectedEdgeIdsUserdata ~= nil then
+                    for _, edgeId in pairs(connectedEdgeIdsUserdata) do -- cannot use connectedEdgeIdsUserdata[index] here
+                        -- getNode2TrackEdgeMap returns the same as getNode2SegmentMap, so we check it ourselves
+                        if helper.isValidAndExistingId(edgeId) and api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_STREET) ~= nil then
+                            arrayUtils.addUnique(results, edgeId)
+                        end
+                    end
+                end
+            end
+        end
+
+        -- print('getConnectedEdgeIds is about to return') debugPrint(results)
+        return results
+    end,
     getNearestEdgeId = function(transf, minZ, maxZ)
         if type(transf) ~= 'table' then return nil end
 
@@ -1040,7 +1045,65 @@ helper.street = {
     end,
 }
 
+local _getTrackEdgeIdsBetweenEdgeAndNode = function(edgeId, nodeId, maxDistance)
+    local edge1IdTyped = api.type.EdgeId.new(edgeId, 0)
+    local edgeIdDir1False = api.type.EdgeIdDirAndLength.new(edge1IdTyped, false, 0)
+    local edgeIdDir1True = api.type.EdgeIdDirAndLength.new(edge1IdTyped, true, 0)
+    local node2Typed = api.type.NodeId.new(nodeId, 0)
+    local myPath = api.engine.util.pathfinding.findPath(
+        { edgeIdDir1False, edgeIdDir1True },
+        { node2Typed },
+        {
+            api.type.enum.TransportMode.TRAIN,
+            -- api.type.enum.TransportMode.ELECTRIC_TRAIN
+        },
+        maxDistance
+    )
+    local results = {}
+    for _, value in pairs(myPath) do
+        -- remove non-edge funds, this api can add some nodes to its output.
+        local baseEdge = api.engine.getComponent(value.entity, api.type.ComponentType.BASE_EDGE)
+        if baseEdge ~= nil then
+            -- remove duplicates arising from traffic light or waypoints on edges, which have the same entity but a higher index.
+            if #results == 0 or results[#results] ~= value.entity then
+                results[#results+1] = value.entity
+            end
+        end
+    end
+    return results
+end
+
+local _getTrackEdgeIdsBetweenEdgeIds = function(edge1Id, edge2Id, maxDistance, isExtendedLog)
+    local baseEdge2 = api.engine.getComponent(edge2Id, api.type.ComponentType.BASE_EDGE)
+    local results = _getTrackEdgeIdsBetweenEdgeAndNode(edge1Id, baseEdge2.node0, maxDistance)
+    if #results > 0 and arrayUtils.arrayHasValue(results, edge2Id) then
+        if isExtendedLog then
+            print('_getTrackEdgeIdsBetweenEdgeIds got path =')
+            debugPrint(results)
+        end
+        return results
+    end
+
+    -- the path did not include edge2Id coz we picked the wrong node: retry with the other node
+    results = _getTrackEdgeIdsBetweenEdgeAndNode(edge1Id, baseEdge2.node1, maxDistance)
+    if #results > 0 and arrayUtils.arrayHasValue(results, edge2Id) then
+        if isExtendedLog then
+            print('_getTrackEdgeIdsBetweenEdgeIds now got path =')
+            debugPrint(results)
+        end
+        return results
+    end
+
+    if isExtendedLog then
+        print('_getTrackEdgeIdsBetweenEdgeIds could not get a proper path, it only got =')
+        debugPrint(results)
+    end
+    return {}
+end
 helper.track = {
+    ---this func has specialised siblings for street and generic
+    ---@param nodeIds table<integer>
+    ---@return table<integer>
     getConnectedEdgeIds = function(nodeIds)
         -- print('getConnectedEdgeIds starting')
         if type(nodeIds) ~= 'table' or #nodeIds < 1 then return {} end
@@ -1054,7 +1117,7 @@ helper.track = {
                 if connectedEdgeIdsUserdata ~= nil then
                     for _, edgeId in pairs(connectedEdgeIdsUserdata) do -- cannot use connectedEdgeIdsUserdata[index] here
                         -- getNode2TrackEdgeMap returns the same as getNode2SegmentMap, so we check it ourselves
-                        if api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_TRACK) ~= nil then
+                        if helper.isValidAndExistingId(edgeId) and api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_TRACK) ~= nil then
                             arrayUtils.addUnique(results, edgeId)
                         end
                     end
@@ -1065,7 +1128,7 @@ helper.track = {
         -- print('getConnectedEdgeIds is about to return') debugPrint(results)
         return results
     end,
-    getContiguousEdges = function(edgeId, acceptedTrackTypes)
+    getContiguousEdges_UNUSED_BUT_KEEP_IT_FOR_NOW = function(edgeId, acceptedTrackTypes)
         local _calcContiguousEdges = function(firstEdgeId, firstNodeId, map, isInsertFirst, results)
             local refEdgeId = firstEdgeId
             local refNodeId = firstNodeId
@@ -1139,7 +1202,9 @@ helper.track = {
             -- print('boundingVolume =') debugPrint(boundingVolume)
             if not(entity) then return end
 
-            if not(api.engine.getComponent(entity, api.type.ComponentType.BASE_EDGE)) then return end
+            if not(api.engine.getComponent(entity, api.type.ComponentType.BASE_EDGE))
+            or not(api.engine.getComponent(entity, api.type.ComponentType.BASE_EDGE_TRACK))
+            then return end
             -- print('the entity is a BASE_EDGE')
 
             baseEdgeIds[#baseEdgeIds+1] = entity
@@ -1219,6 +1284,224 @@ helper.track = {
             print('track.getNearestEdgeIdStrict falling back, could not find an edge covering the position')
             return baseEdgeIds[1] -- fallback
         end
+    end,
+    ---Receives an unsorted list of edge ids and returns an unsorted list of node ids.
+    ---It can include the outer nodes that are dead ends.
+    ---It requires at least two edgeIds.
+    ---@param edgeIds table<integer>
+    ---@param isIncludeOuterEndNodes? boolean
+    ---@return table<integer>
+    getNodeIdsBetweenEdgeIds_optionalDeadEnds = function(edgeIds, isIncludeOuterEndNodes)
+        if type(edgeIds) ~= 'table' then return {} end
+
+        local _map = api.engine.system.streetSystem.getNode2TrackEdgeMap()
+        local allNodeIds_indexed = {}
+        local sharedNodeIds_indexed = {}
+        for _, edgeId in pairs(edgeIds) do
+            local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+            if baseEdge ~= nil and api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_TRACK) ~= nil then
+                local nEdgesAttached2Node0 = _map[baseEdge.node0]
+                if nEdgesAttached2Node0 == nil then nEdgesAttached2Node0 = 0 else nEdgesAttached2Node0 = #_map[baseEdge.node0] end
+                if (nEdgesAttached2Node0 == 1 and isIncludeOuterEndNodes) or allNodeIds_indexed[baseEdge.node0] then
+                    sharedNodeIds_indexed[baseEdge.node0] = true
+                end
+                local nEdgesAttached2Node1 = _map[baseEdge.node1]
+                if nEdgesAttached2Node1 == nil then nEdgesAttached2Node1 = 0 else nEdgesAttached2Node1 = #_map[baseEdge.node1] end
+                if (nEdgesAttached2Node1 == 1 and isIncludeOuterEndNodes) or allNodeIds_indexed[baseEdge.node1] then
+                    sharedNodeIds_indexed[baseEdge.node1] = true
+                end
+                allNodeIds_indexed[baseEdge.node0] = true
+                allNodeIds_indexed[baseEdge.node1] = true
+            end
+        end
+
+        local results = {}
+        for nodeId, _ in pairs(sharedNodeIds_indexed) do
+            results[#results+1] = nodeId
+        end
+        return results
+    end,
+    ---Receives an unsorted list of edge ids and returns an unsorted list of node ids.
+    ---It can include the outer nodes.
+    ---@param edgeIds table<integer>
+    ---@param isIncludeOuterNodes? boolean
+    ---@return table<integer>
+    getNodeIdsBetweenEdgeIds_optionalEnds = function(edgeIds, isIncludeOuterNodes)
+        if type(edgeIds) ~= 'table' then return {} end
+
+        local nodesBetweenEdges_indexed = {} -- nodeId, counter
+        for _, edgeId in pairs(edgeIds) do -- don't use _ here, we call it below to translate the message!
+            local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+            if baseEdge and api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_TRACK) ~= nil then
+                if nodesBetweenEdges_indexed[baseEdge.node0] then
+                    nodesBetweenEdges_indexed[baseEdge.node0] = nodesBetweenEdges_indexed[baseEdge.node0] + 1
+                else
+                    nodesBetweenEdges_indexed[baseEdge.node0] = 1
+                end
+                if nodesBetweenEdges_indexed[baseEdge.node1] then
+                    nodesBetweenEdges_indexed[baseEdge.node1] = nodesBetweenEdges_indexed[baseEdge.node1] + 1
+                else
+                    nodesBetweenEdges_indexed[baseEdge.node1] = 1
+                end
+            end
+        end
+
+        local results = {}
+        for nodeId, count in pairs(nodesBetweenEdges_indexed) do
+            if count > 1 or isIncludeOuterNodes then
+                results[#results+1] = nodeId
+            end
+        end
+        return results
+    end,
+    getTrackEdgeIdsBetweenNodeIds = function(_node1Id, _node2Id, maxDistance, isExtendedLog)
+        if isExtendedLog then
+            print('getTrackEdgeIdsBetweenNodeIds starting')
+            print('node1Id =', _node1Id) print('node2Id =', _node2Id)
+            print('ONE')
+        end
+        if not(helper.isValidAndExistingId(_node1Id)) then return {} end
+        if isExtendedLog then print('ONE AND A HALF') end
+        if not(helper.isValidAndExistingId(_node2Id)) then return {} end
+        if isExtendedLog then print('TWO') end
+        if _node1Id == _node2Id then return {} end
+        if isExtendedLog then print('THREE') end
+
+        local _map = api.engine.system.streetSystem.getNode2TrackEdgeMap()
+        local adjacentEdge1Ids = {}
+        local adjacentEdge2Ids = {}
+        local _fetchAdjacentEdges = function()
+            local adjacentEdge1IdsUserdata = _map[_node1Id] -- userdata
+            local adjacentEdge2IdsUserdata = _map[_node2Id] -- userdata
+            if adjacentEdge1IdsUserdata == nil then
+                if isExtendedLog then print('Warning: FOUR') end
+                return false
+            else
+                for _, edgeId in pairs(adjacentEdge1IdsUserdata) do -- cannot use adjacentEdgeIds[index] here
+                    -- arrayUtils.addUnique(adjacentEdge1Ids, edgeId)
+                    adjacentEdge1Ids[#adjacentEdge1Ids+1] = edgeId
+                end
+                if isExtendedLog then print('FIVE') end
+            end
+            if adjacentEdge2IdsUserdata == nil then
+                if isExtendedLog then print('Warning: SIX') end
+                return false
+            else
+                for _, edgeId in pairs(adjacentEdge2IdsUserdata) do -- cannot use adjacentEdgeIds[index] here
+                    -- arrayUtils.addUnique(adjacentEdge2Ids, edgeId)
+                    adjacentEdge2Ids[#adjacentEdge2Ids+1] = edgeId
+                end
+                if isExtendedLog then print('SEVEN') end
+            end
+
+            return true
+        end
+
+        if not(_fetchAdjacentEdges()) then
+            if isExtendedLog then print('FOUR OR SIX') end
+            return {}
+        end
+        if #adjacentEdge1Ids < 1 or #adjacentEdge2Ids < 1 then
+            if isExtendedLog then print('Warning: EIGHT') end
+            return {}
+        end
+
+        if #adjacentEdge1Ids == 1 and #adjacentEdge2Ids == 1 then
+            if adjacentEdge1Ids[1] == adjacentEdge2Ids[1] then
+                if isExtendedLog then print('NINE') end
+                return { adjacentEdge1Ids[1] }
+            else
+                if isExtendedLog then print('TEN') end
+            end
+        end
+        -- if isExtendedLog then
+        --     print('adjacentEdge1Ids =') debugPrint(adjacentEdge1Ids)
+        --     print('adjacentEdge2Ids =') debugPrint(adjacentEdge2Ids)
+        -- end
+
+        local trackEdgeIdsBetweenEdgeIds = _getTrackEdgeIdsBetweenEdgeAndNode(adjacentEdge1Ids[1], _node2Id, maxDistance)
+        if isExtendedLog then
+            print('trackEdgeIdsBetweenEdgeIds before pruning =') debugPrint(trackEdgeIdsBetweenEdgeIds)
+        end
+        -- remove edges adjacent to but outside node1 and node2
+
+        -- for _, edgeId in pairs(trackEdgeIdsBetweenEdgeIds) do
+        --     local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+        --     if isExtendedLog then
+        --         print('base edge = ', edgeId) debugPrint(baseEdge)
+        --     end
+        -- end
+
+        local isExit = false
+        while not(isExit) do
+            if #trackEdgeIdsBetweenEdgeIds > 1
+            and arrayUtils.arrayHasValue(adjacentEdge1Ids, trackEdgeIdsBetweenEdgeIds[1])
+            and arrayUtils.arrayHasValue(adjacentEdge1Ids, trackEdgeIdsBetweenEdgeIds[2]) then
+                if isExtendedLog then print('ELEVEN') end
+                table.remove(trackEdgeIdsBetweenEdgeIds, 1)
+                if isExtendedLog then
+                    print('trackEdgeIdsBetweenEdgeIds during pruning =')
+                    debugPrint(trackEdgeIdsBetweenEdgeIds)
+                end
+            else
+                if isExtendedLog then print('TWELVE') end
+                isExit = true
+            end
+        end
+        -- isExit = false
+        -- while not(isExit) do
+        --     if #trackEdgeIdsBetweenEdgeIds > 1
+        --     and arrayUtils.arrayHasValue(adjacentEdge2Ids, trackEdgeIdsBetweenEdgeIds[#trackEdgeIdsBetweenEdgeIds])
+        --     and arrayUtils.arrayHasValue(adjacentEdge2Ids, trackEdgeIdsBetweenEdgeIds[#trackEdgeIdsBetweenEdgeIds-1]) then
+        --         if isExtendedLog then
+        --             print('THIRTEEN HALF')
+        --             warn('I reinstated this, check it')
+        --         end
+        --         table.remove(trackEdgeIdsBetweenEdgeIds, #trackEdgeIdsBetweenEdgeIds)
+        --         if isExtendedLog then
+        --             print('trackEdgeIdsBetweenEdgeIds during pruning =')
+        --             debugPrint(trackEdgeIdsBetweenEdgeIds)
+        --         end
+        --     else
+        --         if isExtendedLog then print('FOURTEEN') end
+        --         isExit = true
+        --     end
+        -- end
+
+        -- for _, edgeId in pairs(trackEdgeIdsBetweenEdgeIds) do
+        --     local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+        --     if isExtendedLog then print('base edge = ', edgeId) debugPrint(baseEdge) end
+        -- end
+        if isExtendedLog then
+            print('trackEdgeIdsBetweenEdgeIds after pruning =')
+            debugPrint(trackEdgeIdsBetweenEdgeIds)
+        end
+        if arrayUtils.arrayHasValue(adjacentEdge2Ids, trackEdgeIdsBetweenEdgeIds[#trackEdgeIdsBetweenEdgeIds]) then return trackEdgeIdsBetweenEdgeIds end
+        print('WARNING: the last edge does not connect, this should never happen')
+        return {}
+    end,
+    -- returns the edge ids in the right sequence from edge1 to edge2, but their node0 and node1 may be scrambled,
+    -- depending how the user laid the tracks
+    getTrackEdgeIdsBetweenEdgeIds = function(edge1Id, edge2Id, maxDistance, isEitherDirection, isExtendedLog)
+        if isExtendedLog then
+            print('getTrackEdgeIdsBetweenEdgeIds starting, edge1Id = ' .. edge1Id .. ', edge2Id = ' .. edge2Id)
+        end
+        if not(helper.isValidAndExistingId(edge1Id)) or not(helper.isValidAndExistingId(edge2Id)) or type(maxDistance) ~= 'number' or maxDistance <= 0 then
+            print('WARNING: getTrackEdgeIdsBetweenEdgeIds received wrong arguments')
+            return {}
+        end
+
+        local results = _getTrackEdgeIdsBetweenEdgeIds(edge1Id, edge2Id, maxDistance, isExtendedLog)
+        if #results > 0 then return results end
+
+        if isEitherDirection then
+            if isExtendedLog then print('getTrackEdgeIdsBetweenEdgeIds about to return reversed results') end
+            return arrayUtils.getReversed(
+                _getTrackEdgeIdsBetweenEdgeIds(edge2Id, edge1Id, maxDistance, isExtendedLog)
+            )
+        end
+
+        return {}
     end,
 }
 

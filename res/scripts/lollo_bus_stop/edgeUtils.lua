@@ -40,6 +40,10 @@ end
 --     any2, any1 = any1, any2
 -- end
 
+helper.getPositionTableFromUserdata = function(pos)
+    return {x = pos.x, y = pos.y, z = pos.z}
+end
+
 helper.getNearbyObjectIds = function(transf, searchRadius, componentType, minZ, maxZ)
     if type(transf) ~= 'table' then return {} end
 
@@ -217,8 +221,8 @@ local _getEdgeLength_Street = function(edgeId, baseEdge, tn, isExtendedLog)
     local tan1 = baseEdge.tangent1
     local resultWithBaseEdge = (transfUtils.getVectorLength_FAST(tan0) + transfUtils.getVectorLength_FAST(tan1)) * 0.5 -- they should be equal but they are not, so we average them
 
-    local pos0 = api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE).position
-    local pos1 = api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE).position
+    local pos0 = helper.getPositionTableFromUserdata(api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE).position)
+    local pos1 = helper.getPositionTableFromUserdata(api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE).position)
     -- group data by splits, sorted in the direction node0Id -> node1Id
     local dataBySplit = {}
     for i = 1, #tn.edges, 1 do
@@ -335,8 +339,8 @@ local _getEdgeLength_Track = function(edgeId, baseEdge, tn, isExtendedLog)
     local tan1 = baseEdge.tangent1
     local resultWithBaseEdge = (transfUtils.getVectorLength_FAST(tan0) + transfUtils.getVectorLength_FAST(tan1)) * 0.5 -- they should be equal but they are not, so we average them
 
-    local pos0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position
-    local pos1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position
+    local pos0 = helper.getPositionTableFromUserdata(api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position)
+    local pos1 = helper.getPositionTableFromUserdata(api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position)
     local geometry0 = tn.edges[1].geometry
     local geometry1 = tn.edges[#tn.edges].geometry
 
@@ -1240,18 +1244,30 @@ helper.track = {
         for _, edgeId in pairs(edgeIds) do
             local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
             if baseEdge ~= nil and api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_TRACK) ~= nil then
-                local nEdgesAttached2Node0 = _map[baseEdge.node0]
-                if nEdgesAttached2Node0 == nil then nEdgesAttached2Node0 = 0 else nEdgesAttached2Node0 = #_map[baseEdge.node0] end
-                if (nEdgesAttached2Node0 == 1 and isIncludeOuterEndNodes) or allNodeIds_indexed[baseEdge.node0] then
+                local nEdgesAttached2Node0 = #(_map[baseEdge.node0] or {})
+                if nEdgesAttached2Node0 == 0 then -- should never happen
+                    logger.warn('should never happen: 0 edges are attached to node ' .. baseEdge.node0)
+                    sharedNodeIds_indexed[baseEdge.node0] = true
+                elseif nEdgesAttached2Node0 == 1 then
+                    if isIncludeOuterEndNodes then
+                        sharedNodeIds_indexed[baseEdge.node0] = true
+                    end
+                elseif allNodeIds_indexed[baseEdge.node0] == nEdgesAttached2Node0 - 1 then
                     sharedNodeIds_indexed[baseEdge.node0] = true
                 end
-                local nEdgesAttached2Node1 = _map[baseEdge.node1]
-                if nEdgesAttached2Node1 == nil then nEdgesAttached2Node1 = 0 else nEdgesAttached2Node1 = #_map[baseEdge.node1] end
-                if (nEdgesAttached2Node1 == 1 and isIncludeOuterEndNodes) or allNodeIds_indexed[baseEdge.node1] then
+                local nEdgesAttached2Node1 = #(_map[baseEdge.node1] or {})
+                if nEdgesAttached2Node1 == 0 then -- should never happen
+                    logger.warn('should never happen: 0 edges are attached to node ' .. baseEdge.node1)
+                    sharedNodeIds_indexed[baseEdge.node1] = true
+                elseif nEdgesAttached2Node1 == 1 then
+                    if isIncludeOuterEndNodes then
+                        sharedNodeIds_indexed[baseEdge.node1] = true
+                    end
+                elseif allNodeIds_indexed[baseEdge.node1] == nEdgesAttached2Node1 - 1 then
                     sharedNodeIds_indexed[baseEdge.node1] = true
                 end
-                allNodeIds_indexed[baseEdge.node0] = true
-                allNodeIds_indexed[baseEdge.node1] = true
+                allNodeIds_indexed[baseEdge.node0] = (allNodeIds_indexed[baseEdge.node0] or 0) + 1
+                allNodeIds_indexed[baseEdge.node1] = (allNodeIds_indexed[baseEdge.node1] or 0) + 1
             end
         end
 

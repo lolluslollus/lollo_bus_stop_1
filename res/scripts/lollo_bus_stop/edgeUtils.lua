@@ -1130,10 +1130,12 @@ helper.track = {
 
         return results
     end,
-    getNearestEdgeIdStrict = function(transf, minZ, maxZ)
+    getNearestEdgeIdStrict = function(transf, minZ, maxZ, myLogger)
+        if myLogger == nil then myLogger = {print = function(q) end, debugPrint = function (q) end} end
         if type(transf) ~= 'table' then return nil end
 
         local _position = transfUtils.getVec123Transformed({0, 0, 0}, transf)
+         -- local testPosition = transfUtils.transf2Position(transf, true)
         -- print('position =') debugPrint(_position)
         local _searchRadius = 0.5
         local _box0 = api.type.Box3.new(
@@ -1148,6 +1150,7 @@ helper.track = {
 
             if not(api.engine.getComponent(entity, api.type.ComponentType.BASE_EDGE))
             or not(api.engine.getComponent(entity, api.type.ComponentType.BASE_EDGE_TRACK))
+            or not(helper.isValidAndExistingId(entity))
             then return end
             -- print('the entity is a BASE_EDGE')
 
@@ -1156,52 +1159,57 @@ helper.track = {
         api.engine.system.octreeSystem.findIntersectingEntities(_box0, callback0)
 
         if #baseEdgeIds == 0 then
+            myLogger.print('#baseEdgeIds == 0')
             return nil
             -- LOLLO NOTE comment this out to make it less strict
         -- elseif #baseEdgeIds == 1 then
-        --     return baseEdgeIds[1]
+            -- print('#baseEdgeIds == 1')
+            -- return baseEdgeIds[1]
         else
+            myLogger.print('#baseEdgeIds == ' .. tostring(#baseEdgeIds) .. ', position = ') myLogger.debugPrint(_position)
             -- print('multiple base edges found')
             -- choose one edge and return its id
 
-            for i = 1, #baseEdgeIds do
-                local baseEdge = api.engine.getComponent(baseEdgeIds[i], api.type.ComponentType.BASE_EDGE)
-                local baseEdgeTrack = api.engine.getComponent(baseEdgeIds[i], api.type.ComponentType.BASE_EDGE_TRACK)
-                if baseEdge ~= nil and baseEdgeTrack ~= nil then -- false when there is a modded road that underwent a breaking change
-                    local node0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
-                    local node1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
-                    local trackTypeProperties = api.res.trackTypeRep.get(baseEdgeTrack.trackType)
-                    local halfTrackWidth = (trackTypeProperties.shapeWidth or 0) * 0.5
-                    local alpha = math.atan2(node1.position.y - node0.position.y, node1.position.x - node0.position.x)
-                    local xPlus = - math.sin(alpha) * halfTrackWidth
-                    local yPlus = math.cos(alpha) * halfTrackWidth
-                    local vertices = {
-                        [1] = {
-                            x = node0.position.x - xPlus,
-                            y = node0.position.y - yPlus
-                        },
-                        [2] = {
-                            x = node0.position.x + xPlus,
-                            y = node0.position.y + yPlus
-                        },
-                        [3] = {
-                            x = node1.position.x + xPlus,
-                            y = node1.position.y + yPlus
-                        },
-                        [4] = {
-                            x = node1.position.x - xPlus,
-                            y = node1.position.y - yPlus
-                        },
-                    }
-                    -- check if the _position falls within the quadrangle approximating the edge
-                    -- LOLLO NOTE I could get a more accurate polygon (not necessarily a quadrangle!) getIsPointWithin
-                    -- api.engine.getComponent(entity, api.type.ComponentType.LOT_LIST)
-                    -- but it returns nothing with bridges and tunnels
-                    if quadrangleUtils.getIsPointWithin(quadrangleUtils.getVerticesSortedClockwise(vertices), _position) then
-                        return baseEdgeIds[i]
-                    end
-                end
-            end
+            -- this is better than nothing
+            -- for i = 1, #baseEdgeIds do
+            --     local baseEdge = api.engine.getComponent(baseEdgeIds[i], api.type.ComponentType.BASE_EDGE)
+            --     local baseEdgeTrack = api.engine.getComponent(baseEdgeIds[i], api.type.ComponentType.BASE_EDGE_TRACK)
+            --     if baseEdge ~= nil and baseEdgeTrack ~= nil then -- false when there is a modded road that underwent a breaking change
+            --         local node0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
+            --         local node1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
+            --         local trackTypeProperties = api.res.trackTypeRep.get(baseEdgeTrack.trackType)
+            --         local halfTrackWidth = (trackTypeProperties.shapeWidth or 0) * 0.5
+            --         print('halfTrackWidth = ' .. tostring(halfTrackWidth))
+            --         local alpha = math.atan2(node1.position.y - node0.position.y, node1.position.x - node0.position.x)
+            --         local xPlus = - math.sin(alpha) * halfTrackWidth
+            --         local yPlus = math.cos(alpha) * halfTrackWidth
+            --         local vertices = {
+            --             [1] = {
+            --                 x = node0.position.x - xPlus,
+            --                 y = node0.position.y - yPlus
+            --             },
+            --             [2] = {
+            --                 x = node0.position.x + xPlus,
+            --                 y = node0.position.y + yPlus
+            --             },
+            --             [3] = {
+            --                 x = node1.position.x + xPlus,
+            --                 y = node1.position.y + yPlus
+            --             },
+            --             [4] = {
+            --                 x = node1.position.x - xPlus,
+            --                 y = node1.position.y - yPlus
+            --             },
+            --         }
+            --         -- check if the _position falls within the quadrangle approximating the edge
+            --         -- LOLLO NOTE I could get a more accurate polygon (not necessarily a quadrangle!) getIsPointWithin
+            --         -- api.engine.getComponent(entity, api.type.ComponentType.LOT_LIST)
+            --         -- but it returns nothing with bridges and tunnels
+            --         if quadrangleUtils.getIsPointWithin(quadrangleUtils.getVerticesSortedClockwise(vertices), _position) then
+            --             return baseEdgeIds[i]
+            --         end
+            --     end
+            -- end
 
             -- another way to do the same, but wrong
             -- for i = 1, #baseEdgeIds do
@@ -1212,7 +1220,7 @@ helper.track = {
             --         -- local node1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
             --         local trackTypeProperties = api.res.trackTypeRep.get(baseEdgeTrack.trackType)
             --         local halfTrackWidth = (trackTypeProperties.shapeWidth or 0) * 0.5
-
+            --         lmyLoggerogger.print('halfTrackWidth = ' .. tostring(halfTrackWidth))
             --         local testPosition = transfUtils.transf2Position(transf, true)
             --         local nodeBetween = helper.getNodeBetweenByPosition(baseEdgeIds[i], testPosition)
             --         if nodeBetween ~= nil and nodeBetween.length0 ~= 0 and nodeBetween.length1 ~= 0 and nodeBetween.position ~= nil then
@@ -1225,8 +1233,89 @@ helper.track = {
             --         end
             --     end
             -- end
-            print('track.getNearestEdgeIdStrict falling back, could not find an edge covering the position')
-            return baseEdgeIds[1] -- fallback
+
+            -- a new idea: split every edge into shorter segments, which are straight enough, then check the point to segment distances
+            local minDistance_edgeId = {distance = 9999, edgeId = nil}
+            for i = 1, #baseEdgeIds do
+                local edgeId = baseEdgeIds[i]
+                local baseEdge = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE)
+                local baseEdgeTrack = api.engine.getComponent(edgeId, api.type.ComponentType.BASE_EDGE_TRACK)
+                if baseEdge ~= nil and baseEdgeTrack ~= nil then -- false when there is a modded road that underwent a breaking change
+                    -- local node0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
+                    -- local node1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
+                    local trackTypeProperties = api.res.trackTypeRep.get(baseEdgeTrack.trackType)
+                    local halfTrackWidth = (trackTypeProperties.shapeWidth or 0) * 0.5
+                    myLogger.print('halfTrackWidth = ' .. tostring(halfTrackWidth))
+                    -- local testPosition = transfUtils.transf2Position(transf, true)
+                    local shifts = {}
+                    local howManySplitsM1 = 32.0 -- the higher, he better. Over 100 would be nonsense. 18 is not enough.
+                    for k = 0, howManySplitsM1, 1 do
+                        shifts[#shifts+1] = k / howManySplitsM1
+                    end
+                    -- print('shifts =') debugPrint(shifts)
+                    local nodesBetween = {}
+                    for _, shift in pairs(shifts) do
+                        local nodeBetween = helper.getNodeBetweenByPercentageShift(edgeId, shift)
+                        --[[
+local nodeBetween = {
+        refDistance0 = length * shift0To1,
+        refPosition0 = {
+            x = pos0.x,
+            y = pos0.y,
+            z = pos0.z,
+        },
+        refTangent0 = {
+            x = tan0.x,
+            y = tan0.y,
+            z = tan0.z,
+        },
+        refDistance1 = length * (1 - shift0To1),
+        refPosition1 = {
+            x = pos1.x,
+            y = pos1.y,
+            z = pos1.z,
+        },
+        refTangent1 = {
+            x = tan1.x,
+            y = tan1.y,
+            z = tan1.z,
+        },
+        refLength = length,
+        position = {
+            x = getPosOnAxisAtShift('x'),
+            y = getPosOnAxisAtShift('y'),
+            z = getPosOnAxisAtShift('z')
+        },
+        -- LOLLO NOTE these are real derivatives, they make no sense for a single point, so we normalise them
+        tangent = transfUtils.getVectorNormalised_FAST({
+            x = getTanOnAxisAtShift('x'),
+            y = getTanOnAxisAtShift('y'),
+            z = getTanOnAxisAtShift('z'),
+        })
+    }
+]]
+                        if nodeBetween ~= nil and nodeBetween.position ~= nil then
+                            nodesBetween[#nodesBetween+1] = nodeBetween
+                        end
+                    end
+                    -- myLogger.print('nodesBetween for edgeId ' .. tostring(edgeId) .. ' =') myLogger.debugPrint(nodesBetween)
+                    if #nodesBetween > 1 then
+                        for k = 1, #nodesBetween - 1, 1 do
+                            -- local distance = transfUtils.getDistanceBetweenPointAndStraight(segmentPosition[1], segmentPosition[2], testPosition)
+                            local distance = transfUtils.getDistanceBetweenPointAndStraight(nodesBetween[k].position, nodesBetween[k+1].position, _position)
+                            if type(distance) == 'number' and distance < minDistance_edgeId.distance and distance < halfTrackWidth then
+                                myLogger.print('new lower distance found for edge ' .. tostring(edgeId) .. ', it is ' .. tostring(distance))
+                                minDistance_edgeId.distance = distance
+                                minDistance_edgeId.edgeId = edgeId
+                            else
+                                myLogger.print('no lower distance found for edge ' .. tostring(edgeId) .. ', it would be ' .. tostring(distance))
+                            end
+                        end
+                    end
+                end
+            end -- loop over edges
+            myLogger.print('track.getNearestEdgeIdStrict is about to return; minDistance_edgeId = ') myLogger.debugPrint(minDistance_edgeId)
+            return minDistance_edgeId.edgeId
         end
     end,
     ---Receives an unsorted list of edge ids and returns an unsorted list of node ids.

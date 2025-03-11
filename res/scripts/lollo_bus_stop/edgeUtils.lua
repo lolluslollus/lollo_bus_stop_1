@@ -221,8 +221,13 @@ local _getEdgeLength_Street = function(edgeId, baseEdge, tn, isExtendedLog)
     local tan1 = baseEdge.tangent1
     local resultWithBaseEdge = (transfUtils.getVectorLength_FAST(tan0) + transfUtils.getVectorLength_FAST(tan1)) * 0.5 -- they should be equal but they are not, so we average them
 
-    local pos0 = helper.getPositionTableFromUserdata(api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE).position)
-    local pos1 = helper.getPositionTableFromUserdata(api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE).position)
+    local node0 = api.engine.getComponent(node0Id, api.type.ComponentType.BASE_NODE)
+    local node1 = api.engine.getComponent(node1Id, api.type.ComponentType.BASE_NODE)
+    if not(node0) or not(node0.position) or not(node1) or not(node1.position) then
+        return nil, false, false
+    end
+    local pos0 = helper.getPositionTableFromUserdata(node0.position)
+    local pos1 = helper.getPositionTableFromUserdata(node1.position)
     -- group data by splits, sorted in the direction node0Id -> node1Id
     local dataBySplit = {}
     for i = 1, #tn.edges, 1 do
@@ -339,8 +344,13 @@ local _getEdgeLength_Track = function(edgeId, baseEdge, tn, isExtendedLog)
     local tan1 = baseEdge.tangent1
     local resultWithBaseEdge = (transfUtils.getVectorLength_FAST(tan0) + transfUtils.getVectorLength_FAST(tan1)) * 0.5 -- they should be equal but they are not, so we average them
 
-    local pos0 = helper.getPositionTableFromUserdata(api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE).position)
-    local pos1 = helper.getPositionTableFromUserdata(api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE).position)
+    local node0 = api.engine.getComponent(baseEdge.node0, api.type.ComponentType.BASE_NODE)
+    local node1 = api.engine.getComponent(baseEdge.node1, api.type.ComponentType.BASE_NODE)
+    if not(node0) or not(node0.position) or not(node1) or not(node1.position) then
+        return 0, false, false
+    end
+    local pos0 = helper.getPositionTableFromUserdata(node0.position)
+    local pos1 = helper.getPositionTableFromUserdata(node1.position)
     local geometry0 = tn.edges[1].geometry
     local geometry1 = tn.edges[#tn.edges].geometry
 

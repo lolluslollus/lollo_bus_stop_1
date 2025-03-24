@@ -375,6 +375,60 @@ local utils = {
             transf[16],
         }
     end,
+    getTransf_YSkewedOnZ = function(transf, skew)
+        local m2 = {
+            1, 0, 0, 0,
+            0, 1, skew, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        }
+
+        return {
+            transf[1],
+            transf[2],
+            transf[3],
+            transf[4],
+            transf[5] + transf[9]  * skew,
+            transf[6] + transf[10] * skew,
+            transf[7] + transf[11] * skew,
+            transf[8] + transf[12] * skew,
+            transf[9],
+            transf[10],
+            transf[11],
+            transf[12],
+            transf[13],
+            transf[14],
+            transf[15],
+            transf[16],
+        }
+    end,
+    getTransf_XSkewedOnY = function(transf, skew)
+        local m2 = {
+            1, skew, 0, 0,
+            skew, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        }
+
+        return {
+            transf[1] + transf[5] * skew,
+            transf[2] + transf[6] * skew,
+            transf[3] + transf[7] * skew,
+            transf[4] + transf[8] * skew,
+            transf[5] + transf[1] * skew,
+            transf[6] + transf[2] * skew,
+            transf[7] + transf[3] * skew,
+            transf[8] + transf[4] * skew,
+            transf[9],
+            transf[10],
+            transf[11],
+            transf[12],
+            transf[13],
+            transf[14],
+            transf[15],
+            transf[16],
+        }
+    end,
 --#endregion faster than mul()
 }
 
@@ -728,6 +782,14 @@ utils.getVectorLength = function(xyz)
     return math.sqrt(x * x + y * y + z * z)
 end
 
+utils.getVectorLength_power2 = function(xyz)
+    if type(xyz) ~= 'table' and type(xyz) ~= 'userdata' then return nil end
+    local x = xyz.x or xyz[1] or 0.0
+    local y = xyz.y or xyz[2] or 0.0
+    local z = xyz.z or xyz[3] or 0.0
+    return x * x + y * y + z * z
+end
+
 ---runs no checks, takes an xyz table
 ---@param xyz table
 ---@return number
@@ -807,6 +869,26 @@ utils.getVectorMultiplied = function(xyz, factor)
     end
 end
 
+utils.getVectorsCross = function(xyz1, xyz2)
+    -- returns |xyz1| * |xyz2| * cos(angle between xyz1 and xyz2)
+    if type(xyz1) ~= 'table' and type(xyz1) ~= 'userdata' then return nil end
+    if type(xyz2) ~= 'table' and type(xyz2) ~= 'userdata' then return nil end
+
+    local x1 = xyz1.x or xyz1[1] or 0.0
+    local y1 = xyz1.y or xyz1[2] or 0.0
+    local z1 = xyz1.z or xyz1[3] or 0.0
+
+    local x2 = xyz2.x or xyz2[1] or 0.0
+    local y2 = xyz2.y or xyz2[2] or 0.0
+    local z2 = xyz2.z or xyz2[3] or 0.0
+
+    return {
+		y1 * z2 - z1 * y2,
+		z1 * x2 - x1 * z2,
+		x1 * y2 - y1 * x2
+    }
+end
+
 utils.getVectorsDot = function(xyz1, xyz2)
     -- returns |xyz1| * |xyz2| * cos(angle between xyz1 and xyz2)
     if type(xyz1) ~= 'table' and type(xyz1) ~= 'userdata' then return nil end
@@ -824,20 +906,52 @@ utils.getVectorsDot = function(xyz1, xyz2)
 end
 
 utils.getPositionsDistance = function(pos0, pos1)
-    local distance = utils.getVectorLength({
+    return utils.getVectorLength({
         (pos0.x or pos0[1]) - (pos1.x or pos1[1]),
         (pos0.y or pos0[2]) - (pos1.y or pos1[2]),
         (pos0.z or pos0[3]) - (pos1.z or pos1[3]),
     })
-    return distance
 end
 
 utils.getPositionsDistance_onlyXY = function(pos0, pos1)
-    local distance = utils.getVectorLength_onlyXY({
+    return utils.getVectorLength_onlyXY({
         (pos0.x or pos0[1]) - (pos1.x or pos1[1]),
         (pos0.y or pos0[2]) - (pos1.y or pos1[2]),
     })
-    return distance
+end
+
+utils.getPositionsDistance_power2 = function(pos0, pos1)
+    return utils.getVectorLength_power2({
+        (pos0.x or pos0[1]) - (pos1.x or pos1[1]),
+        (pos0.y or pos0[2]) - (pos1.y or pos1[2]),
+        (pos0.z or pos0[3]) - (pos1.z or pos1[3]),
+    })
+end
+
+utils.getPositionsDistance_power2_123_FAST = function(pos0, pos1)
+    local dx = pos0[1] - pos1[1]
+    local dy = pos0[2] - pos1[2]
+    local dz = pos0[3] - pos1[3]
+    return dx * dx + dy * dy + dz * dz
+end
+
+utils.getPointToSegmentNormalIntersection_2D = function(pos, segPos1, segPos2)
+    if segPos1[1] == segPos2[1] and segPos1[2] == segPos2[2] then print('getPointToSegmentNormalIntersection_2D is returning false') return false end
+
+    local u = ( (pos[1] - segPos1[1]) * (segPos2[1] - segPos1[1]) + (pos[2] - segPos1[2]) * (segPos2[2] - segPos1[2]) ) / ( (segPos2[1] - segPos1[1])^2 + (segPos2[2] - segPos1[2])^2 )
+    local x = segPos1[1] + u * (segPos2[1] - segPos1[1])
+    local y = segPos1[2] + u * (segPos2[2] - segPos1[2])
+    return {x, y}
+end
+
+utils.getPointToSegmentNormalIntersection_3D = function(pos, segPos1, segPos2)
+    if segPos1[1] == segPos2[1] and segPos1[2] == segPos2[2] and segPos1[3] == segPos2[3] then print('getPointToSegmentNormalIntersection_3D is returning false') return false end
+
+    local u = ( (pos[1] - segPos1[1]) * (segPos2[1] - segPos1[1]) + (pos[2] - segPos1[2]) * (segPos2[2] - segPos1[2]) + (pos[3] - segPos1[3]) * (segPos2[3] - segPos1[3]) ) / ( (segPos2[1] - segPos1[1])^2 + (segPos2[2] - segPos1[2])^2 + (segPos2[3] - segPos1[3])^2 )
+    local x = segPos1[1] + u * (segPos2[1] - segPos1[1])
+    local y = segPos1[2] + u * (segPos2[2] - segPos1[2])
+    local z = segPos1[3] + u * (segPos2[3] - segPos1[3])
+    return {x, y, z}
 end
 
 utils.getPositionsMiddle = function(pos0, pos1)
@@ -1064,9 +1178,8 @@ utils.get1MModelTransf = function(pos1, pos2)
 end
 
 -- gets a transf to fit something with length xObjectLength between two positions. x size is scaled, y and z sizes are preserved
-utils.getTransf2FitObjectBetweenPositions = function(pos0, pos1, xObjectLength, logger)
+utils.getTransf2FitObjectBetweenPositions = function(pos0, pos1, xObjectLength, isExtendedLog)
     local _absX0I = xObjectLength / 2
-    local _logger = logger == nil and {print = function() end, debugPrint = function() end, getIsExtendedLog = function() return false end} or logger
     local x0 = pos0.x or pos0[1]
     local x1 = pos1.x or pos1[1]
     local y0 = pos0.y or pos0[2]
@@ -1081,7 +1194,9 @@ utils.getTransf2FitObjectBetweenPositions = function(pos0, pos1, xObjectLength, 
     local ipotenusaYX = math.sqrt((x1 - x0)^2 + (y1 - y0)^2)
     local sinYX = (y1-y0) / ipotenusaYX
     local cosYX = (x1-x0) / ipotenusaYX
-    _logger.print('ipotenusaYX =', ipotenusaYX, 'sinYX =', sinYX, 'cosYX =', cosYX)
+    if isExtendedLog then
+        print('ipotenusaYX =', ipotenusaYX, 'sinYX =', sinYX, 'cosYX =', cosYX)
+    end
     local vecY0 = {0, 1, 0} -- transforms to {xMid - sinYX, yMid + cosYX, zMid}
     local vecZ0 = {0, 0, 1} -- transforms to {xMid, yMid, zMid + 1}
     local vecZTilted = {0, 0, 1} -- transforms to
@@ -1122,7 +1237,9 @@ utils.getTransf2FitObjectBetweenPositions = function(pos0, pos1, xObjectLength, 
     unknownTransf[9] = 0
     unknownTransf[10] = 0
     unknownTransf[11] = 1
-    _logger.print('unknownTransf straight =') _logger.debugPrint(unknownTransf)
+    if isExtendedLog then
+        print('unknownTransf straight =') debugPrint(unknownTransf)
+    end
     -- solving for vecZ0 tilted
     -- this makes buildings perpendicular to the road, the points match. Curves seem to get less angry.
     -- LOLLO TODO these three are fine for the edges but tilt the construction models, the con should compensate for it
@@ -1132,15 +1249,18 @@ utils.getTransf2FitObjectBetweenPositions = function(pos0, pos1, xObjectLength, 
     unknownTransf[10] = -math.sin(math.atan2((z1-z0), (ipotenusaYX))) * sinYX
     -- zMid +math.cos(math.atan2((z1-z0), (ipotenusaYX))) = unknownTransf[11] + zMid
     unknownTransf[11] = math.cos(math.atan2((z1-z0), (ipotenusaYX)))
-    _logger.print('unknownTransf tilted =') _logger.debugPrint(unknownTransf)
-
+    if isExtendedLog then
+        print('unknownTransf tilted =') debugPrint(unknownTransf)
+    end
     local result = unknownTransf
-    _logger.print('result =') _logger.debugPrint(result)
+    if isExtendedLog then
+        print('result =') debugPrint(result)
+    end
     local vecX0Transformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecX0), result)
     local vecX1Transformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecX1), result)
     local vecYTransformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecY0), result)
     local vecZ0Transformed = utils.getVecTransformed(utils.oneTwoThree2XYZ(vecZ0), result)
-    if _logger.getIsExtendedLog() then
+    if isExtendedLog then
         print('vecX0 straight and transformed =') debugPrint(vecX0) debugPrint(vecX0Transformed)
         print('should be') debugPrint({x0, y0, z0})
         print('vecX1 straight and transformed =') debugPrint(vecX1) debugPrint(vecX1Transformed)
@@ -1300,6 +1420,15 @@ utils.getDistanceBetweenPointAndStraight = function(segmentPosition1, segmentPos
         return math.abs(yM - y1 + (y1 - y2) / (x1 - x2) * (x1 - xM)) / math.sqrt(1 + (y1 - y2) / (x1 - x2) * (y1 - y2) / (x1 - x2))
     end
 
+    --[[
+    float dist_to_segment_squared(float px, float py, float pz, float lx1, float ly1, float lz1, float lx2, float ly2, float lz2) {
+    float line_dist = dist_sq(lx1, ly1, lz1, lx2, ly2, lz2);
+    if (line_dist == 0) return dist_sq(px, py, pz, lx1, ly1, lz1);
+    float t = ((px - lx1) * (lx2 - lx1) + (py - ly1) * (ly2 - ly1) + (pz - lz1) * (lz2 - lz1)) / line_dist;
+    t = constrain(t, 0, 1);
+    return dist_sq(px, py, pz, lx1 + t * (lx2 - lx1), ly1 + t * (ly2 - ly1), lz1 + t * (lz2 - lz1));
+    }
+]]
 end
 
 return utils

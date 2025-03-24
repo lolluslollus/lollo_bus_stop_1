@@ -448,7 +448,7 @@ local _actions = {
             return
         end
 
-        local conTransf_lua = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2) --, logger)
+        local conTransf_lua = transfUtils.getTransf2FitObjectBetweenPositions(baseNode0.position, baseNode1.position, constants.outerEdgeX * 2, logger.getIsExtendedLog())
         local inverseConTransf_lua = transfUtils.getInverseTransf(conTransf_lua)
         logger.print('conTransf_lua =') logger.debugPrint(conTransf_lua)
         logger.print('inverseConTransf_lua =') logger.debugPrint(inverseConTransf_lua)

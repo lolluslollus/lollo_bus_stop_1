@@ -17,7 +17,8 @@ if math.atan2 == nil then
             return result
         elseif dy < 0 then
             return - result
-        else return false
+        -- else return false
+        else return 0
         end
     end
 end

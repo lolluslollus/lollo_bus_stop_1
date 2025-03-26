@@ -1431,4 +1431,25 @@ utils.getDistanceBetweenPointAndStraight = function(segmentPosition1, segmentPos
 ]]
 end
 
+local _getLuaTransfFromSolCols = function(col0, col1, col2, col3)
+	return {
+		col0.x, col0.y, col0.z, col0.w,
+		col1.x, col1.y, col1.z, col1.w,
+		col2.x, col2.y, col2.z, col2.w,
+		col3.x, col3.y, col3.z, col3.w
+	}
+end
+utils.getLuaTransfFromSolTransf = function(solTransf)
+    return _getLuaTransfFromSolCols(solTransf:cols(0), solTransf:cols(1), solTransf:cols(2), solTransf:cols(3))
+end
+-- only call this where the api is available
+utils.getSolTransfFromLuaTransf = function(luaTransf)
+    return api.type.Mat4f.new(
+        api.type.Vec4f.new(luaTransf[1], luaTransf[2], luaTransf[3], luaTransf[4]),
+        api.type.Vec4f.new(luaTransf[5], luaTransf[6], luaTransf[7], luaTransf[8]),
+        api.type.Vec4f.new(luaTransf[9], luaTransf[10], luaTransf[11], luaTransf[12]),
+        api.type.Vec4f.new(luaTransf[13], luaTransf[14], luaTransf[15], luaTransf[16])
+    )
+end
+
 return utils

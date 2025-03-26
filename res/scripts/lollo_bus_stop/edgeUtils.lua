@@ -793,13 +793,15 @@ end
 helper.isNodeStreet = function(nodeId)
     if not(helper.isValidAndExistingId(nodeId)) then return false end
 
-    return (#api.engine.system.streetSystem.getNode2StreetEdgeMap()[nodeId] > 0)
+    local _map = api.engine.system.streetSystem.getNode2StreetEdgeMap()
+    return (#(_map[nodeId]) > 0)
 end
 
 helper.isNodeTrack = function(nodeId)
     if not(helper.isValidAndExistingId(nodeId)) then return false end
 
-    return (#api.engine.system.streetSystem.getNode2TrackEdgeMap()[nodeId] > 0)
+    local _map = api.engine.system.streetSystem.getNode2TrackEdgeMap()
+    return (#(_map[nodeId]) > 0)
 end
 
 helper.getObjectPosition = function(objectId)
